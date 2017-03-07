@@ -1,11 +1,15 @@
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.*;
 import java.util.HashMap;
 import java.util.Map;
 
 public class ServerThread extends Thread
 {
-	protected DatagramSocket socket = null;
+	protected ServerSocket socket = null;		//New
+	protected Socket echosocket = null;			//New
 	protected int port = 0;
 	protected boolean finished = false;
 	protected Map<String,String> database = null;
@@ -17,10 +21,11 @@ public class ServerThread extends Thread
 		this.port = port;
 		database = new HashMap<String,String>();
 		
-		socket = new DatagramSocket(port);
+		socket = new ServerSocket(port);
 		//socket.setSoTimeout(1000);
 		
 		System.out.println("SERVER OPENED");
+	
 	}
 
 	public void run() 
@@ -29,26 +34,28 @@ public class ServerThread extends Thread
 		{	
 			try
 			{
+				System.out.println("Waiting for connection request ...");
+				//Establish conection
+				echosocket = socket.accept();		//Waits until conection request
+				System.out.println("Connection Established!");
+			
 				
-				//receive requests
-				byte[] rbuf = new byte[256];
-				DatagramPacket packet = new DatagramPacket(rbuf,rbuf.length);
-				socket.receive(packet);
-				
-				//print 
-				String received = new String(packet.getData());
-				System.out.println("Server Received : " + received);
+				BufferedReader in = null;
+				in = new BufferedReader(new InputStreamReader(echosocket.getInputStream()));
+				String request = in.readLine();
+				System.out.println("Server Received : " + request);
 				
 				//process requests
-				String reply = process(received);
-				byte[] sbuf = reply.getBytes();
+				String reply = process(request);
 				
 				//send reply
-				InetAddress address = packet.getAddress();		//Get Client Address
-				int pport = packet.getPort();					//Get Client Port
-	            packet = new DatagramPacket(sbuf, sbuf.length, address, pport);
-	            socket.send(packet);
-	            
+				PrintWriter out = null;
+				out = new PrintWriter(echosocket.getOutputStream(),true);
+				out.println(reply);
+				
+				//close connection
+				echosocket.close();
+				System.out.println("Connection closed");
 	            			
 			} catch (Exception e) {
 				finished = true;
@@ -56,8 +63,7 @@ public class ServerThread extends Thread
 			}
 		}
 		
-		socket.close();
-		System.out.println("\nSERVER CLOSED");	
+		//socket.close();
 			
 	}
 	
