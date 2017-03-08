@@ -20,12 +20,13 @@ public class Peer {
 	
 	public Peer(int id, String[] access_point, String[] mc_ap, String[] mdb_ap, String[] mdr_ap)
 	{
+		this.ID = id;
 		try 
 		{
 			//socket de conexao com o cliente
 			InetAddress address = InetAddress.getByName(access_point[0]);
 			int port = Integer.parseInt(access_point[1]);
-			socket = new DatagramListener(address, port);	
+			socket = new DatagramListener(address, port+id);	
 			
 			//sockets multicast
 			if(mc_ap[0] == "")
@@ -52,8 +53,8 @@ public class Peer {
 		
 		//inicializacao dos channels
 		socket.start();
-		/*
 		mc.start();
+		/*
 		mdb.start();
 		mdr.start();
 		*/
