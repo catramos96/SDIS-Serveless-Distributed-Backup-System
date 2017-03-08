@@ -4,7 +4,6 @@ import java.io.IOException;
 
 public class BackupSystem 
 {
-	private static Peer peer = null;
 	public static int protocol_version = 0;
 	
 	//main de teste
@@ -13,6 +12,7 @@ public class BackupSystem
 		if(args.length != 1)
 		{
 			System.out.println("Usage: java BackupSystem <peer_id>");
+			return;
 		}
 	
 		int peer_id = Integer.parseInt(args[0]);
@@ -20,7 +20,7 @@ public class BackupSystem
 		String[] parts_ap = {"","8000"};
 		String[] parts_mc = {"224.0.0.3","4446"};
 		
-		peer = new Peer(peer_id,parts_ap,parts_mc,null,null);
+		new Peer(peer_id,parts_ap,parts_mc,null,null);
 	}
 	
 	/*

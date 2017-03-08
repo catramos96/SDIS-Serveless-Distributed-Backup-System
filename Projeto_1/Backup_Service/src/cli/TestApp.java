@@ -1,5 +1,6 @@
 package cli;
 import java.io.IOException;
+import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 
@@ -13,14 +14,26 @@ public class TestApp
 		if(args.length != 0)
 		{
 			System.out.println("Usage: java TestApp");
+			return;
 		}
 		
 		InetAddress address = InetAddress.getLocalHost();
+		int port = 8000;
 		
 		//abrir o socket de ligacao com o peer
-		socket = new DatagramSocket(8000,address);
+		socket = new DatagramSocket();
 		
 		//trasmitir informacao
+		byte[] sbuf = ("hello").getBytes();	//oper + args
+		DatagramPacket packet = new DatagramPacket(sbuf, sbuf.length,address,port);
+		socket.send(packet);
+		
+		//receber informacao
+		byte[] rbuf = new byte[256];
+		packet = new DatagramPacket(rbuf, rbuf.length);
+		socket.receive(packet);
+		
+		System.out.println(new String(packet.getData()));
 		
 		//fechar socket
 		socket.close();
