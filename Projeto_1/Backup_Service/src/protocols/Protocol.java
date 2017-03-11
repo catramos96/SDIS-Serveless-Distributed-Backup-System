@@ -3,19 +3,21 @@ package protocols;
 import java.util.Random;
 
 import network.Message;
+import network.MulticastListener;
 
-public interface Protocol {
+public abstract class Protocol {
 	
 	Message message = null;
 	Random delay = null;
-	/*
-	 * NetworkInformation ?
-	 */
+	/*Vão ser passados pelo peer*/
+	MulticastListener mc;	
+	MulticastListener mdb;
+	MulticastListener mdr;
 
 	/*
 	 * Common Functions
-	 */
-	void warnPeers();				//send messages
+	 */	
+	abstract void warnPeers();				//send messages
 	
-	void executeProtocolAction();	//receive messages and do something
+	abstract void executeProtocolAction();	//receive messages (or not) and perform an action
 }

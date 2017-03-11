@@ -1,12 +1,12 @@
 package protocols;
+import network.MulticastListener;
 
-public class FileDeletion implements Protocol{
+public class ChunkRestoreProtocol extends Protocol{
+
+	ChunkRestoreProtocol(MulticastListener mdr, MulticastListener mc){
+		this.mdr = mdr;
+	}
 	
-	/*			MSG="DELETE"		 --> Peer	
-	 * InitPeer ---------------> MC ---> Peer 
-	 * 								 --> Peer	
-	 */
-
 	@Override
 	public void warnPeers() {
 		// TODO Auto-generated method stub
@@ -18,5 +18,5 @@ public class FileDeletion implements Protocol{
 		// TODO Auto-generated method stub
 		
 	}
-	
+
 }
