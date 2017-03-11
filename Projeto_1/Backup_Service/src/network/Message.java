@@ -32,9 +32,9 @@ public class Message
 	private int ReplicationDeg = -1; //so para putchunk
 	*/
 	
-	private byte[] body;
+	/*private byte[] body; content of chunk*/
 	
-	public Message()
+	public Message(MessageType type, int version, int senderId, int fileId, int chunkNo, int ReplicationDeg, byte[] body)
 	{
 		
 	}
