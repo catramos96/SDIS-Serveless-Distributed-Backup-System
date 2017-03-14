@@ -93,32 +93,29 @@ public class Peer {
 	
 	public void doAction(int x){
 		Message msg = new Message(MessageType.PUTCHUNK,1,2,3,4,5,"HELLO");
-		
-		String m = msg.buildMessage();
-		msg.parseMessage(m);
 		System.out.println("Message: " + msg.buildMessage());
 		
-		/*switch(x){
+		switch(x){
 			case 1:{
-				backupProt.warnPeers();
+				backupProt.warnPeers(msg);
 				break;
 			}
 			case 2:{
-				restoreProt.warnPeers();
+				restoreProt.warnPeers(msg);
 				break;
 			}
 			case 3:{
-				deleteProt.warnPeers();
+				deleteProt.warnPeers(msg);
 				break;
 			}
 			case 4:{
-				spaceReclProt.warnPeers();
+				spaceReclProt.warnPeers(msg);
 				break;
 			}
 			default:{
 				System.out.println("Invalid Action");
 			}
-		}*/
+		}
 	}
 
 	/*

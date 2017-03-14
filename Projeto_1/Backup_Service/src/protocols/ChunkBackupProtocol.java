@@ -47,13 +47,13 @@ public class ChunkBackupProtocol extends Protocol{
 	public void executeProtocolAction() {
 		System.out.println("Protocol: Executing Chunk Backup Protocol");
 		
-		try {
+		/*try {
 			Thread.sleep(delay.nextInt(400));	//delay
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 		
-		/*if(replicationDegree <)
-		 * 	mc.send("stored");*/
+		if(replicationDegree <)
+		  	mc.send("stored");*/
 	}
 }
