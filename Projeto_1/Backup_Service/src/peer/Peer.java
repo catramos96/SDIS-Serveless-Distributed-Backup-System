@@ -21,6 +21,8 @@ public class Peer {
 	public Peer(int id, String[] access_point, String[] mc_ap, String[] mdb_ap, String[] mdr_ap)
 	{
 		this.ID = id;
+		fileManager = new FileManager();
+		
 		try 
 		{
 			//socket de conexao com o cliente
@@ -59,6 +61,19 @@ public class Peer {
 		mdr.start();
 		*/
 		
+		clientNotification("BACKUP","hello.png");
 	}
-
+	
+	public void clientNotification(String message, String filename)
+	{
+		if(message.equals("BACKUP"))
+		{
+			fileManager.splitFileInChunks(filename);
+			
+			//provavelmente -> isto estara tudo dentro de um protocolo
+			//criar a mensagem putchunk (por cada chunk)
+			//enviar a mensagem  (por cada chunk)
+		}
+		
+	}
 }

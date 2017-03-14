@@ -37,6 +37,7 @@ public class DatagramListener extends Thread
 				socket.receive(r_packet);
 				
 				System.out.println(new String(r_packet.getData()));
+				//envia para o initiator peer o que quer
 				
 				//envia uma confirmacao da rececao
 				byte[] sbuf = ("bye").getBytes();
