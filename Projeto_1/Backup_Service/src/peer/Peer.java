@@ -57,6 +57,10 @@ public class Peer {
 			mdr = new MulticastListener(address,port);
 			*/			
 			mc.start();
+			/*
+			mdb.start();
+			mdr.start();
+			*/
 			
 			Thread.sleep(1000);		//delay para inicializar as variáveis do multicast
 			
@@ -64,11 +68,6 @@ public class Peer {
 			restoreProt = new ChunkRestoreProtocol(mc,mc);	//mdr,mc
 			deleteProt = new FileDeletionProtocol(mc);
 			spaceReclProt = new SpaceReclaimingProtocol(mc);
-			
-			/*backupProt.warnPeers();
-			restoreProt.warnPeers();
-			deleteProt.warnPeers();
-			spaceReclProt.warnPeers();*/
 			
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -79,14 +78,8 @@ public class Peer {
 		
 		//inicializacao dos channels
 		socket.start();
-		
-		/*
-		mdb.start();
-		mdr.start();
-		*/
-		
 	}
-	/*
+	/* Actions:
 	 * 1 - Backup
 	 * 2 - Restore
 	 * 3 - Delete
@@ -127,8 +120,8 @@ public class Peer {
 		if(message.contains("backup"))				backupProt.executeProtocolAction();
 		else if(message.contains("deletion"))		deleteProt.executeProtocolAction();
 		else if(message.contains("restore"))		restoreProt.executeProtocolAction();
-		else if(message.contains("space_reclaim"))spaceReclProt.executeProtocolAction();
-		else											System.out.println("Notification: ??");
+		else if(message.contains("space_reclaim"))	spaceReclProt.executeProtocolAction();
+		else										System.out.println("Notification: ??");
 	}
 	
 	}

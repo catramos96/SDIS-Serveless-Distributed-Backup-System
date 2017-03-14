@@ -16,23 +16,22 @@ public class BackupSystem
 	//main de teste
 	public static void main(String[] args) throws IOException
 	{
-		if(args.length != 2)
+		if(args.length != 1)
 		{
-			System.out.println("Usage: java BackupSystem <peer_id> <action>"); //action tmp
+			System.out.println("Usage: java BackupSystem <peer_id>"); //action tmp
 			return;
 		}
 	
 		int peer_id = Integer.parseInt(args[0]);
-		int action = Integer.parseInt(args[1]);	//tmp
 		
 		String[] parts_ap = {"","8000"};
 		String[] parts_mc = {"224.0.0.3","4446"};
 		
 		Peer myPeer = new Peer(peer_id,parts_ap,parts_mc,null,null);
 		
-		
 		/*Para aceitar varias instruções*/
 		Scanner sc = new Scanner(System.in);
+		int action;
 		while(true){
 		    action = sc.nextInt();
 			myPeer.doAction(action);

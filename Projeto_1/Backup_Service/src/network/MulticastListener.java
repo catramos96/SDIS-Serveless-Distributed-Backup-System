@@ -22,16 +22,23 @@ public class MulticastListener extends Thread
 		this.peer = peer;
 	}
 	
+	/*
+	 * sent
+	 */
 	public void send(String message){
+		
 		DatagramPacket msg = new DatagramPacket(message.getBytes(), message.length(),address, port);
 		try {
 			socket.send(msg);
+			System.out.println("Message sent: " + message);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 	
+	/*
+	 * Receive
+	 */
 	public String receive(){
 		//waits for multicast message
 		byte[] m_buf = new byte[256];
@@ -43,12 +50,9 @@ public class MulticastListener extends Thread
 			e.printStackTrace();
 		}
 
-		String msg_received = new String(packet.getData());
+		//Removes the last sequences of white spaces (\s) and null characters (\0)
+		String msg_received = (new String(packet.getData()).replaceAll("[\0 \\s]*$", ""));
 		System.out.println("Message received: " + msg_received);
-		
-		/*
-		 * Remove last sequence of white spaces in the received message		 * 
-		 */
 		
 		return msg_received;
 	}
@@ -64,9 +68,6 @@ public class MulticastListener extends Thread
 			socket = new MulticastSocket(this.port);
 			socket.setTimeToLive(1);
 			socket.joinGroup(this.address);
-
-			//receber a informacao
-			send("I'm a Multicaster");		//temp
 
 			while(running)
 			{

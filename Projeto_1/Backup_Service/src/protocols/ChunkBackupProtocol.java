@@ -16,7 +16,6 @@ public class ChunkBackupProtocol extends Protocol{
 
 	@Override
 	public void warnPeers() {
-		// TODO Auto-generated method stub
 		mc.send("backup");
 	}
 
