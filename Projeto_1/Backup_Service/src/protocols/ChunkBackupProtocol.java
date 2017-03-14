@@ -9,20 +9,18 @@ public class ChunkBackupProtocol extends Protocol{
 	 * 								  --> Peer		Random Delay
 	 */
 	
-	ChunkBackupProtocol(MulticastListener mdb, MulticastListener mc){
+	public ChunkBackupProtocol(MulticastListener mdb, MulticastListener mc){
 		this.mdb = mdb;
 		this.mc = mc;
 	}
 
 	@Override
 	public void warnPeers() {
-		// TODO Auto-generated method stub
-		
+		mc.send("backup");
 	}
 
 	@Override
 	public void executeProtocolAction() {
-		// TODO Auto-generated method stub
-		
+		System.out.println("Protocol: Executing Chunk Backup Protocol");
 	}
 }

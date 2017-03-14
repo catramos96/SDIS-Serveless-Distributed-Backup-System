@@ -1,9 +1,16 @@
 package peer;
 
 import java.io.IOException;
+import java.util.Scanner;
 
 public class BackupSystem 
 {
+	/* Action
+	 * 1 - Backup
+	 * 2 - Restore
+	 * 3 - Delete
+	 * 4 - Space Reclaiming
+	 */
 	public static int protocol_version = 0;
 	
 	//main de teste
@@ -11,7 +18,7 @@ public class BackupSystem
 	{
 		if(args.length != 1)
 		{
-			System.out.println("Usage: java BackupSystem <peer_id>");
+			System.out.println("Usage: java BackupSystem <peer_id>"); //action tmp
 			return;
 		}
 	
@@ -20,7 +27,16 @@ public class BackupSystem
 		String[] parts_ap = {"","8000"};
 		String[] parts_mc = {"224.0.0.3","4446"};
 		
-		new Peer(peer_id,parts_ap,parts_mc,null,null);
+		Peer myPeer = new Peer(peer_id,parts_ap,parts_mc,null,null);
+		
+		/*Para aceitar varias instruções*/
+		Scanner sc = new Scanner(System.in);
+		int action;
+		while(true){
+		    action = sc.nextInt();
+			myPeer.doAction(action);
+		}
+		
 	}
 	
 	/*
