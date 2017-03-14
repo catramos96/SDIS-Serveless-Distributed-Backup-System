@@ -3,20 +3,20 @@ import network.MulticastListener;
 
 public class ChunkRestoreProtocol extends Protocol{
 
-	ChunkRestoreProtocol(MulticastListener mdr, MulticastListener mc){
+	public ChunkRestoreProtocol(MulticastListener mdr, MulticastListener mc){
 		this.mdr = mdr;
 	}
 	
 	@Override
 	public void warnPeers() {
 		// TODO Auto-generated method stub
-		
+		mc.send("restore");
 	}
 
 	@Override
 	public void executeProtocolAction() {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Protocol: Executing Chunk Restore Protocol");
 	}
 
 }
