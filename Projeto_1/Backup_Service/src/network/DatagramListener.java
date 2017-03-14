@@ -5,15 +5,19 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 
+import peer.Peer;
+
 public class DatagramListener extends Thread
 {
 	public DatagramSocket socket = null;
 	protected InetAddress address = null;
 	protected int port = 0;
-	private boolean running = false;
+	protected boolean running = false;
+	protected Peer peer = null; 
 	
-	public DatagramListener(InetAddress address, int port)
+	public DatagramListener(InetAddress address, int port,Peer peer)
 	{
+		this.peer = peer;
 		this.address = address;
 		this.port = port;
 	}
@@ -37,6 +41,9 @@ public class DatagramListener extends Thread
 				socket.receive(r_packet);
 				
 				System.out.println(new String(r_packet.getData()));
+				
+				//initiator peer trata do que recebeu do client
+				peer.clientNotification("BACKUP", "hello.png"); //teste
 				
 				//envia uma confirmacao da rececao
 				byte[] sbuf = ("bye").getBytes();

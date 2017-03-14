@@ -14,72 +14,75 @@ import protocols.FileDeletionProtocol;
 import protocols.SpaceReclaimingProtocol;
 
 public class Peer {
-	
+
 	public int ID = 0;
 	public DatagramListener socket = null; 	//socket for communication with client
-	
+
 	public MulticastListener mc = null;
 	public MulticastListener mdb = null;
 	public MulticastListener mdr = null;
-	
+
 	/*Protocols*/
 	public ChunkBackupProtocol backupProt = null;
 	public ChunkRestoreProtocol restoreProt = null;
 	public FileDeletionProtocol deleteProt = null;
 	public SpaceReclaimingProtocol spaceReclProt = null;
-	
+
 	public FileManager fileManager = null;
-	
+
 	public Peer(int id, String[] access_point, String[] mc_ap, String[] mdb_ap, String[] mdr_ap)
 	{
 		this.ID = id;
+		fileManager = new FileManager();
+
 		try 
 		{
 			//socket de conexao com o cliente
 			InetAddress address = InetAddress.getByName(access_point[0]);
 			int port = Integer.parseInt(access_point[1]);
-			socket = new DatagramListener(address, port+id);	
-			
+			socket = new DatagramListener(address, port+id,this);	
+
 			//sockets multicast
 			if(mc_ap[0] == "")
 				address = InetAddress.getLocalHost();
 			else	
 				address = InetAddress.getByName(mc_ap[0]);
-			
+
 			port = Integer.parseInt(mc_ap[1]);
 			mc = new MulticastListener(address,port,this);
-			
+
 			/*
 			address = InetAddress.getByName(mdb_ap[0]);
 			port = Integer.parseInt(mdb_ap[1]);
 			mdb = new MulticastListener(address,port);
-			
+
 			address = InetAddress.getByName(mdr_ap[0]);
 			port = Integer.parseInt(mdr_ap[1]);
 			mdr = new MulticastListener(address,port);
-			*/			
+			 */			
+
+			//inicializacao dos channels
+			socket.start();
+
 			mc.start();
 			/*
 			mdb.start();
 			mdr.start();
-			*/
-			
-			Thread.sleep(1000);		//delay para inicializar as variáveis do multicast
-			
+			 */
+
+			Thread.sleep(1000);		//delay para inicializar as variï¿½veis do multicast
+
 			backupProt = new ChunkBackupProtocol(mc,mc);	//mrd,mc
 			restoreProt = new ChunkRestoreProtocol(mc,mc);	//mdr,mc
 			deleteProt = new FileDeletionProtocol(mc);
 			spaceReclProt = new SpaceReclaimingProtocol(mc);
-			
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		//inicializacao dos channels
-		socket.start();
 	}
 	/* Actions:
 	 * 1 - Backup
@@ -117,14 +120,14 @@ public class Peer {
 			}
 		}*/
 	}
-	
+
 	/*
 	 * FROM MULTICAST 
 	 */
 	public void notify(String message){
 		System.out.println("Notification: " + message);
 		System.out.println("Length: " + message.length());
-		
+
 		/*Depois de resolver o problema dos white spaces passar para um switch*/
 		if(message.contains("backup"))				backupProt.executeProtocolAction();
 		else if(message.contains("deletion"))		deleteProt.executeProtocolAction();
@@ -132,5 +135,19 @@ public class Peer {
 		else if(message.contains("space_reclaim"))	spaceReclProt.executeProtocolAction();
 		else										System.out.println("Notification: ??");
 	}
-	
+
+
+	public void clientNotification(String message, String filename)
+	{
+		if(message.equals("BACKUP"))
+		{
+			fileManager.splitFileInChunks(filename);
+
+			//provavelmente -> isto estara tudo dentro de um protocolo
+			//criar a mensagem putchunk (por cada chunk)
+			//enviar a mensagem  (por cada chunk)
+		}
+
 	}
+
+}
