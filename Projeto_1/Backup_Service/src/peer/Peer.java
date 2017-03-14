@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 
 import network.DatagramListener;
+import network.Message;
+import network.Message.MessageType;
 import network.MulticastListener;
 import protocols.ChunkBackupProtocol;
 import protocols.ChunkRestoreProtocol;
@@ -85,8 +87,15 @@ public class Peer {
 	 * 3 - Delete
 	 * 4 - Space Reclaiming
 	 */
+	
 	public void doAction(int x){
-		switch(x){
+		Message msg = new Message(MessageType.PUTCHUNK,1,2,3,4,5,"HELLO");
+		
+		String m = msg.buildMessage();
+		msg.parseMessage(m);
+		System.out.println("Message: " + msg.buildMessage());
+		
+		/*switch(x){
 			case 1:{
 				backupProt.warnPeers();
 				break;
@@ -106,7 +115,7 @@ public class Peer {
 			default:{
 				System.out.println("Invalid Action");
 			}
-		}
+		}*/
 	}
 	
 	/*
