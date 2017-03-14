@@ -2,8 +2,6 @@ package peer;
 
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 
 import network.DatagramListener;
@@ -61,8 +59,6 @@ public class Peer {
 			mc.start();
 			
 			Thread.sleep(1000);		//delay para inicializar as variáveis do multicast
-			
-			System.out.println("hello");
 			
 			backupProt = new ChunkBackupProtocol(mc,mc);	//mrd,mc
 			restoreProt = new ChunkRestoreProtocol(mc,mc);	//mdr,mc
@@ -128,10 +124,10 @@ public class Peer {
 		System.out.println("Length: " + message.length());
 		
 		/*Depois de resolver o problema dos white spaces passar para um switch*/
-		if(message.compareTo("backup") >= 1)			backupProt.executeProtocolAction();
-		else if(message.compareTo("deletion") >= 1)		deleteProt.executeProtocolAction();
-		else if(message.compareTo("restore") >= 1)		restoreProt.executeProtocolAction();
-		else if(message.compareTo("space_reclaim") >= 1)spaceReclProt.executeProtocolAction();
+		if(message.contains("backup"))				backupProt.executeProtocolAction();
+		else if(message.contains("deletion"))		deleteProt.executeProtocolAction();
+		else if(message.contains("restore"))		restoreProt.executeProtocolAction();
+		else if(message.contains("space_reclaim"))spaceReclProt.executeProtocolAction();
 		else											System.out.println("Notification: ??");
 	}
 	

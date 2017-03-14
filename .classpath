@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="Prática 1/Client/src"/>
+	<classpathentry kind="src" path="Prática 1/Server/src"/>
+	<classpathentry kind="src" path="Prática 2/Client/src"/>
+	<classpathentry kind="src" path="Prática 2/Server/src"/>
+	<classpathentry kind="src" path="Prática 3/Client TCP/src"/>
+	<classpathentry kind="src" path="Prática 3/Server TCP/src"/>
+	<classpathentry kind="src" path="Projeto_1/Backup_Service/src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="Projeto_1/Backup_Service/bin"/>
+</classpath>

@@ -2,8 +2,8 @@ package peer;
 
 public class Chunk {
 	
-	private int chunkNo;
-	private int fileId;
+	private int chunkNo = -1;
+	private int fileId = -1;
 	//private int replicationDeg; ??
 	
 	Chunk(int chunkNo, int fileId){

@@ -5,6 +5,7 @@ public class ChunkRestoreProtocol extends Protocol{
 
 	public ChunkRestoreProtocol(MulticastListener mdr, MulticastListener mc){
 		this.mdr = mdr;
+		this.mc = mc;
 	}
 	
 	@Override
