@@ -9,6 +9,7 @@ public abstract class Protocol {
 	
 	Message message = null;
 	Random delay = null;
+
 	/*Vão ser passados pelo peer*/
 	MulticastListener mc;	
 	MulticastListener mdb;
@@ -17,7 +18,7 @@ public abstract class Protocol {
 	/*
 	 * Common Functions
 	 */	
-	abstract void warnPeers();				//send messages
+	abstract void warnPeers(Message msg);				//send messages
 	
 	abstract void executeProtocolAction();	//receive messages (or not) and perform an action
 }

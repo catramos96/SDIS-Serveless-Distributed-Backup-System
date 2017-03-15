@@ -1,5 +1,6 @@
 package protocols;
 
+import network.Message;
 import network.MulticastListener;
 
 public class FileDeletionProtocol extends Protocol{
@@ -14,7 +15,7 @@ public class FileDeletionProtocol extends Protocol{
 	}
 	
 	@Override
-	public void warnPeers() {
+	public void warnPeers(Message msg) {
 		// TODO Auto-generated method stub
 		mc.send("deletion");
 		

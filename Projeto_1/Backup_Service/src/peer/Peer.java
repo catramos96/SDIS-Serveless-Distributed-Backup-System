@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 
 import network.DatagramListener;
+import network.Message;
+import network.Message.MessageType;
 import network.MulticastListener;
 import protocols.ChunkBackupProtocol;
 import protocols.ChunkRestoreProtocol;
@@ -68,7 +70,7 @@ public class Peer {
 			mdr.start();
 			 */
 
-			Thread.sleep(1000);		//delay para inicializar as variáveis do multicast
+			Thread.sleep(1000);		//delay para inicializar as variï¿½veis do multicast
 
 			backupProt = new ChunkBackupProtocol(mc,mc);	//mrd,mc
 			restoreProt = new ChunkRestoreProtocol(mc,mc);	//mdr,mc
@@ -89,27 +91,31 @@ public class Peer {
 	 * 3 - Delete
 	 * 4 - Space Reclaiming
 	 */
+	
 	public void doAction(int x){
+		Message msg = new Message(MessageType.PUTCHUNK,1,2,3,4,5,"HELLO");
+		System.out.println("Message: " + msg.buildMessage());
+		
 		switch(x){
-		case 1:{
-			backupProt.warnPeers();
-			break;
-		}
-		case 2:{
-			restoreProt.warnPeers();
-			break;
-		}
-		case 3:{
-			deleteProt.warnPeers();
-			break;
-		}
-		case 4:{
-			spaceReclProt.warnPeers();
-			break;
-		}
-		default:{
-			System.out.println("Invalid Action");
-		}
+			case 1:{
+				backupProt.warnPeers(msg);
+				break;
+			}
+			case 2:{
+				restoreProt.warnPeers(msg);
+				break;
+			}
+			case 3:{
+				deleteProt.warnPeers(msg);
+				break;
+			}
+			case 4:{
+				spaceReclProt.warnPeers(msg);
+				break;
+			}
+			default:{
+				System.out.println("Invalid Action");
+			}
 		}
 	}
 
