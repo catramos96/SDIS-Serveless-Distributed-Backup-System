@@ -22,7 +22,7 @@ public class TestApp
 		
 		//abrir o socket de ligacao com o peer
 		socket = new DatagramSocket();
-		
+	
 		//trasmitir informacao
 		byte[] sbuf = ("hello").getBytes();	//oper + args
 		DatagramPacket packet = new DatagramPacket(sbuf, sbuf.length,address,port);

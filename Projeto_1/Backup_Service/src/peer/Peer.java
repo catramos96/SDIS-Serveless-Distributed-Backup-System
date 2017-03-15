@@ -13,7 +13,7 @@ import protocols.SpaceReclaimingProtocol;
 
 public class Peer {
 
-	public int ID = 0;
+	public static int ID = 0;
 	public DatagramListener socket = null; 	//socket for communication with client
 
 	public MulticastListener mc = null;
@@ -82,6 +82,7 @@ public class Peer {
 			e.printStackTrace();
 		}
 	}
+	
 	/* Actions:
 	 * 1 - Backup
 	 * 2 - Restore
@@ -134,11 +135,18 @@ public class Peer {
 		{
 			fileManager.splitFileInChunks(filename);
 
-			//provavelmente -> isto estara tudo dentro de um protocolo
-			//criar a mensagem putchunk (por cada chunk)
-			//enviar a mensagem  (por cada chunk)
+			//provavelmente -> isto estara tudo dentro de um protocolo: para cada chunk
+				//criar a mensagem putchunk 
+				//enviar a mensagem
 		}
 
 	}
-
+	
+	/**
+	 * Gets e sets
+	 */
+	public static int getId()
+	{
+		return ID;
+	}
 }
