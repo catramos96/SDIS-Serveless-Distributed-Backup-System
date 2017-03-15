@@ -135,7 +135,7 @@ public class Peer {
 	}
 
 
-	public void clientNotification(String message, String filename)
+	public void clientNotification(String message, String filename) 
 	{
 		if(message.equals("BACKUP"))
 		{
