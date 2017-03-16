@@ -3,6 +3,7 @@ package peer;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.ArrayList;
 
 import network.DatagramListener;
 import network.Message;
@@ -93,21 +94,22 @@ public class Peer {
 	 */
 
 	public void doAction(String action, String filename){
-		Message msg = new Message(MessageType.PUTCHUNK,1,2,3,4,5,"HELLO");
-		System.out.println("Message: " + msg.buildMessage());
 
 		if(action.equals("BACKUP")){
-			fileManager.splitFileInChunks(filename);
+			ArrayList<Chunk> chunks = fileManager.splitFileInChunks(filename);
+			
+			Message msg = new Message(MessageType.PUTCHUNK,1,2,3,4,5,"HELLO");
+			
 			backupProt.warnPeers(msg);
 		}
 		else if(action.equals("RESTORE")){
-			restoreProt.warnPeers(msg);
+			restoreProt.warnPeers(null);
 		}
 		else if(action.equals("DELETE")){
-			deleteProt.warnPeers(msg);
+			deleteProt.warnPeers(null);
 		}
 		else if(action.equals("RECLAIM")){
-			spaceReclProt.warnPeers(msg);
+			spaceReclProt.warnPeers(null);
 		}
 		else{
 			System.out.println("Invalid Action");

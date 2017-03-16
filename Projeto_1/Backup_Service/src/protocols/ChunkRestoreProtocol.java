@@ -15,7 +15,7 @@ public class ChunkRestoreProtocol extends Protocol{
 		
 		while(rep < 5){
 			
-			mc.send("restore");		//msg GetChunk
+			mc.send(msg);		//msg GetChunk
 			
 			try {
 				Thread.sleep(1000);	

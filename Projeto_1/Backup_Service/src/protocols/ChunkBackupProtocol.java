@@ -28,7 +28,7 @@ public class ChunkBackupProtocol extends Protocol{
 		
 		while(rep < 5){
 			
-			mc.send("backup");		//msg PutChunk
+			mc.send(msg);		//msg PutChunk
 			
 			try {
 				Thread.sleep(1000);	

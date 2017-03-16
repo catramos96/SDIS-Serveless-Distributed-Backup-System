@@ -17,7 +17,7 @@ public class FileDeletionProtocol extends Protocol{
 	@Override
 	public void warnPeers(Message msg) {
 		// TODO Auto-generated method stub
-		mc.send("deletion");
+		mc.send(msg);
 		
 	}
 

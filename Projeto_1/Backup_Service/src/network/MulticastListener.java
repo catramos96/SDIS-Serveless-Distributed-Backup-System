@@ -25,12 +25,14 @@ public class MulticastListener extends Thread
 	/*
 	 * sent
 	 */
-	public void send(String message){
+	public void send(Message message)
+	{
+		String msg = message.buildMessage();
 		
-		DatagramPacket msg = new DatagramPacket(message.getBytes(), message.length(),address, port);
+		DatagramPacket packet = new DatagramPacket(msg.getBytes(), msg.length(),address, port);
 		try {
-			socket.send(msg);
-			System.out.println("Message sent: " + message);
+			socket.send(packet);
+			System.out.println("Message sent: " + msg);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

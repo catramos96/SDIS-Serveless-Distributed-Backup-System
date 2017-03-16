@@ -17,7 +17,7 @@ public class SpaceReclaimingProtocol extends Protocol{
 	@Override
 	public void warnPeers(Message msg) {
 		// TODO Auto-generated method stub
-		mc.send("space_reclaim");
+		mc.send(msg);
 	}
 
 	@Override
