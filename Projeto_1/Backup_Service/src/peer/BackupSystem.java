@@ -27,16 +27,7 @@ public class BackupSystem
 		String[] parts_ap = {"","8000"};
 		String[] parts_mc = {"224.0.0.3","4446"};
 		
-		Peer myPeer = new Peer(peer_id,parts_ap,parts_mc,null,null);
-		
-		/*Para aceitar varias instruções*/
-		Scanner sc = new Scanner(System.in);
-		int action;
-		while(true){
-		    action = sc.nextInt();
-			myPeer.doAction(action);
-		}
-		
+		Peer myPeer = new Peer(peer_id,parts_ap,parts_mc,null,null);		
 	}
 	
 	/*

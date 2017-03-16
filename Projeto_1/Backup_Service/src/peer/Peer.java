@@ -84,38 +84,33 @@ public class Peer {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/* Actions:
 	 * 1 - Backup
 	 * 2 - Restore
 	 * 3 - Delete
 	 * 4 - Space Reclaiming
 	 */
-	
-	public void doAction(int x){
+
+	public void doAction(String action, String filename){
 		Message msg = new Message(MessageType.PUTCHUNK,1,2,3,4,5,"HELLO");
 		System.out.println("Message: " + msg.buildMessage());
-		
-		switch(x){
-			case 1:{
-				backupProt.warnPeers(msg);
-				break;
-			}
-			case 2:{
-				restoreProt.warnPeers(msg);
-				break;
-			}
-			case 3:{
-				deleteProt.warnPeers(msg);
-				break;
-			}
-			case 4:{
-				spaceReclProt.warnPeers(msg);
-				break;
-			}
-			default:{
-				System.out.println("Invalid Action");
-			}
+
+		if(action.equals("BACKUP")){
+			fileManager.splitFileInChunks(filename);
+			backupProt.warnPeers(msg);
+		}
+		else if(action.equals("RESTORE")){
+			restoreProt.warnPeers(msg);
+		}
+		else if(action.equals("DELETE")){
+			deleteProt.warnPeers(msg);
+		}
+		else if(action.equals("RECLAIM")){
+			spaceReclProt.warnPeers(msg);
+		}
+		else{
+			System.out.println("Invalid Action");
 		}
 	}
 
@@ -134,20 +129,6 @@ public class Peer {
 		else										System.out.println("Notification: ??");
 	}
 
-
-	public void clientNotification(String message, String filename) 
-	{
-		if(message.equals("BACKUP"))
-		{
-			fileManager.splitFileInChunks(filename);
-
-			//provavelmente -> isto estara tudo dentro de um protocolo: para cada chunk
-				//criar a mensagem putchunk 
-				//enviar a mensagem
-		}
-
-	}
-	
 	/**
 	 * Gets e sets
 	 */
