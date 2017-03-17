@@ -1,20 +1,27 @@
 package network;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
 public class Message 
 {
-	public MessageType type = null;
-	public int version = -1;
-	public int senderId = -1;
-	public int fileId = -1;
-	public int chunkNo = -1;
-	public int replicationDeg = -1;
+	private MessageType type = null;
+	private char[] version;
+	private int senderId = -1;
+	private String fileId = null;
+	private int chunkNo = -1;
+	private int replicationDeg = -1;
 	
-	private String body = null;
+	private byte[] body = null;
 	
-	public static final char CR = 0xD;
-	public static final char LF = 0xA;
+	private static final char CR = 0xD;
+	private static final char LF = 0xA;
 	public static final String LINE_SEPARATOR = "" + CR + LF;
 	
+
 	/**
 	 * <MessageType> <Version> <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF>
 	 * 
@@ -28,12 +35,12 @@ public class Message
 	
 	public static enum MessageType
 	{
-		PUTCHUNK, STORED, GETCHUNK, CHUNK, DELETE,REMOVED
+		PUTCHUNK, STORED, GETCHUNK, CHUNK, DELETE, REMOVED
 	}
 	
 	public Message(){};
 	
-	public Message(MessageType type, int version, int senderId, int fileId, int chunkNo, int ReplicationDeg, String body)
+	public Message(MessageType type, char[] version, int senderId, String fileId, int chunkNo, int ReplicationDeg, byte[] body)
 	{
 		this.type = type;
 		this.version = version;
@@ -47,45 +54,40 @@ public class Message
 	/*
 	 * Constroi o conteudo de uma mensagem
 	 */
-	public String buildMessage(){
-		String content = (type.name() + " " + version + " " + senderId + " " + fileId + " ");
+	public byte[] buildMessage() {
+		
+		String content = type.name() + " " + version + " " + senderId + " " + fileId + " ";
 		
 		if(type.compareTo(MessageType.DELETE) != 0)
-			content = content.concat(chunkNo + " ");
+			content += chunkNo + " ";
 		
 		if(type.compareTo(MessageType.PUTCHUNK) == 0)
-			content = content.concat(replicationDeg + " ");
+			content += replicationDeg + " ";
 		
-		content = content.concat(LINE_SEPARATOR + LINE_SEPARATOR);
+		content += LINE_SEPARATOR + LINE_SEPARATOR;
 		
-		if(type.compareTo(MessageType.PUTCHUNK) == 0|| type.compareTo(MessageType.CHUNK) == 0)
-			content  = content.concat(body);
+		if(type.compareTo(MessageType.PUTCHUNK) == 0 || type.compareTo(MessageType.CHUNK) == 0)
+		{
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			try 
+			{
+				baos.write(content.getBytes());
+				baos.write(body);
+			} 
+			catch (IOException e) 
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			byte[] a = baos.toByteArray();
+			
+			System.out.println(a.length);
+			
+			return a;
+		}
 		
-		return content;
-	}
-	
-	/*
-	 * Preenche os atributos da classe com os respetivos valores 
-	 */
-	public void parseMessage(String msg){
-		String[] values = msg.split(LINE_SEPARATOR + LINE_SEPARATOR);
-		String[] header = values[0].split("\\s");
-		
-		body = values[1];
-		type = MessageType.valueOf(header[0]);
-		version = Integer.parseInt(header[1]);
-		senderId = Integer.parseInt(header[2]);
-		fileId = Integer.parseInt(header[3]);
-		
-		if(type.compareTo(MessageType.DELETE) != 0)
-			chunkNo = Integer.parseInt(header[4]);
-		else
-			chunkNo = -1;
-		
-		if(type.compareTo(MessageType.PUTCHUNK) == 0)
-			replicationDeg = Integer.parseInt(header[5]);
-		else
-			replicationDeg = -1;
+		return content.getBytes();
 	}
 	
 }

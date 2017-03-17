@@ -12,8 +12,11 @@ public class FileManager {
 	
 	private final String DIR = "resources/";
 	private final int CHUNKLENGTH = 64*1000;
+	private int peerID = -1;
 	
-	FileManager(){}
+	FileManager(int peerId){
+		this.peerID = peerId;
+	}
 	
 	public ArrayList<Chunk> splitFileInChunks(String filename) 
 	{
@@ -86,7 +89,7 @@ public class FileManager {
 	private String getFileID(File file) throws NoSuchAlgorithmException
 	{
 		//filename, last modification, ownwer
-		String textToEncrypt = file.getName() + file.lastModified() + Peer.getId();
+		String textToEncrypt = file.getName() + file.lastModified() + peerID;
 	
 		return sha256(textToEncrypt);
 	}

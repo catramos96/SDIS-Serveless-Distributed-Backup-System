@@ -9,6 +9,7 @@ import peer.Peer;
 
 public class MulticastListener extends Thread
 {
+	public static int PACKET_MAX_SIZE = 65000;
 	public MulticastSocket socket = null;
 	public Peer peer;
 	protected InetAddress address = null;
@@ -27,12 +28,12 @@ public class MulticastListener extends Thread
 	 */
 	public void send(Message message)
 	{
-		String msg = message.buildMessage();
+		byte[] msg = message.buildMessage();
 		
-		DatagramPacket packet = new DatagramPacket(msg.getBytes(), msg.length(),address, port);
+		DatagramPacket packet = new DatagramPacket(msg, msg.length, address, port);
 		try {
 			socket.send(packet);
-			System.out.println("Message sent: " + msg);
+			System.out.println("1 - Message sent: " + msg);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -41,9 +42,9 @@ public class MulticastListener extends Thread
 	/*
 	 * Receive
 	 */
-	public String receive(){
+	public byte[] receive(){
 		//waits for multicast message
-		byte[] m_buf = new byte[256];
+		byte[] m_buf = new byte[PACKET_MAX_SIZE];
 		DatagramPacket packet = new DatagramPacket(m_buf, m_buf.length);
 		try {
 			socket.receive(packet);
@@ -51,12 +52,10 @@ public class MulticastListener extends Thread
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-		//Removes the last sequences of white spaces (\s) and null characters (\0)
-		String msg_received = (new String(packet.getData()).replaceAll("[\0 \\s]*$", ""));
-		System.out.println("Message received: " + msg_received);
 		
-		return msg_received;
+		System.out.println("2 - Message received: " + packet.getData());
+		
+		return packet.getData();
 	}
 
 	@Override
@@ -73,7 +72,7 @@ public class MulticastListener extends Thread
 
 			while(running)
 			{
-				String messageReceived = receive();
+				byte[] messageReceived = receive();
 				peer.notify(messageReceived);
 			}
 

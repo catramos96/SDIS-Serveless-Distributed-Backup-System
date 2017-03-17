@@ -2,6 +2,7 @@ package protocols;
 
 import network.Message;
 import network.MulticastListener;
+import network.Message.MessageType;
 
 public class ChunkBackupProtocol extends Protocol{
 	
@@ -28,7 +29,7 @@ public class ChunkBackupProtocol extends Protocol{
 		
 		while(rep < 5){
 			
-			mc.send(msg);		//msg PutChunk
+			mdb.send(msg);		//msg PutChunk
 			
 			try {
 				Thread.sleep(1000);	
@@ -45,15 +46,17 @@ public class ChunkBackupProtocol extends Protocol{
 
 	@Override
 	public void executeProtocolAction() {
-		System.out.println("Protocol: Executing Chunk Backup Protocol");
-		
-		/*try {
+		System.out.println("2 - Protocol: Executing Chunk Backup Protocol");
+	
+		/*
+		try {
 			Thread.sleep(delay.nextInt(400));	//delay
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		
-		if(replicationDegree <)
-		  	mc.send("stored");*/
+		*/
+		//if(replicationDegree <)
+		//Message msg = new Message(MessageType.STORED,version,ID,c.getFileId(),c.getChunkNo(),replicationDegree,c.getData());
+		//mc.send("stored");
 	}
 }
