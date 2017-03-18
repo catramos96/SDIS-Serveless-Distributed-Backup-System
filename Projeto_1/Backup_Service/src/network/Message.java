@@ -89,5 +89,21 @@ public class Message
 		
 		return content.getBytes();
 	}
+
+	public MessageType getType() {
+		return type;
+	}
+
+	public void setType(MessageType type) {
+		this.type = type;
+	}
+
+	public int getChunkNo() {
+		return chunkNo;
+	}
+
+	public void setChunkNo(int chunkNo) {
+		this.chunkNo = chunkNo;
+	}
 	
 }

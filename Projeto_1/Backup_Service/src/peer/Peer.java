@@ -102,13 +102,15 @@ public class Peer {
 
 		if(action.equals("BACKUP"))
 		{
-			ArrayList<Chunk> chunks = fileManager.splitFileInChunks(filename);
-			Chunk c = chunks.get(0);	
-			
-			//TODO fazer um ciclo while de warn de peers
-			Message msg = new Message(MessageType.PUTCHUNK,version,ID,c.getFileId(),c.getChunkNo(),replicationDegree,c.getData());
-
-			backupProt.warnPeers(msg);
+			//separa o ficheiro em chunks
+			ArrayList<Chunk> chunks = fileManager.splitFileInChunks(filename);	
+			//faz warn dos peers para cada chunk
+			for (int i = 0; i < chunks.size(); i++) 
+			{
+				Chunk c = chunks.get(i);
+				Message msg = new Message(MessageType.PUTCHUNK,version,ID,c.getFileId(),c.getChunkNo(),replicationDegree,c.getData());
+				backupProt.warnPeers(msg);
+			}
 		}
 		else if(action.equals("RESTORE"))
 		{
@@ -134,21 +136,31 @@ public class Peer {
 	public void notify(byte[] message){
 
 		Message received = parseMessage(message);
-
-		/*if(message.contains("PUTCHUNK"))
-		{
+		
+		switch (received.getType()) {
+		case PUTCHUNK:
 			//duvida : e aqui que executa "guardar o chunk" e "criar messsage" ?
-			//backupProt.executeProtocolAction(msg); ?
+			System.out.println("CHUNKNO "+ received.getChunkNo());
 			backupProt.executeProtocolAction();
-		}*/
-
-		/*Depois de resolver o problema dos white spaces passar para um switch
-		if(message.contains("backup"))				backupProt.executeProtocolAction();
-		else if(message.contains("deletion"))		deleteProt.executeProtocolAction();
-		else if(message.contains("restore"))		restoreProt.executeProtocolAction();
-		else if(message.contains("space_reclaim"))	spaceReclProt.executeProtocolAction();
-		else										System.out.println("Notification: ??");
-		 */
+			break;
+		case STORED:
+			
+			break;
+		case GETCHUNK:
+			//restoreProt.executeProtocolAction();
+			break;
+		case CHUNK:
+			//spaceReclProt.executeProtocolAction();
+			break;
+		case DELETE:
+			//deleteProt.executeProtocolAction();
+			break;
+		case REMOVED:
+			
+			break;
+		default:
+			break;
+		}
 	}
 
 	/*
@@ -156,6 +168,7 @@ public class Peer {
 	 */
 	private Message parseMessage(byte[] message)
 	{
+		Message parsed = null;
 		
 		ByteArrayInputStream stream = new ByteArrayInputStream(message);
 		BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
@@ -174,20 +187,25 @@ public class Peer {
 			int chunkNo_rcv = validateChunkNo(parts[4],type_rcv);
 			int replicationDeg_rcv = validateReplicationDeg(parts[5],type_rcv);
 			
+			//Removes the last sequences of white spaces (\s) and null characters (\0)
+			//String msg_received = (new String(packet.getData()).replaceAll("[\0 \\s]*$", ""));
 			//temporario?
 			int offset = header.length() + Message.LINE_SEPARATOR.length()*2;
 			byte[] body = new byte[64000];
 			System.arraycopy(message, offset, body, 0, 64000);
 			
-			return new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv,chunkNo_rcv,replicationDeg_rcv,body);			
+			parsed = new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv,chunkNo_rcv,replicationDeg_rcv,body);			
+		
+			reader.close();
+			stream.close();
 		} 
 		catch (IOException e) 
 		{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		return null;
+				
+		return parsed;
 	}
 
 	private int validateReplicationDeg(String string, MessageType type_rcv) 
