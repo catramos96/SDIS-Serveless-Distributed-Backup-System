@@ -1,16 +1,13 @@
 package peer;
 
-
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.util.ArrayList;
 
 import network.DatagramListener;
 import network.Message;
 import network.Message.MessageType;
+import network.MessageHandler;
 import network.MulticastListener;
 import protocols.ChunkBackupProtocol;
 import protocols.ChunkRestoreProtocol;
@@ -19,9 +16,10 @@ import protocols.SpaceReclaimingProtocol;
 
 public class Peer {
 
-	public int ID = 0;
-	public final char[] version = {'1','.','0'};
+	private int ID = 0;
+	private char[] version = {'1','.','0'};		//TEMPORARIO
 
+	/*listeners*/
 	public DatagramListener socket = null; 	//socket for communication with client
 
 	public MulticastListener mc = null;
@@ -34,12 +32,15 @@ public class Peer {
 	public FileDeletionProtocol deleteProt = null;
 	public SpaceReclaimingProtocol spaceReclProt = null;
 
+	/*objects*/
 	public FileManager fileManager = null;
+	public MessageHandler handler;
 
 	public Peer(int id, String[] access_point, String[] mc_ap, String[] mdb_ap, String[] mdr_ap)
 	{
 		this.ID = id;
 		fileManager = new FileManager(ID);
+		handler = new MessageHandler(this); 
 
 		try 
 		{
@@ -55,11 +56,11 @@ public class Peer {
 				address = InetAddress.getByName(mc_ap[0]);
 
 			port = Integer.parseInt(mc_ap[1]);
-			mc = new MulticastListener(address,port,this);
+			mc = new MulticastListener(address,port,handler);
 
 			address = InetAddress.getByName(mdb_ap[0]);
 			port = Integer.parseInt(mdb_ap[1]);
-			mdb = new MulticastListener(address,port,this);
+			mdb = new MulticastListener(address,port,handler);
 			/*
 			address = InetAddress.getByName(mdr_ap[0]);
 			port = Integer.parseInt(mdr_ap[1]);
@@ -90,15 +91,37 @@ public class Peer {
 			e.printStackTrace();
 		}
 	}
+	
+	public void putchunkAction(Chunk c)
+	{	
+		//cria a mensagem a enviar no protocolo
+		Message msg = new Message(MessageType.STORED,version,ID,c.getFileId(),c.getChunkNo());
+		
+		//se o ficheiro ja existir apenas envia a mensagem
+		
+		//se nao existir, envia e guarda
+		backupProt.executeProtocolAction(msg);
+		fileManager.save(c);
+	}
+	
+	public void storeAction()
+	{
+		//verificar que o multicast esta a espera de receber respostas para este fileId ??
+		//mapeamento para saber onde esta guardado este chunk ??
+		
+		backupProt.incStored();
+	}
 
-	/* Actions:
+	/**
+	 * TODO transformar isto num ClientHandler?
+	 * Actions:
 	 * 1 - Backup
 	 * 2 - Restore
 	 * 3 - Delete
 	 * 4 - Space Reclaiming
 	 */
 
-	public void doAction(String action, String filename, int replicationDegree){
+	public void initiateProtocol(String action, String filename, int replicationDegree){
 
 		if(action.equals("BACKUP"))
 		{
@@ -130,110 +153,19 @@ public class Peer {
 		}
 	}
 
-	/*
-	 * FROM MULTICAST 
-	 */
-	public void notify(byte[] message){
-
-		Message received = parseMessage(message);
-		
-		switch (received.getType()) {
-		case PUTCHUNK:
-			//duvida : e aqui que executa "guardar o chunk" e "criar messsage" ?
-			System.out.println("CHUNKNO "+ received.getChunkNo());
-			backupProt.executeProtocolAction();
-			break;
-		case STORED:
-			
-			break;
-		case GETCHUNK:
-			//restoreProt.executeProtocolAction();
-			break;
-		case CHUNK:
-			//spaceReclProt.executeProtocolAction();
-			break;
-		case DELETE:
-			//deleteProt.executeProtocolAction();
-			break;
-		case REMOVED:
-			
-			break;
-		default:
-			break;
-		}
+	public char[] getVersion() {
+		return version;
 	}
 
-	/*
-	 * Preenche os atributos da classe com os respetivos valores 
-	 */
-	private Message parseMessage(byte[] message)
-	{
-		Message parsed = null;
-		
-		ByteArrayInputStream stream = new ByteArrayInputStream(message);
-		BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-	
-		try
-		{
-			String header = reader.readLine();	//a primeira linha corresponde a header
-			
-			//interpretação da header
-			String[] parts = header.split("\\s");
-			
-			MessageType type_rcv = validateMessageType(parts[0]); 
-			char[] version_rcv = validateVersion(parts[1]);
-			int senderId_rcv = Integer.parseInt(parts[2]);
-			String fileId_rcv = parts[3];
-			int chunkNo_rcv = validateChunkNo(parts[4],type_rcv);
-			int replicationDeg_rcv = validateReplicationDeg(parts[5],type_rcv);
-			
-			//Removes the last sequences of white spaces (\s) and null characters (\0)
-			//String msg_received = (new String(packet.getData()).replaceAll("[\0 \\s]*$", ""));
-			//temporario?
-			int offset = header.length() + Message.LINE_SEPARATOR.length()*2;
-			byte[] body = new byte[64000];
-			System.arraycopy(message, offset, body, 0, 64000);
-			
-			parsed = new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv,chunkNo_rcv,replicationDeg_rcv,body);			
-		
-			reader.close();
-			stream.close();
-		} 
-		catch (IOException e) 
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-				
-		return parsed;
+	public void setVersion(char[] version) {
+		this.version = version;
 	}
 
-	private int validateReplicationDeg(String string, MessageType type_rcv) 
-	{
-		if(type_rcv.compareTo(MessageType.PUTCHUNK) == 0)
-			return Integer.parseInt(string);
-		return -1;
+	public int getID() {
+		return ID;
 	}
 
-	private int validateChunkNo(String string, MessageType type) 
-	{
-		if(type.compareTo(MessageType.DELETE) != 0)
-			return Integer.parseInt(string);
-		return -1;
-	}
-
-	private char[] validateVersion(String string) 
-	{
-		char[] vs = string.toCharArray();
-		if(vs[0] == version[0] && vs[1] == version[1])
-			return vs;
-		
-		return null;	//deve retornar um erro
-	}
-
-	private MessageType validateMessageType(String string) 
-	{
-		//nao sei se ha restricoes aqui
-		return MessageType.valueOf(string);
+	public void setID(int iD) {
+		ID = iD;
 	}
 }

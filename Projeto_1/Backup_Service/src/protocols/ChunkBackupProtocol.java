@@ -2,7 +2,6 @@ package protocols;
 
 import network.Message;
 import network.MulticastListener;
-import network.Message.MessageType;
 
 public class ChunkBackupProtocol extends Protocol{
 	
@@ -26,37 +25,42 @@ public class ChunkBackupProtocol extends Protocol{
 	public void warnPeers(Message msg) {
 		stored = 0;
 		int rep = 0;
+		int waitingTime = 1000;
 		
-		while(rep < 5){
-			
+		while(rep < 5)
+		{
 			mdb.send(msg);		//msg PutChunk
 			
 			try {
-				Thread.sleep(1000);	
+				Thread.sleep(waitingTime);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 			
-			/*if(stored >= replicationDegree)
-				break;*/
+			if(stored >= msg.getReplicationDeg())	//replication degree done
+				break;
 			
+			waitingTime *= 2;	//doubles time for each rep
 			rep++;
 		}
+		
+		//stored = 0; //reiniciar os contadores
 	}
 
 	@Override
-	public void executeProtocolAction() {
+	public void executeProtocolAction(Message msg) {
 		System.out.println("2 - Protocol: Executing Chunk Backup Protocol");
 	
-		/*
-		try {
-			Thread.sleep(delay.nextInt(400));	//delay
-		} catch (InterruptedException e) {
+		try 
+		{
+			Thread.sleep(delay.nextInt(400)); //delay
+		} 
+		catch (InterruptedException e) 
+		{
+			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-		*/
-		//if(replicationDegree <)
-		//Message msg = new Message(MessageType.STORED,version,ID,c.getFileId(),c.getChunkNo(),replicationDegree,c.getData());
-		//mc.send("stored");
+		}	
+		
+		mc.send(msg);
 	}
 }

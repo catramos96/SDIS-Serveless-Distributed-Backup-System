@@ -21,10 +21,9 @@ public class SpaceReclaimingProtocol extends Protocol{
 	}
 
 	@Override
-	public void executeProtocolAction() {
+	void executeProtocolAction(Message msg) {
 		// TODO Auto-generated method stub
 		System.out.println("Protocol: Executing Space Reclaiming Protocol");
-		
 	}
 	
 }

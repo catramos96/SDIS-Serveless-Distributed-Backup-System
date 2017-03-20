@@ -43,9 +43,9 @@ public class DatagramListener extends Thread
 				System.out.println(new String(r_packet.getData()));
 				
 				//initiator peer trata do que recebeu do client
-				peer.doAction("BACKUP", "hello.png",3); //teste
+				peer.initiateProtocol("BACKUP", "hello.png",3); //teste
 				
-				//envia uma confirmacao da rececao
+				//envia uma confirmacao da rececao TODO
 				byte[] sbuf = ("bye").getBytes();
 				s_packet = new DatagramPacket(sbuf, sbuf.length,r_packet.getAddress(),r_packet.getPort());
 				socket.send(s_packet);

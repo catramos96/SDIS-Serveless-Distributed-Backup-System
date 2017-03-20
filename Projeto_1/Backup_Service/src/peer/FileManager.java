@@ -101,5 +101,12 @@ public class FileManager {
 		
 		return DatatypeConverter.printHexBinary(hash);
 	}
+
+	public void save(Chunk c)
+	{
+		//guarda o chunk -> se ainda não tiver guardado
+		// TODO Auto-generated method stub
+		
+	}
 	
 }

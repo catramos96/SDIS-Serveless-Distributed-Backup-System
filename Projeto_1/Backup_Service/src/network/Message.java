@@ -1,10 +1,7 @@
 package network;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
 public class Message 
 {
@@ -38,8 +35,6 @@ public class Message
 		PUTCHUNK, STORED, GETCHUNK, CHUNK, DELETE, REMOVED
 	}
 	
-	public Message(){};
-	
 	public Message(MessageType type, char[] version, int senderId, String fileId, int chunkNo, int ReplicationDeg, byte[] body)
 	{
 		this.type = type;
@@ -51,12 +46,21 @@ public class Message
 		this.body = body;
 	}
 	
+	public Message(MessageType type, char[] version, int senderId, String fileId, int chunkNo)
+	{
+		this.type = type;
+		this.version = version;
+		this.senderId = senderId;
+		this.fileId = fileId;
+		this.chunkNo = chunkNo;
+	}
+	
 	/*
 	 * Constroi o conteudo de uma mensagem
 	 */
 	public byte[] buildMessage() {
 		
-		String content = type.name() + " " + version + " " + senderId + " " + fileId + " ";
+		String content = type.name() + " " + version[0]+version[1]+version[2] + " " + senderId + " " + fileId + " ";
 		
 		if(type.compareTo(MessageType.DELETE) != 0)
 			content += chunkNo + " ";
@@ -104,6 +108,38 @@ public class Message
 
 	public void setChunkNo(int chunkNo) {
 		this.chunkNo = chunkNo;
+	}
+
+	public int getReplicationDeg() {
+		return replicationDeg;
+	}
+
+	public void setReplicationDeg(int replicationDeg) {
+		this.replicationDeg = replicationDeg;
+	}
+
+	public String getFileId() {
+		return fileId;
+	}
+
+	public void setFileId(String fileId) {
+		this.fileId = fileId;
+	}
+
+	public byte[] getBody() {
+		return body;
+	}
+
+	public void setBody(byte[] body) {
+		this.body = body;
+	}
+
+	public int getSenderId() {
+		return senderId;
+	}
+
+	public void setSenderId(int senderId) {
+		this.senderId = senderId;
 	}
 	
 }

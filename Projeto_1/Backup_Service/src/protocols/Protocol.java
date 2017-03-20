@@ -20,5 +20,5 @@ public abstract class Protocol {
 	 */	
 	abstract void warnPeers(Message msg);				//send messages
 	
-	abstract void executeProtocolAction();	//receive messages (or not) and perform an action
+	abstract void executeProtocolAction(Message msg);	//receive messages and perform an action
 }
