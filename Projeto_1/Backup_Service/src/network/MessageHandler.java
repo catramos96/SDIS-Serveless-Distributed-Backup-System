@@ -80,11 +80,9 @@ public class MessageHandler extends Thread
 			int senderId_rcv = Integer.parseInt(parts[2]);
 			String fileId_rcv = parts[3];
 			int chunkNo_rcv = -1;
-			
-			if(type_rcv.compareTo(MessageType.DELETE) == 0)
+			if(type_rcv.compareTo(MessageType.DELETE) != 0)
 				chunkNo_rcv = Integer.parseInt(parts[4]);
 			int replicationDeg_rcv = -1;
-			
 			if(type_rcv.compareTo(MessageType.PUTCHUNK) == 0)
 				replicationDeg_rcv = Integer.parseInt(parts[5]);
 			

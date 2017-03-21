@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import network.DatagramListener;
 import network.Message;
 import network.Message.MessageType;
-import network.MessageHandler;
 import network.MulticastListener;
 import protocols.ChunkBackupProtocol;
 import protocols.ChunkRestoreProtocol;
@@ -39,7 +38,7 @@ public class Peer {
 	public Peer(int id, String[] access_point, String[] mc_ap, String[] mdb_ap, String[] mdr_ap)
 	{
 		this.ID = id;
-		fileManager = new FileManager(ID);
+		fileManager = new FileManager(ID,1000000);	//1MB
 		//handler = new MessageHandler(this); 
 
 		try 
@@ -98,9 +97,15 @@ public class Peer {
 		
 		//se o ficheiro ja existir apenas envia a mensagem
 		
-		//se nao existir, envia e guarda
-		backupProt.executeProtocolAction(msg);
-		fileManager.save(c);
+		//se nao existir e nao tiver espaco 
+		if(!fileManager.hasSpaceAvailable(c))
+			return;
+		else
+		{
+			//envia e guarda
+			backupProt.executeProtocolAction(msg);
+			fileManager.save(c);
+		}
 	}
 	
 	public void storeAction()
