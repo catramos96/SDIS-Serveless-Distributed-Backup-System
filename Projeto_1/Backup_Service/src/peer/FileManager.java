@@ -10,7 +10,7 @@ import javax.xml.bind.DatatypeConverter;
 
 public class FileManager {
 	
-	private final String DIR = "resources/";
+	private final String DIR = "../resources/";
 	private final int CHUNKLENGTH = 64*1000;
 	private int peerID = -1;
 	

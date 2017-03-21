@@ -5,21 +5,23 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 
+import peer.Peer;
+
 public class MulticastListener extends Thread
 {
 	public static int PACKET_MAX_SIZE = 65000;
 	
 	public MulticastSocket socket = null;
-	public MessageHandler handler;
 	protected InetAddress address = null;
 	protected int port = 0;
 	protected boolean running = false;
+	protected Peer peer = null;
 
-	public MulticastListener(InetAddress address, int port, MessageHandler handler)
+	public MulticastListener(InetAddress address, int port, Peer peer)
 	{
 		this.address = address;
 		this.port = port;
-		this.handler = handler;
+		this.peer = peer;
 	}
 	
 	/*
@@ -76,7 +78,8 @@ public class MulticastListener extends Thread
 			while(running)
 			{
 				byte[] messageReceived = receive();
-				handler.processMessage(messageReceived);
+				/*Cria nova thread que encaminhará a mensagem*/
+				new MessageHandler(peer,messageReceived).start();
 			}
 
 			//fechar a conexao

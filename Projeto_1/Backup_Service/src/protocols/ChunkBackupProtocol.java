@@ -1,5 +1,7 @@
 package protocols;
 
+import java.util.Random;
+
 import network.Message;
 import network.MulticastListener;
 
@@ -15,6 +17,7 @@ public class ChunkBackupProtocol extends Protocol{
 	public ChunkBackupProtocol(MulticastListener mdb, MulticastListener mc){
 		this.mdb = mdb;
 		this.mc = mc;
+		this.delay = new Random();
 	}
 	
 	public void incStored(){

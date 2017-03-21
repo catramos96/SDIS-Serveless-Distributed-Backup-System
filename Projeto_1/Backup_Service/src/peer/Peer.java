@@ -34,13 +34,13 @@ public class Peer {
 
 	/*objects*/
 	public FileManager fileManager = null;
-	public MessageHandler handler;
+	//public MessageHandler handler;
 
 	public Peer(int id, String[] access_point, String[] mc_ap, String[] mdb_ap, String[] mdr_ap)
 	{
 		this.ID = id;
 		fileManager = new FileManager(ID);
-		handler = new MessageHandler(this); 
+		//handler = new MessageHandler(this); 
 
 		try 
 		{
@@ -56,11 +56,11 @@ public class Peer {
 				address = InetAddress.getByName(mc_ap[0]);
 
 			port = Integer.parseInt(mc_ap[1]);
-			mc = new MulticastListener(address,port,handler);
+			mc = new MulticastListener(address,port,this);
 
 			address = InetAddress.getByName(mdb_ap[0]);
 			port = Integer.parseInt(mdb_ap[1]);
-			mdb = new MulticastListener(address,port,handler);
+			mdb = new MulticastListener(address,port,this);
 			/*
 			address = InetAddress.getByName(mdr_ap[0]);
 			port = Integer.parseInt(mdr_ap[1]);
@@ -79,7 +79,6 @@ public class Peer {
 			Thread.sleep(1000);		//delay para inicializar as variaveis do multicast
 
 			backupProt = new ChunkBackupProtocol(mdb,mc);	//mdb,mc
-
 			restoreProt = new ChunkRestoreProtocol(mc,mc);	//mdr,mc
 			deleteProt = new FileDeletionProtocol(mc);
 			spaceReclProt = new SpaceReclaimingProtocol(mc);
