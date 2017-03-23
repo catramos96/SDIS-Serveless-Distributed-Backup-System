@@ -14,15 +14,15 @@ public class ChunkBackupProtocol extends Protocol{
 	 * 								  --> Peer		Random Delay
 	 */
 	
-	public ChunkBackupProtocol(MulticastListener mdb, MulticastListener mc, MulticastRecord record){
+	public ChunkBackupProtocol(MulticastListener mdb, MulticastRecord record, Message msg){
 		this.mdb = mdb;
-		this.mc = mc;
 		this.delay = new Random();
 		this.record = record;
+		this.msg = msg;
 	}
 
 	@Override
-	public void warnPeers(Message msg) {
+	public void run() {
 		
 		int stored = 0;
 		int rep = 0;
@@ -33,7 +33,7 @@ public class ChunkBackupProtocol extends Protocol{
 		System.out.println("FileNo: " + fileNo);
 		System.out.println("ChunkNo: " + chunkNo);
 		
-		while(rep < 1)	//alterar para rep
+		while(stored < 1)	//alterar para rep
 		{
 			mdb.send(msg);		//msg PutChunk
 			
@@ -54,22 +54,5 @@ public class ChunkBackupProtocol extends Protocol{
 		}
 		
 		//stored = 0; //reiniciar os contadores
-	}
-
-	@Override
-	public void executeProtocolAction(Message msg) {
-		System.out.println("2 - Protocol: Executing Chunk Backup Protocol");
-		
-		try 
-		{
-			Thread.sleep(delay.nextInt(400)); //delay
-		} 
-		catch (InterruptedException e) 
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}	
-		
-		mc.send(msg);
 	}
 }

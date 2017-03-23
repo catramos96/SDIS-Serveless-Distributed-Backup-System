@@ -12,22 +12,17 @@ public class FileDeletionProtocol extends Protocol{
 	 * 								 --> Peer	
 	 */
 
-	public FileDeletionProtocol(MulticastListener mc, MulticastRecord record){
+	public FileDeletionProtocol(MulticastListener mc, MulticastRecord record,Message msg){
 		this.mc = mc;
 		this.record = record;
+		this.msg = msg;
 	}
 	
 	@Override
-	public void warnPeers(Message msg) {
+	public void run() {
 		// TODO Auto-generated method stub
 		mc.send(msg);
 		
-	}
-
-	@Override
-	void executeProtocolAction(Message msg) {
-		// TODO Auto-generated method stub
-		System.out.println("Protocol: Executing File Deletion Protocol");
 	}
 	
 }

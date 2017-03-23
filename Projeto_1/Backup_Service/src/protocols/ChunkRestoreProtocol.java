@@ -6,14 +6,15 @@ import peer.Peer;
 
 public class ChunkRestoreProtocol extends Protocol{
 
-	public ChunkRestoreProtocol(MulticastListener mdr, MulticastListener mc, MulticastRecord record){
+	public ChunkRestoreProtocol(MulticastListener mdr, MulticastListener mc, MulticastRecord record, Message msg){
 		this.mdr = mdr;
 		this.mc = mc;
 		this.record = record;
+		this.msg = msg;
 	}
 	
 	@Override
-	public void warnPeers(Message msg) {
+	public void run()  {
 		int rep = 0;
 		
 		while(rep < 5){
@@ -32,7 +33,7 @@ public class ChunkRestoreProtocol extends Protocol{
 		}
 	}
 
-	@Override
+	/*@Override
 	void executeProtocolAction(Message msg) {
 		// TODO Auto-generated method stub
 		System.out.println("Protocol: Executing Chunk Restore Protocol");
@@ -43,7 +44,7 @@ public class ChunkRestoreProtocol extends Protocol{
 			e.printStackTrace();
 		}
 		
-		/*if (not received Chunk 4 this chunk) -> mc.send("Chunk")*/
-	}
+		/*if (not received Chunk 4 this chunk) -> mc.send("Chunk")
+	}*/
 
 }

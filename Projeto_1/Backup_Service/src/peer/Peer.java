@@ -3,6 +3,7 @@ package peer;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Random;
 
 import network.DatagramListener;
 import network.Message;
@@ -27,10 +28,10 @@ public class Peer {
 	public MulticastListener mdr = null;
 
 	/*Protocols*/
-	public ChunkBackupProtocol backupProt = null;
+	/*public ChunkBackupProtocol backupProt = null;
 	public ChunkRestoreProtocol restoreProt = null;
 	public FileDeletionProtocol deleteProt = null;
-	public SpaceReclaimingProtocol spaceReclProt = null;
+	public SpaceReclaimingProtocol spaceReclProt = null;*/
 
 	/*objects*/
 	public FileManager fileManager = null;
@@ -80,10 +81,10 @@ public class Peer {
 
 			Thread.sleep(1000);		//delay para inicializar as variaveis do multicast
 
-			backupProt = new ChunkBackupProtocol(mdb,mc,record);	//mdb,mc
+			/*backupProt = new ChunkBackupProtocol(mdb,mc,record);	//mdb,mc
 			restoreProt = new ChunkRestoreProtocol(mc,mc,record);	//mdr,mc
 			deleteProt = new FileDeletionProtocol(mc,record);
-			spaceReclProt = new SpaceReclaimingProtocol(mc,record);
+			spaceReclProt = new SpaceReclaimingProtocol(mc,record);*/
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -105,9 +106,18 @@ public class Peer {
 			return;
 		else
 		{
-			//envia e guarda
-			backupProt.executeProtocolAction(msg);
-			fileManager.save(c);
+			Random delay = new Random();
+			try {
+				Thread.sleep(delay.nextInt(400));
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			System.out.println(record.checkStored(msg.getFileId(), msg.getChunkNo()) + " - " +  msg.getReplicationDeg());
+			//if(record.checkStored(msg.getFileId(), msg.getChunkNo()) < msg.getReplicationDeg()){
+				mc.send(msg);
+				fileManager.save(c);
+			//}
+				
 		}
 		
 	}
@@ -137,20 +147,20 @@ public class Peer {
 			{
 				Chunk c = chunks.get(i);
 				Message msg = new Message(MessageType.PUTCHUNK,version,ID,c.getFileId(),c.getChunkNo(),replicationDegree,c.getData());
-				backupProt.warnPeers(msg);
+				new ChunkBackupProtocol(mdb,record,msg).start();
 			}
 		}
 		else if(action.equals("RESTORE"))
 		{
-			restoreProt.warnPeers(null);
+			//restoreProt.warnPeers(null);
 		}
 		else if(action.equals("DELETE"))
 		{
-			deleteProt.warnPeers(null);
+			//deleteProt.warnPeers(null);
 		}
 		else if(action.equals("RECLAIM"))
 		{
-			spaceReclProt.warnPeers(null);
+			//spaceReclProt.warnPeers(null);
 		}
 		else
 		{

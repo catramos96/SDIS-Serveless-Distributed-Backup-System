@@ -8,9 +8,9 @@ import network.MulticastListener;
 import network.MulticastRecord;
 import peer.Peer;
 
-public abstract class Protocol{
+public abstract class Protocol extends Thread{
 	
-	Message message = null;
+	Message msg = null;
 	Random delay = null;
 
 	/*Vão ser passados pelo peer*/
@@ -18,11 +18,6 @@ public abstract class Protocol{
 	MulticastListener mdb;
 	MulticastListener mdr;
 	MulticastRecord record;
-
-	/*
-	 * Common Functions
-	 */	
-	abstract void warnPeers(Message msg);				//send messages
 	
-	abstract void executeProtocolAction(Message msg);	//receive messages and perform an action
+	public abstract void run();
 }

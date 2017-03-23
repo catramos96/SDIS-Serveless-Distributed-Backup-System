@@ -12,21 +12,16 @@ public class SpaceReclaimingProtocol extends Protocol{
 	 * 								 --> Peer					replication degree
 	 */
 	
-	public SpaceReclaimingProtocol(MulticastListener mc, MulticastRecord record){
+	public SpaceReclaimingProtocol(MulticastListener mc, MulticastRecord record, Message msg){
 		this.mc = mc;
 		this.record = record;
+		this.msg = msg;
 	}
 
 	@Override
-	public void warnPeers(Message msg) {
+	public void run() {
 		// TODO Auto-generated method stub
 		mc.send(msg);
-	}
-
-	@Override
-	void executeProtocolAction(Message msg) {
-		// TODO Auto-generated method stub
-		System.out.println("Protocol: Executing Space Reclaiming Protocol");
 	}
 	
 }
