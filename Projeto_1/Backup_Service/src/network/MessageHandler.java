@@ -34,7 +34,7 @@ public class MessageHandler extends Thread
 			break;
 		case STORED:
 			System.out.println("STORED "+ msg.getChunkNo());
-			peer.storeAction();
+			peer.storeAction(msg.getFileId(), msg.getChunkNo());	
 			break;
 		case GETCHUNK:
 			//restoreProt.executeProtocolAction();

@@ -78,7 +78,7 @@ public class MulticastListener extends Thread
 			while(running)
 			{
 				byte[] messageReceived = receive();
-				/*Cria nova thread que encaminhará a mensagem*/
+				/*Cria nova thread que encaminhará a mensagem para os peers*/
 				new MessageHandler(peer,messageReceived).start();
 			}
 

@@ -1,11 +1,14 @@
 package protocols;
 
+import java.util.Queue;
 import java.util.Random;
 
 import network.Message;
 import network.MulticastListener;
+import network.MulticastRecord;
+import peer.Peer;
 
-public abstract class Protocol {
+public abstract class Protocol{
 	
 	Message message = null;
 	Random delay = null;
@@ -14,6 +17,7 @@ public abstract class Protocol {
 	MulticastListener mc;	
 	MulticastListener mdb;
 	MulticastListener mdr;
+	MulticastRecord record;
 
 	/*
 	 * Common Functions

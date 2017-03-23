@@ -4,33 +4,36 @@ import java.util.Random;
 
 import network.Message;
 import network.MulticastListener;
+import network.MulticastRecord;
+import peer.Peer;
 
 public class ChunkBackupProtocol extends Protocol{
-	
-	private int stored = 0;
 
 	/*			MSG="PUTCHUNK"		  --> Peer		MSG="STORED"		sleep(1sec)
 	 * InitPeer ---------------> MDB ---> Peer -------------------> MC -------------> InitPeer
 	 * 								  --> Peer		Random Delay
 	 */
 	
-	public ChunkBackupProtocol(MulticastListener mdb, MulticastListener mc){
+	public ChunkBackupProtocol(MulticastListener mdb, MulticastListener mc, MulticastRecord record){
 		this.mdb = mdb;
 		this.mc = mc;
 		this.delay = new Random();
-	}
-	
-	public void incStored(){
-		stored++; /*if received store for a specific chunk*/
+		this.record = record;
 	}
 
 	@Override
 	public void warnPeers(Message msg) {
-		stored = 0;
+		
+		int stored = 0;
 		int rep = 0;
 		int waitingTime = 1000;
+		String fileNo = msg.getFileId();
+		int chunkNo = msg.getChunkNo();
 		
-		while(rep < 5)
+		System.out.println("FileNo: " + fileNo);
+		System.out.println("ChunkNo: " + chunkNo);
+		
+		while(rep < 1)	//alterar para rep
 		{
 			mdb.send(msg);		//msg PutChunk
 			
@@ -39,6 +42,9 @@ public class ChunkBackupProtocol extends Protocol{
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+			
+			stored = record.checkStored(fileNo, chunkNo);
+			System.out.println("STORED from record: " + stored);
 			
 			if(stored >= msg.getReplicationDeg())	//replication degree done
 				break;
@@ -53,7 +59,7 @@ public class ChunkBackupProtocol extends Protocol{
 	@Override
 	public void executeProtocolAction(Message msg) {
 		System.out.println("2 - Protocol: Executing Chunk Backup Protocol");
-	
+		
 		try 
 		{
 			Thread.sleep(delay.nextInt(400)); //delay

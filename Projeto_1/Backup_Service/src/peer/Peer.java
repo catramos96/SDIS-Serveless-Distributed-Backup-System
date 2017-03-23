@@ -8,6 +8,7 @@ import network.DatagramListener;
 import network.Message;
 import network.Message.MessageType;
 import network.MulticastListener;
+import network.MulticastRecord;
 import protocols.ChunkBackupProtocol;
 import protocols.ChunkRestoreProtocol;
 import protocols.FileDeletionProtocol;
@@ -33,14 +34,16 @@ public class Peer {
 
 	/*objects*/
 	public FileManager fileManager = null;
-	//public MessageHandler handler;
+	
+	/*MulticastRecord*/
+	public MulticastRecord record = null;
 
 	public Peer(int id, String[] access_point, String[] mc_ap, String[] mdb_ap, String[] mdr_ap)
 	{
 		this.ID = id;
-		fileManager = new FileManager(ID,1000000);	//1MB
-		//handler = new MessageHandler(this); 
-
+		fileManager = new FileManager(ID,1000000);
+		record = new MulticastRecord();
+		
 		try 
 		{
 			//socket de conexao com o cliente
@@ -77,10 +80,10 @@ public class Peer {
 
 			Thread.sleep(1000);		//delay para inicializar as variaveis do multicast
 
-			backupProt = new ChunkBackupProtocol(mdb,mc);	//mdb,mc
-			restoreProt = new ChunkRestoreProtocol(mc,mc);	//mdr,mc
-			deleteProt = new FileDeletionProtocol(mc);
-			spaceReclProt = new SpaceReclaimingProtocol(mc);
+			backupProt = new ChunkBackupProtocol(mdb,mc,record);	//mdb,mc
+			restoreProt = new ChunkRestoreProtocol(mc,mc,record);	//mdr,mc
+			deleteProt = new FileDeletionProtocol(mc,record);
+			spaceReclProt = new SpaceReclaimingProtocol(mc,record);
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -106,14 +109,12 @@ public class Peer {
 			backupProt.executeProtocolAction(msg);
 			fileManager.save(c);
 		}
+		
 	}
 	
-	public void storeAction()
+	public void storeAction(String fileId,int chunkNo)
 	{
-		//verificar que o multicast esta a espera de receber respostas para este fileId ??
-		//mapeamento para saber onde esta guardado este chunk ??
-		
-		backupProt.incStored();
+		record.recordStoreChunk(fileId, chunkNo, ID);
 	}
 
 	/**
@@ -171,5 +172,17 @@ public class Peer {
 
 	public void setID(int iD) {
 		ID = iD;
+	}
+	
+	public MulticastListener getMc(){
+		return mc;
+	}
+	
+	public MulticastListener getMdb(){
+		return mdb;
+	}
+	
+	public MulticastRecord getMulticastRecord(){
+		return record;
 	}
 }

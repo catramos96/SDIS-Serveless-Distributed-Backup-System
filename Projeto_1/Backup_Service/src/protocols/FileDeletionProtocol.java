@@ -2,6 +2,8 @@ package protocols;
 
 import network.Message;
 import network.MulticastListener;
+import network.MulticastRecord;
+import peer.Peer;
 
 public class FileDeletionProtocol extends Protocol{
 	
@@ -10,8 +12,9 @@ public class FileDeletionProtocol extends Protocol{
 	 * 								 --> Peer	
 	 */
 
-	public FileDeletionProtocol(MulticastListener mc){
+	public FileDeletionProtocol(MulticastListener mc, MulticastRecord record){
 		this.mc = mc;
+		this.record = record;
 	}
 	
 	@Override

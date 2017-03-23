@@ -1,12 +1,15 @@
 package protocols;
 import network.Message;
 import network.MulticastListener;
+import network.MulticastRecord;
+import peer.Peer;
 
 public class ChunkRestoreProtocol extends Protocol{
 
-	public ChunkRestoreProtocol(MulticastListener mdr, MulticastListener mc){
+	public ChunkRestoreProtocol(MulticastListener mdr, MulticastListener mc, MulticastRecord record){
 		this.mdr = mdr;
 		this.mc = mc;
+		this.record = record;
 	}
 	
 	@Override
