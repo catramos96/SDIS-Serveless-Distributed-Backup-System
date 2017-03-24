@@ -36,7 +36,7 @@ public class TestApp
 		socket = new DatagramSocket();
 	
 		//trasmitir informacao
-		byte[] sbuf = (message).getBytes();	//oper + args
+		byte[] sbuf = (message+'\n').getBytes();	//oper + args
 		DatagramPacket packet = new DatagramPacket(sbuf, sbuf.length,address,port);
 		socket.send(packet);
 		

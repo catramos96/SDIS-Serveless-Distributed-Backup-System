@@ -61,8 +61,7 @@ public class DatagramListener extends Thread
 	private void handle(byte[] data) 
 	{
 		String message = new String(data);
-		String[] parts = message.split(" ");
-		
+		String[] parts = message.split("\\s");
 		//initiator peer trata do que recebeu do client
 		peer.initiateProtocol(parts[0], parts[1],Integer.parseInt(parts[2]));
 	}
