@@ -13,7 +13,8 @@ import javax.xml.bind.DatatypeConverter;
 public class FileManager {
 
 	private final String DIR = "../resources/";
-	private final String CHUNKSDIR = "../chunks/";
+	private final String CHUNKSDIR = "/chunks/";
+	private String diskDIR = null;
 	private final int CHUNKLENGTH = 64*1000;
 	private int peerID = -1;
 	private int totalSpace = 0;
@@ -23,6 +24,15 @@ public class FileManager {
 		this.peerID = peerId;
 		this.totalSpace = totalSpace;
 		this.remaingSpace = this.totalSpace;
+		
+		diskDIR = new String("../peersDisk/Peer" + peerID);
+		
+		//create peer disk dir
+		File dir = new File(diskDIR);
+		if(!(dir.exists() && dir.isDirectory()))		{
+			dir.mkdir();
+		}
+
 	}
 
 	public ArrayList<Chunk> splitFileInChunks(String filename) 
@@ -118,7 +128,7 @@ public class FileManager {
 	public void save(Chunk c)
 	{			
 		//Verificar se ja existe o folder 'CHUNKS'
-		File dir = new File(CHUNKSDIR);
+		File dir = new File(new String(diskDIR + CHUNKSDIR));
 		if(!(dir.exists() && dir.isDirectory()))
 		{
 			dir.mkdir();
@@ -155,7 +165,7 @@ public class FileManager {
 	}
 	
 	private String createChunkName(Chunk c){
-		return new String(CHUNKSDIR +c.getChunkNo()+ c.getFileId());
+		return new String(diskDIR + CHUNKSDIR + c.getChunkNo()+ c.getFileId());
 	}
 
 }
