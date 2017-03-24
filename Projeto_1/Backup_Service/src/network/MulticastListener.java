@@ -23,24 +23,28 @@ public class MulticastListener extends Thread
 		this.peer = peer;
 	}
 	
-	/*
-	 * sent
+	/**
+	 * Send message 
+	 * @param message
 	 */
 	public void send(Message message)
 	{
 		byte[] msg = message.buildMessage();
 		
 		DatagramPacket packet = new DatagramPacket(msg, msg.length, address, port);
-		try {
+		try 
+		{
 			socket.send(packet);
-			//System.out.println("1 - Message sent: " + msg);
-		} catch (IOException e) {
+		} 
+		catch (IOException e) 
+		{
 			e.printStackTrace();
 		}
 	}
 	
-	/*
-	 * Receive
+	/**
+	 * receive message
+	 * @return
 	 */
 	public byte[] receive()
 	{
@@ -55,7 +59,7 @@ public class MulticastListener extends Thread
 		{
 			e.printStackTrace();
 		}
-		//System.out.println("2 - Message received: " + packet.getData());
+		
 		return packet.getData();
 	}
 
@@ -66,7 +70,7 @@ public class MulticastListener extends Thread
 		{
 			running = true;
 			
-			//abrir a conexao
+			//open connection
 			socket = new MulticastSocket(this.port);
 			socket.setTimeToLive(1);
 			socket.joinGroup(this.address);
@@ -74,11 +78,11 @@ public class MulticastListener extends Thread
 			while(running)
 			{
 				byte[] messageReceived = receive();
-				/*Cria nova thread que encaminhará a mensagem para os peers*/
+				//new thread that handles message received
 				new MessageHandler(peer,messageReceived).start();
 			}
 
-			//fechar a conexao
+			//close connection
 			socket.leaveGroup(address);
 			socket.close();
 		} 

@@ -31,13 +31,19 @@ public class ChunkBackupProtocol extends Protocol{
 		String fileNo = msg.getFileId();
 		int chunkNo = msg.getChunkNo();
 		boolean end = false;
+		
 		while(rep < Util.MAX_TRIES)	
 		{
+			System.out.println("Try number "+ rep + " to stored chunk number "+msg.getChunkNo());
+			
 			mdb.send(msg);		//msg PutChunk
 			
-			try {
+			try 
+			{
 				Thread.sleep(waitingTime);
-			} catch (InterruptedException e) {
+			} 
+			catch (InterruptedException e) 
+			{
 				e.printStackTrace();
 			}
 			
@@ -45,8 +51,10 @@ public class ChunkBackupProtocol extends Protocol{
 			if(stored_peers != null)
 				stored = stored_peers.size();
 			
-			if(stored >= msg.getReplicationDeg()){	//replication degree done
-				System.out.println("END - " + msg.getChunkNo());
+			//replication degree achieved
+			if(stored >= msg.getReplicationDeg())
+			{
+				System.out.println("All Chunks with number "+ msg.getChunkNo()+ " Stored");
 				end = true;
 				break;
 			}
@@ -54,8 +62,9 @@ public class ChunkBackupProtocol extends Protocol{
 			waitingTime *= Util.TIME_REINFORCEMENT;	//doubles time for each rep
 			rep++;
 		}
-		if(!end){
-			System.out.println("ERROR - " + msg.getChunkNo());
+		if(!end)
+		{
+			System.out.println("Replication Degree not pleased for chunk number " + msg.getChunkNo());
 		}
 		
 	}

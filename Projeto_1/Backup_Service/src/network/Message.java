@@ -50,6 +50,10 @@ public class Message
 		this.chunkNo = chunkNo;
 	}
 	
+	/**
+	 * Create new message
+	 * @return
+	 */
 	public byte[] buildMessage() {
 		
 		String content = type.name() + " " + version[0]+version[1]+version[2] + " " + senderId + " " + fileId + " ";
@@ -83,6 +87,10 @@ public class Message
 		
 		return content.getBytes();
 	}
+	
+	/*
+	 * Getters and Setters
+	 */
 
 	public Util.MessageType getType() {
 		return type;

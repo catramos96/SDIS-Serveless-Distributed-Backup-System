@@ -122,7 +122,8 @@ public class Peer {
 			//create message for each chunk
 			Chunk c = chunks.get(i);
 			Message msg = new Message(MessageType.PUTCHUNK,version,ID,c.getFileId(),c.getChunkNo(),replicationDegree,c.getData());
-
+			System.out.println("(Sent) Type : "+ msg.getType() + " from sender : "+ msg.getSenderId() + " with chunk "+ msg.getChunkNo());
+			
 			//initiate file record
 			record.startRecordStores(msg.getFileId());
 
@@ -183,6 +184,7 @@ public class Peer {
 	{	
 		//response message : STORED
 		Message msg = new Message(Util.MessageType.STORED,version,ID,c.getFileId(),c.getChunkNo());
+		System.out.println("(Sent) Type : "+ msg.getType() + " from sender : "+ msg.getSenderId() + " with chunk "+ msg.getChunkNo());
 
 		//verifies chunk existence in this peer
 		boolean alreadyExists = fileManager.chunkExists(c);

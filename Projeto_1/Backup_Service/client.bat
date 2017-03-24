@@ -1,1 +1,1 @@
-java cli.TestApp 4455 BACKUP 1
+java cli.TestApp 8000 BACKUP hello.png 2

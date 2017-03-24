@@ -14,31 +14,33 @@ public class MessageHandler extends Thread
 	private Peer peer = null; //peer associado ao listener
 	private Message msg = null;
 	
+	/**
+	 * Parse the message to object Message
+	 * @param peer
+	 * @param msg
+	 */
 	public MessageHandler(Peer peer,byte[] msg)
 	{
 		this.peer = peer;
 		this.msg = parseMessage(msg);
 	}
 
+	/**
+	 * Execute actions depending on Message Type
+	 */
 	public void run() 
 	{
-		/*Don't process messages that were sent by himself*/
+		//Don't process messages that were sent by himself
 		if(peer.getID() != msg.getSenderId())
-		{
+		{			
 			switch (msg.getType()) {
 			case PUTCHUNK:
-				System.out.println(msg.getSenderId() + " - PUTCHUNK "+ msg.getChunkNo());
-				
 				Chunk c = new Chunk(msg.getFileId(), msg.getChunkNo(), msg.getBody());
-				c.setReplicationDeg(msg.getReplicationDeg());
+				//peer.receivedPutchunk(c, msg.getReplicationDeg()); //later??
 				peer.receivedPutchunk(c);
-				
 				break;
 			case STORED:
-				System.out.println(msg.getSenderId() + " - STORED "+ msg.getChunkNo());
-				
 				peer.storeAction(msg.getFileId(), msg.getChunkNo(),msg.getSenderId());	
-				
 				break;
 			case GETCHUNK:
 				//restoreProt.executeProtocolAction();
@@ -55,6 +57,8 @@ public class MessageHandler extends Thread
 			default:
 				break;
 			}
+			
+			System.out.println("(Received) Type : "+ msg.getType() + " from sender : "+ msg.getSenderId() + " with chunk "+ msg.getChunkNo());
 		}
 	}
 	
