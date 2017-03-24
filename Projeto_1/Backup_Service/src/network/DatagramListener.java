@@ -62,8 +62,18 @@ public class DatagramListener extends Thread
 	{
 		String message = new String(data);
 		String[] parts = message.split("\\s");
-		//initiator peer trata do que recebeu do client
-		peer.initiateProtocol(parts[0], parts[1],Integer.parseInt(parts[2]));
+		
+		if(parts[0].equals("BACKUP"))
+			peer.BackupTrigger(parts[1], Integer.parseInt(parts[2]));
+		else if(parts[0].equals("RESTORE"))
+			peer.RestoreTrigger();
+		else if(parts[0].equals("DELETE"))
+			peer.DeleteTrigger();
+		else if(parts[0].equals("RECLAIM"))
+			peer.ReclaimTrigger();
+		else if(parts[0].equals("STATE"))
+			peer.StateTrigger();
+			
 	}
 
 	protected boolean isRunning() {

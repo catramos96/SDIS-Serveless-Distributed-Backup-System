@@ -31,11 +31,20 @@ public class Peer {
 	/*MulticastRecord*/
 	public MulticastRecord record = null;
 
+	/**
+	 * Create peer
+	 * @param protocolVs
+	 * @param id
+	 * @param access_point
+	 * @param mc_ap
+	 * @param mdb_ap
+	 * @param mdr_ap
+	 */
 	public Peer(char[] protocolVs, int id, String[] access_point, String[] mc_ap, String[] mdb_ap, String[] mdr_ap)
 	{
 		this.ID = id;
 		this.version = protocolVs;
-		
+
 		fileManager = new FileManager(ID,Util.DISK_SPACE_DEFAULT);
 		record = new MulticastRecord();
 
@@ -58,7 +67,7 @@ public class Peer {
 			address = InetAddress.getByName(mdb_ap[0]);
 			port = Integer.parseInt(mdb_ap[1]);
 			mdb = new MulticastListener(address,port,this);
-			
+
 			address = InetAddress.getByName(mdr_ap[0]);
 			port = Integer.parseInt(mdr_ap[1]);
 			mdr = new MulticastListener(address,port,this);		
@@ -80,68 +89,137 @@ public class Peer {
 			e.printStackTrace();
 		}*/
 	}
-
-	public void initiateProtocol(String action, String filename, int replicationDegree){
-
-		if(action.equals("BACKUP"))
-		{
-			//separa o ficheiro em chunks
-			ArrayList<Chunk> chunks = fileManager.splitFileInChunks(filename);	
-			//faz warn dos peers para cada chunk
-			for (int i = 0; i < chunks.size(); i++) 
-			{
-				Chunk c = chunks.get(i);
-				Message msg = new Message(MessageType.PUTCHUNK,version,ID,c.getFileId(),c.getChunkNo(),replicationDegree,c.getData());
-
-				record.startRecordStores(msg.getFileId());
-
-				new ChunkBackupProtocol(mdb,record,msg).start();
-			}
-		}
-		else if(action.equals("RESTORE"))
-		{
-			//restoreProt.warnPeers(null);
-		}
-		else if(action.equals("DELETE"))
-		{
-			//deleteProt.warnPeers(null);
-		}
-		else if(action.equals("RECLAIM"))
-		{
-			//spaceReclProt.warnPeers(null);
-		}
-		else
-		{
-			System.out.println("Invalid Action");
+	
+	/**
+	 * Peer waiting
+	 */
+	public void randomDelay(){
+		Random delay = new Random();
+		try {
+			Thread.sleep(delay.nextInt(Util.RND_DELAY));
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
 	}
+
+	/*
+	 * Peer triggers
+	 */
 	
+	/**
+	 * Peer initiator response to client request for backup
+	 * @param action
+	 * @param filename
+	 * @param replicationDegree
+	 */
+	public void BackupTrigger(String filename, int replicationDegree){
+
+		//split file in chunks
+		ArrayList<Chunk> chunks = fileManager.splitFileInChunks(filename);	
+
+		for (int i = 0; i < chunks.size(); i++) 
+		{
+			//create message for each chunk
+			Chunk c = chunks.get(i);
+			Message msg = new Message(MessageType.PUTCHUNK,version,ID,c.getFileId(),c.getChunkNo(),replicationDegree,c.getData());
+
+			//initiate file record
+			record.startRecordStores(msg.getFileId());
+
+			//warn other peers
+			new ChunkBackupProtocol(mdb,record,msg).start();
+		}
+	}
+
+	/**
+	 * Peer initiator response to client request for RESTORE
+	 * @param action
+	 * @param filename
+	 * @param replicationDegree
+	 */
+	public void RestoreTrigger(){
+
+	}
+
+	/**
+	 * Peer initiator response to client request for DELETE
+	 * @param action
+	 * @param filename
+	 * @param replicationDegree
+	 */
+	public void DeleteTrigger(){
+
+	}
+
+	/**
+	 * Peer initiator response to client request for RECLAIM
+	 * @param action
+	 * @param filename
+	 * @param replicationDegree
+	 */
+	public void ReclaimTrigger(){
+
+	}
+
+	/**
+	 * Peer initiator response to client request for STATE
+	 * @param action
+	 * @param filename
+	 * @param replicationDegree
+	 */
+	public void StateTrigger(){
+
+	}
+
+	/*
+	 * Peer responses
+	 */
+	
+	/**
+	 * Peer response to other peer PUTCHUNK message
+	 * @param c
+	 */
 	public synchronized void receivedPutchunk(Chunk c)
 	{	
-		//cria a mensagem a enviar no protocolo
+		//response message : STORED
 		Message msg = new Message(Util.MessageType.STORED,version,ID,c.getFileId(),c.getChunkNo());
 
+		//verifies chunk existence in this peer
 		boolean alreadyExists = fileManager.chunkExists(c);
 
-		//se nao existir e nao tiver espaco 
+		//no space available and file does not exist -> can't store
 		if(!fileManager.hasSpaceAvailable(c) && !alreadyExists)
 			return;
 		else
 		{
+			//waiting time
 			randomDelay();
+			
 			/*if(record.checkStored(msg.getFileId(), msg.getChunkNo()) < c.getReplicationDeg()){*/
+			
+			//send STORED message
 			mc.send(msg);
+			//only save if file doesn't exist
 			if(!alreadyExists)
 				fileManager.save(c);
+			
 			/*}	*/
 		}
 	}
 
+	/**
+	 * Peer response to other peer STORE message
+	 */
 	public synchronized void storeAction(String fileId,int chunkNo,int sender)
 	{
+		//record chunk only if this peer is the initiator peer
 		record.recordStoreChunks(fileId, chunkNo, sender);
 	}
 
+	/*
+	 * Peer getters and setters
+	 */
+	
 	public char[] getVersion() {
 		return version;
 	}
@@ -168,14 +246,5 @@ public class Peer {
 
 	public MulticastRecord getMulticastRecord(){
 		return record;
-	}
-
-	public void randomDelay(){
-		Random delay = new Random();
-		try {
-			Thread.sleep(delay.nextInt(Util.RND_DELAY));
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
 	}
 }
