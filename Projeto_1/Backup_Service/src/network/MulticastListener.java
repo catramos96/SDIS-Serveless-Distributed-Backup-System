@@ -4,13 +4,12 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import resources.Util;
 
 import peer.Peer;
 
 public class MulticastListener extends Thread
 {
-	public static int PACKET_MAX_SIZE = 65000;
-	
 	public MulticastSocket socket = null;
 	protected InetAddress address = null;
 	protected int port = 0;
@@ -34,7 +33,7 @@ public class MulticastListener extends Thread
 		DatagramPacket packet = new DatagramPacket(msg, msg.length, address, port);
 		try {
 			socket.send(packet);
-			System.out.println("1 - Message sent: " + msg);
+			//System.out.println("1 - Message sent: " + msg);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -46,7 +45,7 @@ public class MulticastListener extends Thread
 	public byte[] receive()
 	{
 		//waits for multicast message
-		byte[] m_buf = new byte[PACKET_MAX_SIZE];
+		byte[] m_buf = new byte[Util.PACKET_MAX_SIZE];
 		DatagramPacket packet = new DatagramPacket(m_buf, m_buf.length);
 		try 
 		{
@@ -54,12 +53,9 @@ public class MulticastListener extends Thread
 		} 
 		catch (IOException e) 
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		System.out.println("2 - Message received: " + packet.getData());
-		
+		//System.out.println("2 - Message received: " + packet.getData());
 		return packet.getData();
 	}
 

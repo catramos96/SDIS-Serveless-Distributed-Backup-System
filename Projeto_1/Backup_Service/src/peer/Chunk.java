@@ -5,12 +5,20 @@ public class Chunk{
 	private int chunkNo = -1;
 	private String fileId;
 	private byte[] data;
-	//private int replicationDeg; ??
+	private int replicationDeg = 0;
 	
 	public Chunk(String fileId, int chunkNo, byte[] data){
 		this.setChunkNo(chunkNo);
 		this.setFileId(fileId);
 		this.setData(data);
+	}
+	
+	public void setReplicationDeg(int rep){
+		replicationDeg = rep;
+	}
+	
+	public int getReplicationDeg(){
+		return replicationDeg;
 	}
 
 	public int getChunkNo() {

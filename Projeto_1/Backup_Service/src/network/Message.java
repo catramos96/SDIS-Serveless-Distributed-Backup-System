@@ -2,10 +2,11 @@ package network;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import resources.Util;
 
 public class Message 
 {
-	private MessageType type = null;
+	private Util.MessageType type = null;
 	private char[] version;
 	private int senderId = -1;
 	private String fileId = null;
@@ -18,7 +19,6 @@ public class Message
 	private static final char LF = 0xA;
 	public static final String LINE_SEPARATOR = "" + CR + LF;
 	
-
 	/**
 	 * <MessageType> <Version> <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF>
 	 * 
@@ -30,12 +30,7 @@ public class Message
 	 * REMOVED <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
 	 */
 	
-	public static enum MessageType
-	{
-		PUTCHUNK, STORED, GETCHUNK, CHUNK, DELETE, REMOVED
-	}
-	
-	public Message(MessageType type, char[] version, int senderId, String fileId, int chunkNo, int ReplicationDeg, byte[] body)
+	public Message(Util.MessageType type, char[] version, int senderId, String fileId, int chunkNo, int ReplicationDeg, byte[] body)
 	{
 		this.type = type;
 		this.version = version;
@@ -46,7 +41,7 @@ public class Message
 		this.body = body;
 	}
 	
-	public Message(MessageType type, char[] version, int senderId, String fileId, int chunkNo)
+	public Message(Util.MessageType type, char[] version, int senderId, String fileId, int chunkNo)
 	{
 		this.type = type;
 		this.version = version;
@@ -55,22 +50,19 @@ public class Message
 		this.chunkNo = chunkNo;
 	}
 	
-	/*
-	 * Constroi o conteudo de uma mensagem
-	 */
 	public byte[] buildMessage() {
 		
 		String content = type.name() + " " + version[0]+version[1]+version[2] + " " + senderId + " " + fileId + " ";
 		
-		if(type.compareTo(MessageType.DELETE) != 0)
+		if(type.compareTo(Util.MessageType.DELETE) != 0)
 			content += chunkNo + " ";
 		
-		if(type.compareTo(MessageType.PUTCHUNK) == 0)
+		if(type.compareTo(Util.MessageType.PUTCHUNK) == 0)
 			content += replicationDeg + " ";
 		
 		content += LINE_SEPARATOR + LINE_SEPARATOR;
 		
-		if(type.compareTo(MessageType.PUTCHUNK) == 0 || type.compareTo(MessageType.CHUNK) == 0)
+		if(type.compareTo(Util.MessageType.PUTCHUNK) == 0 || type.compareTo(Util.MessageType.CHUNK) == 0)
 		{
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			try 
@@ -86,19 +78,17 @@ public class Message
 			
 			byte[] a = baos.toByteArray();
 			
-			System.out.println(a.length);
-			
 			return a;
 		}
 		
 		return content.getBytes();
 	}
 
-	public MessageType getType() {
+	public Util.MessageType getType() {
 		return type;
 	}
 
-	public void setType(MessageType type) {
+	public void setType(Util.MessageType type) {
 		this.type = type;
 	}
 

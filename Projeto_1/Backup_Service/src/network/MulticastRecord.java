@@ -49,6 +49,13 @@ public class MulticastRecord {
 			if(tmp.containsKey(chunkNo))
 				size = tmp.get(chunkNo).size();
 		}
+		
+		//tmp
+		if(size != 0){
+				System.out.println("SENDER Chunk - " + chunkNo);
+		}
+		
+		
 		return size;
 	}
 }

@@ -5,7 +5,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import network.Message.MessageType;
+import resources.Util;
 import peer.Chunk;
 import peer.Peer;
 
@@ -24,16 +24,17 @@ public class MessageHandler extends Thread
 	{
 		switch (msg.getType()) {
 		case PUTCHUNK:
-			System.out.println("PUTCHUNK "+ msg.getChunkNo());
+			System.out.println(msg.getSenderId() + " - PUTCHUNK "+ msg.getChunkNo());
 			//A peer must never store the chunks of its own files
 			if(peer.getID() !=msg.getSenderId())
 			{
 				Chunk c = new Chunk(msg.getFileId(), msg.getChunkNo(), msg.getBody());
+				c.setReplicationDeg(msg.getReplicationDeg());
 				peer.putchunkAction(c);
 			}
 			break;
 		case STORED:
-			System.out.println("STORED "+ msg.getChunkNo());
+			System.out.println(msg.getSenderId() + " - STORED "+ msg.getChunkNo());
 			peer.storeAction(msg.getFileId(), msg.getChunkNo());	
 			break;
 		case GETCHUNK:
@@ -70,21 +71,19 @@ public class MessageHandler extends Thread
 			//interpretação da header
 			String[] parts = header.split("\\s");
 			
-			
-			MessageType type_rcv = validateMessageType(parts[0]);
-			
-			System.out.println("==" + type_rcv.name() + "==");
+			Util.MessageType type_rcv = validateMessageType(parts[0]);
 
-			
 			char[] version_rcv = validateVersion(parts[1]);
 			int senderId_rcv = Integer.parseInt(parts[2]);
 			String fileId_rcv = parts[3];
 			int chunkNo_rcv = -1;
-			if(type_rcv.compareTo(MessageType.DELETE) != 0)
+			if(type_rcv.compareTo(Util.MessageType.DELETE) != 0)
 				chunkNo_rcv = Integer.parseInt(parts[4]);
 			int replicationDeg_rcv = -1;
-			if(type_rcv.compareTo(MessageType.PUTCHUNK) == 0)
+			if(type_rcv.compareTo(Util.MessageType.PUTCHUNK) == 0){
 				replicationDeg_rcv = Integer.parseInt(parts[5]);
+			}
+				
 			
 			//Removes the last sequences of white spaces (\s) and null characters (\0)
 			//String msg_received = (new String(packet.getData()).replaceAll("[\0 \\s]*$", ""));
@@ -117,10 +116,10 @@ public class MessageHandler extends Thread
 		return null;	//deve retornar um erro
 	}
 
-	private MessageType validateMessageType(String string) 
+	private Util.MessageType validateMessageType(String string) 
 	{
 		//nao sei se ha restricoes aqui
-		return MessageType.valueOf(string);
+		return Util.MessageType.valueOf(string);
 	}
 
 	public Peer getPeer() {

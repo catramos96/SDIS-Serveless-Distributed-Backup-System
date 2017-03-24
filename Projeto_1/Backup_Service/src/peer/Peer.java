@@ -7,13 +7,14 @@ import java.util.Random;
 
 import network.DatagramListener;
 import network.Message;
-import network.Message.MessageType;
+import resources.Util.MessageType;
 import network.MulticastListener;
 import network.MulticastRecord;
 import protocols.ChunkBackupProtocol;
 import protocols.ChunkRestoreProtocol;
 import protocols.FileDeletionProtocol;
 import protocols.SpaceReclaimingProtocol;
+import resources.Util;
 
 public class Peer {
 
@@ -27,12 +28,6 @@ public class Peer {
 	public MulticastListener mdb = null;
 	public MulticastListener mdr = null;
 
-	/*Protocols*/
-	/*public ChunkBackupProtocol backupProt = null;
-	public ChunkRestoreProtocol restoreProt = null;
-	public FileDeletionProtocol deleteProt = null;
-	public SpaceReclaimingProtocol spaceReclProt = null;*/
-
 	/*objects*/
 	public FileManager fileManager = null;
 	
@@ -42,7 +37,7 @@ public class Peer {
 	public Peer(int id, String[] access_point, String[] mc_ap, String[] mdb_ap, String[] mdr_ap)
 	{
 		this.ID = id;
-		fileManager = new FileManager(ID,1000000);
+		fileManager = new FileManager(ID,Util.DISK_SPACE_DEFAULT);
 		record = new MulticastRecord();
 		
 		try 
@@ -79,7 +74,7 @@ public class Peer {
 			mdr.start();
 			 */
 
-			Thread.sleep(1000);		//delay para inicializar as variaveis do multicast
+			Thread.sleep(Util.WAITING_TIME);		//delay para inicializar as variaveis do multicast
 
 			/*backupProt = new ChunkBackupProtocol(mdb,mc,record);	//mdb,mc
 			restoreProt = new ChunkRestoreProtocol(mc,mc,record);	//mdr,mc
@@ -89,7 +84,6 @@ public class Peer {
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -97,44 +91,25 @@ public class Peer {
 	public void putchunkAction(Chunk c)
 	{	
 		//cria a mensagem a enviar no protocolo
-		Message msg = new Message(MessageType.STORED,version,ID,c.getFileId(),c.getChunkNo());
-		
-		//se o ficheiro ja existir apenas envia a mensagem
+		Message msg = new Message(Util.MessageType.STORED,version,ID,c.getFileId(),c.getChunkNo());
 		
 		//se nao existir e nao tiver espaco 
 		if(!fileManager.hasSpaceAvailable(c))
 			return;
 		else
 		{
-			Random delay = new Random();
-			try {
-				Thread.sleep(delay.nextInt(400));
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			System.out.println(record.checkStored(msg.getFileId(), msg.getChunkNo()) + " - " +  msg.getReplicationDeg());
-			//if(record.checkStored(msg.getFileId(), msg.getChunkNo()) < msg.getReplicationDeg()){
+			randomDelay();
+			if(record.checkStored(msg.getFileId(), msg.getChunkNo()) < c.getReplicationDeg()){
 				mc.send(msg);
 				fileManager.save(c);
-			//}
-				
+			}	
 		}
-		
 	}
 	
 	public void storeAction(String fileId,int chunkNo)
 	{
 		record.recordStoreChunk(fileId, chunkNo, ID);
 	}
-
-	/**
-	 * TODO transformar isto num ClientHandler?
-	 * Actions:
-	 * 1 - Backup
-	 * 2 - Restore
-	 * 3 - Delete
-	 * 4 - Space Reclaiming
-	 */
 
 	public void initiateProtocol(String action, String filename, int replicationDegree){
 
@@ -194,5 +169,14 @@ public class Peer {
 	
 	public MulticastRecord getMulticastRecord(){
 		return record;
+	}
+	
+	public void randomDelay(){
+		Random delay = new Random();
+		try {
+			Thread.sleep(delay.nextInt(Util.RND_DELAY));
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 }

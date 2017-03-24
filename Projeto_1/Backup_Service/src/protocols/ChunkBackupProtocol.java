@@ -5,7 +5,7 @@ import java.util.Random;
 import network.Message;
 import network.MulticastListener;
 import network.MulticastRecord;
-import peer.Peer;
+import resources.Util;
 
 public class ChunkBackupProtocol extends Protocol{
 
@@ -26,14 +26,11 @@ public class ChunkBackupProtocol extends Protocol{
 		
 		int stored = 0;
 		int rep = 0;
-		int waitingTime = 1000;
+		int waitingTime = Util.WAITING_TIME;
 		String fileNo = msg.getFileId();
 		int chunkNo = msg.getChunkNo();
-		
-		System.out.println("FileNo: " + fileNo);
-		System.out.println("ChunkNo: " + chunkNo);
-		
-		while(stored < 1)	//alterar para rep
+		boolean end = false;
+		while(rep < Util.MAX_TRIES)	
 		{
 			mdb.send(msg);		//msg PutChunk
 			
@@ -44,15 +41,24 @@ public class ChunkBackupProtocol extends Protocol{
 			}
 			
 			stored = record.checkStored(fileNo, chunkNo);
-			System.out.println("STORED from record: " + stored);
+			if(stored > 0 )
+				System.out.println("STORED from record: " + stored);
 			
-			if(stored >= msg.getReplicationDeg())	//replication degree done
+			/*if(stored >= msg.getReplicationDeg())	//replication degree done
+				break;*/
+			
+			if(stored > 0){
+				System.out.println("END - " + msg.getChunkNo());
+				end = true;
 				break;
+			}
 			
-			waitingTime *= 2;	//doubles time for each rep
+			waitingTime *= Util.TIME_REINFORCEMENT;	//doubles time for each rep
 			rep++;
 		}
+		if(!end){
+			System.out.println("ERROR - " + msg.getChunkNo());
+		}
 		
-		//stored = 0; //reiniciar os contadores
 	}
 }
