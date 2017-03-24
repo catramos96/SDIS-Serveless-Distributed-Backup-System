@@ -25,14 +25,19 @@ public class FileManager {
 		this.totalSpace = totalSpace;
 		this.remaingSpace = this.totalSpace;
 		
-		diskDIR = new String("../peersDisk/Peer" + peerID);
-		
-		//create peer disk dir
-		File dir = new File(diskDIR);
-		if(!(dir.exists() && dir.isDirectory()))		{
+		diskDIR = new String("../peersDisk/");
+		File dir = new File(new String(diskDIR));
+		if(!(dir.exists() && dir.isDirectory()))
+		{
 			dir.mkdir();
 		}
-
+		diskDIR += "Peer"+ peerId;
+		dir = new File(new String(diskDIR));
+		if(!(dir.exists() && dir.isDirectory()))
+		{
+			dir.mkdir();
+		}
+		
 	}
 
 	public ArrayList<Chunk> splitFileInChunks(String filename) 
@@ -71,7 +76,6 @@ public class FileManager {
 					chunkList.add(c);
 				}
 
-
 				//Teste de clonagem de ficheiro
 				/*byte[] clonedData = new byte[(int)file.length()];
 				byteCount = 0;
@@ -92,7 +96,9 @@ public class FileManager {
 			catch (NoSuchAlgorithmException e) 
 			{
 				e.printStackTrace();
-			} catch (IOException e) {
+			} 
+			catch (IOException e) 
+			{
 				System.out.println("File not found!");
 			}
 

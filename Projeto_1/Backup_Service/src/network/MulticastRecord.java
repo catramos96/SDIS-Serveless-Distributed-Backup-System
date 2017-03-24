@@ -3,8 +3,6 @@ package network;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import peer.Peer;
-
 public class MulticastRecord {
 	
 	/*

@@ -11,9 +11,6 @@ import resources.Util.MessageType;
 import network.MulticastListener;
 import network.MulticastRecord;
 import protocols.ChunkBackupProtocol;
-import protocols.ChunkRestoreProtocol;
-import protocols.FileDeletionProtocol;
-import protocols.SpaceReclaimingProtocol;
 import resources.Util;
 
 public class Peer {
@@ -30,7 +27,7 @@ public class Peer {
 
 	/*objects*/
 	public FileManager fileManager = null;
-	
+
 	/*MulticastRecord*/
 	public MulticastRecord record = null;
 
@@ -39,7 +36,7 @@ public class Peer {
 		this.ID = id;
 		fileManager = new FileManager(ID,Util.DISK_SPACE_DEFAULT);
 		record = new MulticastRecord();
-		
+
 		try 
 		{
 			//socket de conexao com o cliente
@@ -87,14 +84,14 @@ public class Peer {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public synchronized void receivedPutchunk(Chunk c)
 	{	
 		//cria a mensagem a enviar no protocolo
 		Message msg = new Message(Util.MessageType.STORED,version,ID,c.getFileId(),c.getChunkNo());
-		
+
 		boolean alreadyExists = fileManager.chunkExists(c);
-		
+
 		//se nao existir e nao tiver espaco 
 		if(!fileManager.hasSpaceAvailable(c) && !alreadyExists)
 			return;
@@ -102,13 +99,13 @@ public class Peer {
 		{
 			randomDelay();
 			/*if(record.checkStored(msg.getFileId(), msg.getChunkNo()) < c.getReplicationDeg()){*/
-				mc.send(msg);
-				if(!alreadyExists)
-					fileManager.save(c);
+			mc.send(msg);
+			if(!alreadyExists)
+				fileManager.save(c);
 			/*}	*/
 		}
 	}
-	
+
 	public synchronized void storeAction(String fileId,int chunkNo,int sender)
 	{
 		record.recordStoreChunks(fileId, chunkNo, sender);
@@ -125,9 +122,9 @@ public class Peer {
 			{
 				Chunk c = chunks.get(i);
 				Message msg = new Message(MessageType.PUTCHUNK,version,ID,c.getFileId(),c.getChunkNo(),replicationDegree,c.getData());
-				
+
 				record.startRecordStores(msg.getFileId());
-				
+
 				new ChunkBackupProtocol(mdb,record,msg).start();
 			}
 		}
@@ -164,19 +161,19 @@ public class Peer {
 	public void setID(int iD) {
 		ID = iD;
 	}
-	
+
 	public MulticastListener getMc(){
 		return mc;
 	}
-	
+
 	public MulticastListener getMdb(){
 		return mdb;
 	}
-	
+
 	public MulticastRecord getMulticastRecord(){
 		return record;
 	}
-	
+
 	public void randomDelay(){
 		Random delay = new Random();
 		try {

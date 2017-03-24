@@ -3,7 +3,6 @@ package protocols;
 import network.Message;
 import network.MulticastListener;
 import network.MulticastRecord;
-import peer.Peer;
 
 public class SpaceReclaimingProtocol extends Protocol{
 

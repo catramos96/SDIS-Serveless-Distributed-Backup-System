@@ -1,7 +1,6 @@
 package peer;
 
 import java.io.IOException;
-import java.util.Scanner;
 
 public class BackupSystem 
 {
@@ -28,7 +27,7 @@ public class BackupSystem
 		String[] parts_mc = {"224.0.0.3","4446"};
 		String[] parts_mdb = {"224.0.0.2","4446"};
 		
-		Peer myPeer = new Peer(peer_id,parts_ap,parts_mc,parts_mdb,null);		
+		new Peer(peer_id,parts_ap,parts_mc,parts_mdb,null);		
 	}
 	
 	/*

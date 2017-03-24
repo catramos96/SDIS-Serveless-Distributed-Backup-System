@@ -1,7 +1,5 @@
 package resources;
 
-import java.util.Random;
-
 public class Util {
 	//protocols
 	public static final int MAX_TRIES = 5;
