@@ -28,17 +28,17 @@ public class MessageHandler extends Thread
 			switch (msg.getType()) {
 			case PUTCHUNK:
 				System.out.println(msg.getSenderId() + " - PUTCHUNK "+ msg.getChunkNo());
-				//A peer must never store the chunks of its own files
-				if(peer.getID() != msg.getSenderId())
-				{
-					Chunk c = new Chunk(msg.getFileId(), msg.getChunkNo(), msg.getBody());
-					c.setReplicationDeg(msg.getReplicationDeg());
-					peer.receivedPutchunk(c);
-				}
+				
+				Chunk c = new Chunk(msg.getFileId(), msg.getChunkNo(), msg.getBody());
+				c.setReplicationDeg(msg.getReplicationDeg());
+				peer.receivedPutchunk(c);
+				
 				break;
 			case STORED:
 				System.out.println(msg.getSenderId() + " - STORED "+ msg.getChunkNo());
+				
 				peer.storeAction(msg.getFileId(), msg.getChunkNo(),msg.getSenderId());	
+				
 				break;
 			case GETCHUNK:
 				//restoreProt.executeProtocolAction();
