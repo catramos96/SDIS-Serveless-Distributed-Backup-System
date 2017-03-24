@@ -16,7 +16,7 @@ import resources.Util;
 public class Peer {
 
 	private int ID = 0;
-	private char[] version = {'1','.','0'};		//TEMPORARIO
+	private char[] version;
 
 	/*listeners*/
 	public DatagramListener socket = null; 	//socket for communication with client
@@ -31,9 +31,11 @@ public class Peer {
 	/*MulticastRecord*/
 	public MulticastRecord record = null;
 
-	public Peer(int id, String[] access_point, String[] mc_ap, String[] mdb_ap, String[] mdr_ap)
+	public Peer(char[] protocolVs, int id, String[] access_point, String[] mc_ap, String[] mdb_ap, String[] mdr_ap)
 	{
 		this.ID = id;
+		this.version = protocolVs;
+		
 		fileManager = new FileManager(ID,Util.DISK_SPACE_DEFAULT);
 		record = new MulticastRecord();
 
@@ -56,59 +58,27 @@ public class Peer {
 			address = InetAddress.getByName(mdb_ap[0]);
 			port = Integer.parseInt(mdb_ap[1]);
 			mdb = new MulticastListener(address,port,this);
-			/*
+			
 			address = InetAddress.getByName(mdr_ap[0]);
 			port = Integer.parseInt(mdr_ap[1]);
-			mdr = new MulticastListener(address,port);
-			 */			
+			mdr = new MulticastListener(address,port,this);		
 
 			//inicializacao dos channels
 			socket.start();
 
 			mc.start();
 			mdb.start();
-			/*
-			mdr.start();
-			 */
+			//mdr.start();
 
-			Thread.sleep(Util.WAITING_TIME);		//delay para inicializar as variaveis do multicast
-
-			/*backupProt = new ChunkBackupProtocol(mdb,mc,record);	//mdb,mc
-			restoreProt = new ChunkRestoreProtocol(mc,mc,record);	//mdr,mc
-			deleteProt = new FileDeletionProtocol(mc,record);
-			spaceReclProt = new SpaceReclaimingProtocol(mc,record);*/
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public synchronized void receivedPutchunk(Chunk c)
-	{	
-		//cria a mensagem a enviar no protocolo
-		Message msg = new Message(Util.MessageType.STORED,version,ID,c.getFileId(),c.getChunkNo());
-
-		boolean alreadyExists = fileManager.chunkExists(c);
-
-		//se nao existir e nao tiver espaco 
-		if(!fileManager.hasSpaceAvailable(c) && !alreadyExists)
-			return;
-		else
+			//Thread.sleep(Util.WAITING_TIME);		//delay para inicializar as variaveis do multicast
+		} catch (IOException e)
 		{
-			randomDelay();
-			/*if(record.checkStored(msg.getFileId(), msg.getChunkNo()) < c.getReplicationDeg()){*/
-			mc.send(msg);
-			if(!alreadyExists)
-				fileManager.save(c);
-			/*}	*/
+			System.out.println("Peer error");
+			e.printStackTrace();
 		}
-	}
-
-	public synchronized void storeAction(String fileId,int chunkNo,int sender)
-	{
-		record.recordStoreChunks(fileId, chunkNo, sender);
+		/* catch (InterruptedException e) {
+			e.printStackTrace();
+		}*/
 	}
 
 	public void initiateProtocol(String action, String filename, int replicationDegree){
@@ -144,6 +114,32 @@ public class Peer {
 		{
 			System.out.println("Invalid Action");
 		}
+	}
+	
+	public synchronized void receivedPutchunk(Chunk c)
+	{	
+		//cria a mensagem a enviar no protocolo
+		Message msg = new Message(Util.MessageType.STORED,version,ID,c.getFileId(),c.getChunkNo());
+
+		boolean alreadyExists = fileManager.chunkExists(c);
+
+		//se nao existir e nao tiver espaco 
+		if(!fileManager.hasSpaceAvailable(c) && !alreadyExists)
+			return;
+		else
+		{
+			randomDelay();
+			/*if(record.checkStored(msg.getFileId(), msg.getChunkNo()) < c.getReplicationDeg()){*/
+			mc.send(msg);
+			if(!alreadyExists)
+				fileManager.save(c);
+			/*}	*/
+		}
+	}
+
+	public synchronized void storeAction(String fileId,int chunkNo,int sender)
+	{
+		record.recordStoreChunks(fileId, chunkNo, sender);
 	}
 
 	public char[] getVersion() {

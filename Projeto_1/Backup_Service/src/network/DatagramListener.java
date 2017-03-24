@@ -41,11 +41,9 @@ public class DatagramListener extends Thread
 				socket.receive(r_packet);
 				
 				System.out.println(new String(r_packet.getData()));
+				handle(r_packet.getData());
 				
-				//initiator peer trata do que recebeu do client
-				peer.initiateProtocol("BACKUP", "hello.png",3); //teste
-				
-				//envia uma confirmacao da rececao TODO
+				//envia uma confirmacao da rececao
 				byte[] sbuf = ("bye").getBytes();
 				s_packet = new DatagramPacket(sbuf, sbuf.length,r_packet.getAddress(),r_packet.getPort());
 				socket.send(s_packet);
@@ -58,6 +56,15 @@ public class DatagramListener extends Thread
 		{
 			e.printStackTrace();
 		}
+	}
+
+	private void handle(byte[] data) 
+	{
+		String message = new String(data);
+		String[] parts = message.split(" ");
+		
+		//initiator peer trata do que recebeu do client
+		peer.initiateProtocol(parts[0], parts[1],Integer.parseInt(parts[2]));
 	}
 
 	protected boolean isRunning() {
