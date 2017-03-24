@@ -88,27 +88,30 @@ public class Peer {
 		}
 	}
 	
-	public void putchunkAction(Chunk c)
+	public synchronized void receivedPutchunk(Chunk c)
 	{	
 		//cria a mensagem a enviar no protocolo
 		Message msg = new Message(Util.MessageType.STORED,version,ID,c.getFileId(),c.getChunkNo());
 		
+		boolean alreadyExists = fileManager.chunkExists(c);
+		
 		//se nao existir e nao tiver espaco 
-		if(!fileManager.hasSpaceAvailable(c))
+		if(!fileManager.hasSpaceAvailable(c) && !alreadyExists)
 			return;
 		else
 		{
 			randomDelay();
-			if(record.checkStored(msg.getFileId(), msg.getChunkNo()) < c.getReplicationDeg()){
+			/*if(record.checkStored(msg.getFileId(), msg.getChunkNo()) < c.getReplicationDeg()){*/
 				mc.send(msg);
-				fileManager.save(c);
-			}	
+				if(!alreadyExists)
+					fileManager.save(c);
+			/*}	*/
 		}
 	}
 	
-	public void storeAction(String fileId,int chunkNo)
+	public synchronized void storeAction(String fileId,int chunkNo,int sender)
 	{
-		record.recordStoreChunk(fileId, chunkNo, ID);
+		record.recordStoreChunks(fileId, chunkNo, sender);
 	}
 
 	public void initiateProtocol(String action, String filename, int replicationDegree){
@@ -122,6 +125,9 @@ public class Peer {
 			{
 				Chunk c = chunks.get(i);
 				Message msg = new Message(MessageType.PUTCHUNK,version,ID,c.getFileId(),c.getChunkNo(),replicationDegree,c.getData());
+				
+				record.startRecordStores(msg.getFileId());
+				
 				new ChunkBackupProtocol(mdb,record,msg).start();
 			}
 		}

@@ -1,5 +1,6 @@
 package protocols;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import network.Message;
@@ -40,14 +41,11 @@ public class ChunkBackupProtocol extends Protocol{
 				e.printStackTrace();
 			}
 			
-			stored = record.checkStored(fileNo, chunkNo);
-			if(stored > 0 )
-				System.out.println("STORED from record: " + stored);
+			ArrayList<Integer> stored_peers = record.checkStored(fileNo, chunkNo);
+			if(stored_peers != null)
+				stored = stored_peers.size();
 			
-			/*if(stored >= msg.getReplicationDeg())	//replication degree done
-				break;*/
-			
-			if(stored > 0){
+			if(stored >= msg.getReplicationDeg()){	//replication degree done
 				System.out.println("END - " + msg.getChunkNo());
 				end = true;
 				break;

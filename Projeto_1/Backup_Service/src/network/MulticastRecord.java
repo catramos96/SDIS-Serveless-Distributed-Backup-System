@@ -3,6 +3,8 @@ package network;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import peer.Peer;
+
 public class MulticastRecord {
 	
 	/*
@@ -23,39 +25,38 @@ public class MulticastRecord {
 		restoreChunks = new HashMap<int[], ArrayList<Integer>>();*/
 	};
 	
+	public synchronized void startRecordStores(String fileNo){
+		storedConfirms.put(fileNo, new HashMap<Integer, ArrayList<Integer>>());
+	}
 	
-	public void recordStoreChunk(String fileNo, int chunkNo, int peerNo){
+	public synchronized void recordStoreChunks(String fileNo, int chunkNo, int peerNo){
 		
 		ArrayList<Integer> peers = new ArrayList<Integer>();
 		
 		if(storedConfirms.containsKey(fileNo)){
 			HashMap<Integer,ArrayList<Integer>> tmp = storedConfirms.get(fileNo);
-			if(tmp.containsKey(chunkNo))
+			
+			if(tmp.containsKey(chunkNo)){	//chunkNo already inserted
+				System.out.println("HAS ENTRY CHUNKNO");
 				peers = tmp.get(chunkNo);
-		}
-		
-		if(!peers.contains(peerNo)){
-			peers.add(peerNo);
-			HashMap<Integer, ArrayList<Integer>> tmp = new HashMap<Integer, ArrayList<Integer>>();
-			tmp.put(chunkNo, peers);
-			storedConfirms.put(fileNo, tmp);
+			}
+			
+			if(!peers.contains(peerNo)){	//peer didn't store the chunk yet
+				peers.add(peerNo);
+				tmp.put(chunkNo, peers);
+				storedConfirms.put(fileNo, tmp);	
+			}
 		}
 	}
 	
-	public int checkStored(String fileNo, int chunkNo){
-		int size = 0;
+	public synchronized ArrayList<Integer> checkStored(String fileNo, int chunkNo){
 		if(storedConfirms.containsKey(fileNo)){
 			HashMap<Integer,ArrayList<Integer>> tmp = storedConfirms.get(fileNo);
-			if(tmp.containsKey(chunkNo))
-				size = tmp.get(chunkNo).size();
-		}
-		
-		//tmp
-		if(size != 0){
+			if(tmp.containsKey(chunkNo)){
 				System.out.println("SENDER Chunk - " + chunkNo);
+				return tmp.get(chunkNo);
+			}
 		}
-		
-		
-		return size;
+		return null;
 	}
 }

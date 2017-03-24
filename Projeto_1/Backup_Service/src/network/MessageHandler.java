@@ -22,35 +22,39 @@ public class MessageHandler extends Thread
 
 	public void run() 
 	{
-		switch (msg.getType()) {
-		case PUTCHUNK:
-			System.out.println(msg.getSenderId() + " - PUTCHUNK "+ msg.getChunkNo());
-			//A peer must never store the chunks of its own files
-			if(peer.getID() !=msg.getSenderId())
-			{
-				Chunk c = new Chunk(msg.getFileId(), msg.getChunkNo(), msg.getBody());
-				c.setReplicationDeg(msg.getReplicationDeg());
-				peer.putchunkAction(c);
+		/*Don't process messages that were sent by himself*/
+		if(peer.getID() != msg.getSenderId())
+		{
+			switch (msg.getType()) {
+			case PUTCHUNK:
+				System.out.println(msg.getSenderId() + " - PUTCHUNK "+ msg.getChunkNo());
+				//A peer must never store the chunks of its own files
+				if(peer.getID() != msg.getSenderId())
+				{
+					Chunk c = new Chunk(msg.getFileId(), msg.getChunkNo(), msg.getBody());
+					c.setReplicationDeg(msg.getReplicationDeg());
+					peer.receivedPutchunk(c);
+				}
+				break;
+			case STORED:
+				System.out.println(msg.getSenderId() + " - STORED "+ msg.getChunkNo());
+				peer.storeAction(msg.getFileId(), msg.getChunkNo(),msg.getSenderId());	
+				break;
+			case GETCHUNK:
+				//restoreProt.executeProtocolAction();
+				break;
+			case CHUNK:
+				//spaceReclProt.executeProtocolAction();
+				break;
+			case DELETE:
+				//deleteProt.executeProtocolAction();
+				break;
+			case REMOVED:
+				
+				break;
+			default:
+				break;
 			}
-			break;
-		case STORED:
-			System.out.println(msg.getSenderId() + " - STORED "+ msg.getChunkNo());
-			peer.storeAction(msg.getFileId(), msg.getChunkNo());	
-			break;
-		case GETCHUNK:
-			//restoreProt.executeProtocolAction();
-			break;
-		case CHUNK:
-			//spaceReclProt.executeProtocolAction();
-			break;
-		case DELETE:
-			//deleteProt.executeProtocolAction();
-			break;
-		case REMOVED:
-			
-			break;
-		default:
-			break;
 		}
 	}
 	
