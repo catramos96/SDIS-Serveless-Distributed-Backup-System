@@ -26,6 +26,7 @@ public class BackupSystem
 		new Peer(protocol_version,peer_id,parts_ap,parts_mc,parts_mdb,parts_mdr);		
 	}
 	
+	
 	private static String[] addressVerification(String arg) 
 	{
 		String[] parts_ap = arg.split(":");
