@@ -48,7 +48,7 @@ public class Peer {
 	public Peer(char[] protocolVs, int id, String[] access_point, String[] mc_ap, String[] mdb_ap, String[] mdr_ap)
 	{
 		mdrRestores = new ArrayList<String>();
-		
+
 		this.ID = id;
 		this.version = protocolVs;
 
@@ -162,7 +162,7 @@ public class Peer {
 
 		//start recording chunk restores
 		FileInfo info = new FileInfo(fileId,filename,chunks);
-		
+
 		record.startRecordRestores(info);
 
 		//create and send message for each chunk
@@ -279,7 +279,12 @@ public class Peer {
 
 	private boolean chunkRestored(String fileId, int chunkNo) {
 		String chunkName = chunkNo+fileId;
-		
+
+		if(mdrRestores.contains(chunkName))
+			System.out.println("sim!");
+		else
+			System.out.println("nao...");
+
 		return mdrRestores.contains(chunkName);
 	}
 
@@ -295,11 +300,11 @@ public class Peer {
 			if(record.recordRestoreChunks(fileId,chunkNo,chunkBody))
 				System.out.println("Chunk Number "+chunkNo+" restored");
 		}
-		else	//other peer
-		{
-			//save history of chunks at mdr (chunkNo, fileId)
-			mdrRestores.add(chunkNo+fileId);
-		}
+
+		//save history of chunks at mdr (chunkNo, fileId)
+		//System.out.println("guardou "+chunkNo+fileId);
+		mdrRestores.add(chunkNo+fileId);
+
 	}
 
 	/**

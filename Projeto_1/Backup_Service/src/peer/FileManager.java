@@ -222,6 +222,7 @@ public class FileManager {
 
 	public void restoreFile(String filename, HashMap<Integer, byte[]> restores) throws IOException
 	{
+		System.out.println("entrou");
 		//Verificar se ja existe o folder 'RESTORES'
 		File dir = new File(new String(diskDIR + RESTORESDIR));
 		if(!(dir.exists() && dir.isDirectory()))
@@ -229,7 +230,7 @@ public class FileManager {
 			dir.mkdir();
 		}
 
-		FileOutputStream out = new FileOutputStream(filename);
+		FileOutputStream out = new FileOutputStream(diskDIR + RESTORESDIR +filename);
 
 		for (int i = 0; i < restores.size(); i++) 
 		{			

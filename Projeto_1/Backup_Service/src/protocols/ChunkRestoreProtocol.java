@@ -63,7 +63,7 @@ public class ChunkRestoreProtocol extends Protocol{
 		try 
 		{
 			peer.fileManager.restoreFile(info.getFilename(), peer.record.getRestores(info));
-			System.out.println("File "+filename+" restored");
+			System.out.println("File "+info.getFilename()+" restored");
 		} 
 		catch (IOException e) 
 		{

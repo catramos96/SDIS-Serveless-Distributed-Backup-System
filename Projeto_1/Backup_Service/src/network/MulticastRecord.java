@@ -151,7 +151,6 @@ public class MulticastRecord {
 			if(fileinfo.getFileId().equals(fileId))
 				return true;
 		}
-		System.out.println("falso");
 		return false;
 	}
 
