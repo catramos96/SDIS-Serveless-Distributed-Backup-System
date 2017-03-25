@@ -105,80 +105,8 @@ public class Peer {
 			e.printStackTrace();
 		}
 	}
-	
 
-	/*
-	 * Peer responses
-	 */
-
-	/**
-	 * Peer response to other peer PUTCHUNK message
-	 * @param c
-	 */
-	public synchronized void receivedPutchunk(String fileId, int chunkNo, byte[] body)
-	{	
-		Chunk c = new Chunk(fileId, chunkNo, body);
-
-		//response message : STORED
-		Message msg = new Message(Util.MessageType.STORED,version,ID,c.getFileId(),c.getChunkNo());
-		System.out.println("(Sent) Type : "+ msg.getType() + " from sender : "+ msg.getSenderId() + " with chunk "+ msg.getChunkNo());
-
-		//verifies chunk existence in this peer
-		boolean alreadyExists = fileManager.chunkExists(c.getFileId(),c.getChunkNo());
-
-		//no space available and file does not exist -> can't store
-		if(!fileManager.hasSpaceAvailable(c) && !alreadyExists)
-			return;
-		else
-		{
-			//waiting time
-			randomDelay();
-
-			/*if(record.checkStored(msg.getFileId(), msg.getChunkNo()) < c.getReplicationDeg()){*/
-
-			//send STORED message
-			mc.send(msg);
-			//only save if file doesn't exist
-			if(!alreadyExists)
-				fileManager.save(c);
-
-			/*}	*/
-		}
-	}
-
-	/**
-	 * Peer response to other peer STORE message
-	 */
-	public synchronized void receivedStore(String fileId, int chunkNo, int sender)
-	{
-		//record chunk only if this peer is the initiator peer
-		record.recordStoreChunks(fileId, chunkNo, sender);
-	}
-
-	/**
-	 * Peer response to other peer GETCHUNK message
-	 */
-	public synchronized void receivedGetchunk(String fileId, int chunkNo)
-	{
-		//peers has stored this chunk
-		if(fileManager.chunkExists(fileId,chunkNo))
-		{
-			//body
-			byte[] body = fileManager.getChunkContent(fileId, chunkNo);
-			//create CHUNK message
-			Message msg = new Message(Util.MessageType.CHUNK,version,ID,fileId,chunkNo,body);
-			randomDelay();
-			//chunk still needed by the initiator peer
-			if(!chunkRestored(fileId, chunkNo))
-			{
-				System.out.println("(Sent) Type : "+ msg.getType() + " from sender : "+ msg.getSenderId() + " with chunk "+ msg.getChunkNo());
-				mdr.send(msg);
-			}
-		}
-
-	}
-
-	private boolean chunkRestored(String fileId, int chunkNo) {
+	public boolean chunkRestored(String fileId, int chunkNo) {
 		String chunkName = chunkNo+fileId;
 
 		if(mdrRestores.contains(chunkName))
@@ -188,41 +116,9 @@ public class Peer {
 
 		return mdrRestores.contains(chunkName);
 	}
-
-	/**
-	 * Peer response to other peer CHUNK message
-	 */
-	public synchronized void receivedChunk(String fileId, int chunkNo, byte[] chunkBody)
-	{
-		//verifies if the file belongs to record --> initiator peer
-		if(record.checkRestore(fileId))
-		{
-			//chunk restore
-			if(record.recordRestoreChunks(fileId,chunkNo,chunkBody))
-				System.out.println("Chunk Number "+chunkNo+" restored");
-		}
-
-		//save history of chunks at mdr (chunkNo, fileId)
-		//System.out.println("guardou "+chunkNo+fileId);
+	
+	public void addRestoredChunk(int chunkNo, String fileId){
 		mdrRestores.add(chunkNo+fileId);
-
-	}
-
-	/**
-	 * Peer response to other peer DELETE message
-	 */
-	public synchronized void receivedDelete(String fileNo){
-
-		//fileChunksExists?
-		//Remove all chunks from fileNo
-	}
-
-	/**
-	 * Peer response to other peer REMOVED message
-	 */
-	public synchronized void receivedRemoved(String fileNo,int chunkNo){
-		//fileChunksExists?
-		//Remove all chunks from fileNo
 	}
 
 	/*
@@ -251,6 +147,10 @@ public class Peer {
 
 	public MulticastListener getMdb(){
 		return mdb;
+	}
+	
+	public MulticastListener getMdr(){
+		return mdr;
 	}
 
 	public MulticastRecord getMulticastRecord(){

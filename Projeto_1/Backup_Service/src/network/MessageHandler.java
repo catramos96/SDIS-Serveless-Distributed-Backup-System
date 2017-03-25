@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 import resources.Util;
+import peer.Chunk;
 import peer.Peer;
 
 public class MessageHandler extends Thread
@@ -34,22 +35,22 @@ public class MessageHandler extends Thread
 		{			
 			switch (msg.getType()) {
 			case PUTCHUNK:
-				peer.receivedPutchunk(msg.getFileId(), msg.getChunkNo(), msg.getBody());
+				handlePutchunk(msg.getFileId(),msg.getChunkNo(),msg.getBody());
 				break;
 			case STORED:
-				peer.receivedStore(msg.getFileId(), msg.getChunkNo(),msg.getSenderId());	
+				handleStore(msg.getFileId(), msg.getChunkNo(),msg.getSenderId());	
 				break;
 			case GETCHUNK:
-				peer.receivedGetchunk(msg.getFileId(),msg.getChunkNo());
+				handleGetchunk(msg.getFileId(),msg.getChunkNo());
 				break;
 			case CHUNK:
-				peer.receivedChunk(msg.getFileId(), msg.getChunkNo(), msg.getBody());
+				handleChunk(msg.getFileId(), msg.getChunkNo(), msg.getBody());
 				break;
 			case DELETE:
-				peer.receivedDelete(msg.getFileId());
+				handleDelete(msg.getFileId());
 				break;
 			case REMOVED:
-				peer.receivedRemoved(msg.getFileId(),msg.getChunkNo());
+				handleRemoved(msg.getFileId(),msg.getChunkNo());
 				break;
 			default:
 				break;
@@ -59,10 +60,105 @@ public class MessageHandler extends Thread
 		}
 	}
 	
+	/**
+	 * Peer response to other peer PUTCHUNK message
+	 * @param c
+	 */
+	private void handlePutchunk(String fileId, int chunkNo,byte[] body){
+		Chunk c = new Chunk(fileId, chunkNo, body);
+
+		//response message : STORED
+		Message msg = new Message(Util.MessageType.STORED,peer.getVersion(),peer.getID(),c.getFileId(),c.getChunkNo());
+		System.out.println("(Sent) Type : "+ msg.getType() + " from sender : "+ msg.getSenderId() + " with chunk "+ msg.getChunkNo());
+
+		//verifies chunk existence in this peer
+		boolean alreadyExists = peer.fileManager.chunkExists(c.getFileId(),c.getChunkNo());
+
+		//no space available and file does not exist -> can't store
+		if(!peer.fileManager.hasSpaceAvailable(c) && !alreadyExists)
+			return;
+		else
+		{
+			//waiting time
+			peer.randomDelay();
+
+			/*if(record.checkStored(msg.getFileId(), msg.getChunkNo()) < c.getReplicationDeg()){*/
+
+			//send STORED message
+			peer.getMc().send(msg);
+			//only save if file doesn't exist
+			if(!alreadyExists)
+				peer.fileManager.save(c);
+
+			/*}	*/
+		}
+	}
+
+	/**
+	 * Peer response to other peer STORE message
+	 */
+	private void handleStore(String fileId, int chunkNo, int senderId){
+		peer.getMulticastRecord().recordStoreChunks(fileId, chunkNo, senderId);
+	}
+	
+	
+
+	/**
+	 * Peer response to other peer GETCHUNK message
+	 */
+	private void handleGetchunk(String fileId, int chunkNo){
+		//peers has stored this chunk
+			if(peer.fileManager.chunkExists(fileId,chunkNo))
+			{
+				//body
+				byte[] body = peer.fileManager.getChunkContent(fileId, chunkNo);
+				//create CHUNK message
+				Message msg = new Message(Util.MessageType.CHUNK,peer.getVersion(),peer.getID(),fileId,chunkNo,body);
+				peer.randomDelay();
+				//chunk still needed by the initiator peer
+				if(!peer.chunkRestored(fileId, chunkNo))
+				{
+					System.out.println("(Sent) Type : "+ msg.getType() + " from sender : "+ msg.getSenderId() + " with chunk "+ msg.getChunkNo());
+					peer.getMdr().send(msg);
+				}
+			}
+	}
+	
+	/**
+	 * Peer response to other peer CHUNK message
+	 */
+	private void handleChunk(String fileId, int chunkNo, byte[] body){
+		//verifies if the file belongs to record --> initiator peer
+		if(peer.getMulticastRecord().checkRestore(fileId))
+		{
+			//chunk restore
+			if(peer.getMulticastRecord().recordRestoreChunks(fileId,chunkNo,body))
+				System.out.println("Chunk Number "+chunkNo+" restored");
+		}
+
+		//save history of chunks at mdr (chunkNo, fileId)
+		//System.out.println("guardou "+chunkNo+fileId);
+		peer.addRestoredChunk(chunkNo, fileId);
+	}
+	
+	/**
+	 * Peer response to other peer DELETE message
+	 */
+	private void handleDelete(String fileId){
+		/* ... */
+	}
+	
+	/**
+	 * Peer response to other peer REMOVED message
+	 */
+	private void handleRemoved(String fileId, int chunkNo){
+		/* ... */
+	}
+	
 	/*
 	 * Preenche os atributos da classe com os respetivos valores 
 	 */
-	private Message parseMessage(byte[] message)
+ 	private Message parseMessage(byte[] message)
 	{
 		Message parsed = null;
 		
