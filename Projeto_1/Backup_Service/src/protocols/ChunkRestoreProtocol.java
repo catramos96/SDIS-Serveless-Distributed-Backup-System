@@ -26,8 +26,6 @@ public class ChunkRestoreProtocol extends Protocol{
 				e.printStackTrace();
 			}
 			
-			/*if(file_chunk_received) break
-			
 			rep++;
 		}*/
 	}

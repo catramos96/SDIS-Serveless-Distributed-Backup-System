@@ -50,6 +50,16 @@ public class Message
 		this.chunkNo = chunkNo;
 	}
 	
+	public Message(Util.MessageType type, char[] version, int senderId, String fileId, int chunkNo, byte[] body)
+	{
+		this.type = type;
+		this.version = version;
+		this.senderId = senderId;
+		this.fileId = fileId;
+		this.chunkNo = chunkNo;
+		this.body = body;
+	}
+	
 	/**
 	 * Create new message
 	 * @return

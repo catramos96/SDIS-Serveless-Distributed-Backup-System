@@ -34,13 +34,13 @@ public class MessageHandler extends Thread
 		if(peer.getID() != msg.getSenderId())
 		{			
 			switch (msg.getType()) {
-			case PUTCHUNK:
+			/*case PUTCHUNK:
 				peer.receivedPutchunk(msg.getFileId(), msg.getChunkNo(), msg.getBody());
-				break;
+				break;*/
 			case STORED:
 				peer.receivedStore(msg.getFileId(), msg.getChunkNo(),msg.getSenderId());	
 				break;
-			case GETCHUNK:
+			case PUTCHUNK:
 				peer.receivedGetchunk(msg.getFileId(),msg.getChunkNo());
 				break;
 			case CHUNK:

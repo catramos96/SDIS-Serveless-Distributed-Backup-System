@@ -209,7 +209,7 @@ public class Peer {
 		System.out.println("(Sent) Type : "+ msg.getType() + " from sender : "+ msg.getSenderId() + " with chunk "+ msg.getChunkNo());
 
 		//verifies chunk existence in this peer
-		boolean alreadyExists = fileManager.chunkExists(c);
+		boolean alreadyExists = fileManager.chunkExists(c.getFileId(),c.getChunkNo());
 
 		//no space available and file does not exist -> can't store
 		if(!fileManager.hasSpaceAvailable(c) && !alreadyExists)
@@ -244,9 +244,11 @@ public class Peer {
 	 * Peer response to other peer GETCHUNK message
 	 */
 	public synchronized void receivedGetchunk(String fileNo, int chunkNo){
-		Message msg = new Message(Util.MessageType.CHUNK,version,ID,fileNo,chunkNo);
-
+		
 		if(fileManager.chunkExists(fileNo,chunkNo)){
+			
+			byte[] body = fileManager.getChunkContent(fileNo, chunkNo);
+			Message msg = new Message(Util.MessageType.CHUNK,version,ID,fileNo,chunkNo,body);
 			randomDelay();
 			System.out.println("(Sent) Type : "+ msg.getType() + " from sender : "+ msg.getSenderId() + " with chunk "+ msg.getChunkNo());
 			mdr.send(msg);
@@ -270,6 +272,7 @@ public class Peer {
 	 * Peer response to other peer DELETE message
 	 */
 	public synchronized void receivedDelete(String fileNo){
+
 		//fileChunksExists?
 		//Remove all chunks from fileNo
 	}

@@ -1,6 +1,7 @@
 package peer;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -9,6 +10,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import javax.xml.bind.DatatypeConverter;
+
+import resources.Util;
 
 public class FileManager {
 
@@ -144,18 +147,12 @@ public class FileManager {
 
 		return DatatypeConverter.printHexBinary(hash);
 	}
-
-	//Receives a chunk
-	public boolean chunkExists(Chunk c){
-		String chunkName = createChunkName(c.getFileId(),c.getChunkNo());
-		File file = new File(chunkName);
-		return (file.exists() && file.isFile());
-	}
 	
 	//Receives a fileNo and chunkNo
 	public boolean chunkExists(String fileNo, int chunkNo){
 		String chunkName = createChunkName(fileNo,chunkNo);
 		File file = new File(chunkName);
+		
 		return (file.exists() && file.isFile());
 	}
 
@@ -186,6 +183,27 @@ public class FileManager {
 		}
 
 		remaingSpace -= data.length;
+	}
+	
+	public byte[] getChunkContent(String fileNo,int chunkNo){
+		String chunkName = createChunkName(fileNo,chunkNo);
+		File file = new File(chunkName);
+		byte[] data = null;
+		
+		if(file.exists() && file.isFile()){
+			FileInputStream in;
+			data = new byte[(int) file.length()];
+			try {
+				in = new FileInputStream(chunkName);
+				in.read(data);
+				in.close();
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return data;
 	}
 
 	public boolean fileExists(File file)
