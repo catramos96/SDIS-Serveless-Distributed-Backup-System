@@ -94,17 +94,6 @@ public class Peer {
 		}
 	}
 
-	/**
-	 * Peer waiting
-	 */
-	public void randomDelay(){
-		Random delay = new Random();
-		try {
-			Thread.sleep(delay.nextInt(Util.RND_DELAY));
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
 
 	/*
 	 * Peer getters and setters

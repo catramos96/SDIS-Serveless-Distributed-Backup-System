@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Random;
 
 import resources.Logs;
 import resources.Util;
@@ -62,6 +63,18 @@ public class MessageHandler extends Thread
 	}
 	
 	/**
+	 * Random Delay
+	 */
+	public void randomDelay(){
+		Random delay = new Random();
+		try {
+			Thread.sleep(delay.nextInt(Util.RND_DELAY));
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
 	 * Peer response to other peer PUTCHUNK message
 	 * @param c
 	 */
@@ -81,7 +94,7 @@ public class MessageHandler extends Thread
 		else
 		{
 			//waiting time
-			peer.randomDelay();
+			randomDelay();
 
 			/*if(record.checkStored(msg.getFileId(), msg.getChunkNo()) < c.getReplicationDeg()){*/
 
@@ -115,7 +128,7 @@ public class MessageHandler extends Thread
 				byte[] body = peer.fileManager.getChunkContent(fileId, chunkNo);
 				//create CHUNK message
 				Message msg = new Message(Util.MessageType.CHUNK,peer.getVersion(),peer.getID(),fileId,chunkNo,body);
-				peer.randomDelay();
+				randomDelay();
 				//chunk still needed by the initiator peer
 				if(!peer.chunkRestored(fileId, chunkNo))
 				{
