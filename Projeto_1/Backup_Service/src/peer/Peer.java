@@ -106,7 +106,11 @@ public class Peer {
 		}
 	}
 
-	public boolean chunkRestored(String fileId, int chunkNo) {
+	/*
+	 * Peer getters and setters
+	 */
+
+	public synchronized boolean chunkRestored(String fileId, int chunkNo) {
 		String chunkName = chunkNo+fileId;
 
 		if(mdrRestores.contains(chunkName))
@@ -117,14 +121,10 @@ public class Peer {
 		return mdrRestores.contains(chunkName);
 	}
 	
-	public void addRestoredChunk(int chunkNo, String fileId){
+	public synchronized void addRestoredChunk(int chunkNo, String fileId){
 		mdrRestores.add(chunkNo+fileId);
 	}
-
-	/*
-	 * Peer getters and setters
-	 */
-
+	
 	public char[] getVersion() {
 		return version;
 	}

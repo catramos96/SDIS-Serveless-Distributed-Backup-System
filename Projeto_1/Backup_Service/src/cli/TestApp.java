@@ -5,6 +5,8 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import resources.Logs;
+
 public class TestApp 
 {
 	private static DatagramSocket socket = null; 	//socket for comunication with server
@@ -17,7 +19,7 @@ public class TestApp
 		
 		if(argsLength < 3)
 		{
-			System.out.println("Usage: java TestApp <peer_ap> <sub_protocol> <opnd_1> <opnd_2>*");
+			Logs.argsClientInfo();
 			return;
 		}
 		
@@ -52,36 +54,29 @@ public class TestApp
 		
 	}
 
-	private static boolean protocolVerification(String arg, int length) {
+	private static boolean protocolVerification(String arg, int length) {		
+		boolean fail = false;
 		
-		if(arg.equals("BACKUP"))
-		{
-			if(length != 4)
-			{
-				System.out.println("Usage: java TestApp <peer_ap> BACKUP <file> <replicationDegree>");
-				return false;
-			}
-		}
-		else if(arg.equals("RESTORE") || arg.equals("DELETE") || arg.equals("RECLAIM"))
-		{
-			if(length != 3)
-			{
-				System.out.println("Usage: java TestApp <peer_ap> "+ arg +" <file>");
-				return false;
-			}
-		}
-		else if(arg.equals("STATE"))
-		{
-			if(length != 2)
-			{
-				System.out.println("Usage: java TestApp <peer_ap> STATE");
-				return false;
-			}
-		}
-		else 
+		if(arg.equals("BACKUP")) 
+	    { 
+	      if(length != 4) fail = true;
+	    } 
+	    else if(arg.equals("RESTORE") || arg.equals("DELETE") || arg.equals("RECLAIM")) 
+	    { 
+	      if(length != 3) fail = true;
+	    } 
+	    else if(arg.equals("STATE")) 
+	    { 
+	      if(length != 2) fail = true;
+	    } 
+	    else	fail = true;
+
+		if(fail){
+			Logs.argsProtocolInfo(arg);
 			return false;
+		}
 		
-		return true;		
+		return true;
 	}
 
 	private static boolean addressVerification(String arg) {

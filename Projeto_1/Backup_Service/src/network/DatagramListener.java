@@ -69,6 +69,8 @@ public class DatagramListener extends Thread
 		String[] parts = message.split("\\s");
 		String filename = parts[1];
 		
+		System.out.println(parts[0]);
+		
 		if(parts[0].equals("BACKUP"))
 			new BackupTrigger(peer,filename, Integer.parseInt(parts[2])).start();	//file name + replicationDegree
 		else if(parts[0].equals("RESTORE"))

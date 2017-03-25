@@ -7,6 +7,7 @@ import peer.Chunk;
 import peer.FileInfo;
 import peer.Peer;
 import protocols.ChunkBackupProtocol;
+import resources.Logs;
 import resources.Util.MessageType;
 
 public class BackupTrigger extends Thread{
@@ -35,8 +36,8 @@ public class BackupTrigger extends Thread{
 			//create message for each chunk
 			Chunk c = chunks.get(i);
 			Message msg = new Message(MessageType.PUTCHUNK,peer.getVersion(),peer.getID(),c.getFileId(),c.getChunkNo(),replicationDegree,c.getData());
-			System.out.println("(Sent) Type : "+ msg.getType() + " from sender : "+ msg.getSenderId() + " with chunk "+ msg.getChunkNo());
-
+			Logs.sentMessageLog(msg);
+			
 			//initiate file record
 			FileInfo fileinfo = new FileInfo(msg.getFileId(),filename,chunks.size());
 			peer.getMulticastRecord().startRecordStores(fileinfo);

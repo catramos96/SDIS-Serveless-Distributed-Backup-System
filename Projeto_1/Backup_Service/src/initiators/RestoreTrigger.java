@@ -6,6 +6,7 @@ import java.security.NoSuchAlgorithmException;
 import network.Message;
 import peer.FileInfo;
 import peer.Peer;
+import resources.Logs;
 import resources.Util.MessageType;
 
 public class RestoreTrigger extends Thread{
@@ -30,7 +31,7 @@ public class RestoreTrigger extends Thread{
 			fileId = peer.fileManager.getFileIdFromResources(filename);
 		} 
 		catch (NoSuchAlgorithmException e){
-			System.out.println("Error searching for fileId of "+filename);
+			Logs.errorFileId(filename);
 			return;
 		}
 		
@@ -45,7 +46,7 @@ public class RestoreTrigger extends Thread{
 		for(int i = 0; i < info.getNumChunks(); i++)
 		{
 			Message msg = new Message(MessageType.GETCHUNK,peer.getVersion(),peer.getID(),info.getFileId(),i);
-			System.out.println("(Sent) Type : "+msg.getType() + " from sender : "+ msg.getSenderId() + " with chunk "+ msg.getChunkNo());
+			Logs.sentMessageLog(msg);
 			peer.mc.send(msg);
 		}
 		
@@ -58,7 +59,7 @@ public class RestoreTrigger extends Thread{
 			}
 			//fileRestore
 			peer.fileManager.restoreFile(info.getFilename(), peer.record.getRestores(info));
-			System.out.println("File "+info.getFilename()+" restored");
+			Logs.fileRestored(info.getFilename());
 		} 
 		catch (InterruptedException e)
 		{

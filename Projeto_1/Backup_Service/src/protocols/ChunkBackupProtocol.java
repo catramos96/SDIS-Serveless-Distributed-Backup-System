@@ -6,6 +6,7 @@ import java.util.Random;
 import network.Message;
 import network.MulticastListener;
 import network.MulticastRecord;
+import resources.Logs;
 import resources.Util;
 
 public class ChunkBackupProtocol extends Protocol{
@@ -34,7 +35,7 @@ public class ChunkBackupProtocol extends Protocol{
 		
 		while(rep < Util.MAX_TRIES)	
 		{
-			System.out.println("Try number "+ rep + " to stored chunk number "+msg.getChunkNo());
+			Logs.tryNrStoreChunk(rep, msg.getChunkNo());
 			
 			mdb.send(msg);		//msg PutChunk
 			
@@ -52,7 +53,7 @@ public class ChunkBackupProtocol extends Protocol{
 			//replication degree achieved
 			if(stored >= msg.getReplicationDeg())
 			{
-				System.out.println("All Chunks with number "+ msg.getChunkNo()+ " Stored");
+				Logs.allChunksNrStored(msg.getChunkNo());
 				end = true;
 				break;
 			}
@@ -61,7 +62,7 @@ public class ChunkBackupProtocol extends Protocol{
 			rep++;
 		}
 		if(!end){
-			System.out.println(stored + " Replication Degree not pleased for chunk number " + msg.getChunkNo());
+			Logs.chunkRepDegNotAccepted(msg.getChunkNo(),stored);
 		}
 		
 	}

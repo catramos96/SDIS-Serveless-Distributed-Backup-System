@@ -10,13 +10,14 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import resources.Util;
 
 import javax.xml.bind.DatatypeConverter;
 
+import resources.Logs;
+
 public class FileManager {
 
-	private final String CHUNKSDIR = "/chunks/";
-	private final String RESTORESDIR = "/restores/";
 	private String diskDIR = null;
 	private final int CHUNKLENGTH = 64*1000;
 	private int peerID = -1;
@@ -28,7 +29,7 @@ public class FileManager {
 		this.totalSpace = totalSpace;
 		this.remaingSpace = this.totalSpace;
 
-		diskDIR = new String("../peersDisk/");
+		diskDIR = Util.PEERS_DIR;
 		File dir = new File(new String(diskDIR));
 		if(!(dir.exists() && dir.isDirectory()))
 		{
@@ -36,6 +37,18 @@ public class FileManager {
 		}
 		diskDIR += "Peer"+ peerId;
 		dir = new File(new String(diskDIR));
+		if(!(dir.exists() && dir.isDirectory()))
+		{
+			dir.mkdir();
+		}
+		
+		dir = new File(new String(diskDIR + Util.CHUNKS_DIR));
+		if(!(dir.exists() && dir.isDirectory()))
+		{
+			dir.mkdir();
+		}
+		
+		dir = new File(new String(diskDIR + Util.RESTORES_DIR));
 		if(!(dir.exists() && dir.isDirectory()))
 		{
 			dir.mkdir();
@@ -102,12 +115,13 @@ public class FileManager {
 			} 
 			catch (IOException e) 
 			{
-				System.out.println("File not found!");
+				Logs.errorFindingFile(filename);
+				e.printStackTrace();
 			}
 
 		}
 		else
-			System.out.println("Error opening "+filename+" file.");
+			Logs.errorOpeningFile(filename);
 
 		return chunkList;
 	}
@@ -157,14 +171,7 @@ public class FileManager {
 	}
 
 	public void save(Chunk c)
-	{			
-		//Verificar se ja existe o folder 'CHUNKS'
-		File dir = new File(new String(diskDIR + CHUNKSDIR));
-		if(!(dir.exists() && dir.isDirectory()))
-		{
-			dir.mkdir();
-		}
-
+	{
 		byte data[] = c.getData();
 		FileOutputStream out;
 		try 
@@ -175,10 +182,8 @@ public class FileManager {
 		} 
 		catch (FileNotFoundException e) 
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -206,31 +211,23 @@ public class FileManager {
 		return data;
 	}
 
-	public boolean fileExists(File file)
-	{
+	public boolean fileExists(File file){
 		return file.exists();
 	}
 
-	public boolean hasSpaceAvailable(Chunk c)
-	{
+	public boolean hasSpaceAvailable(Chunk c){
 		return (c.getData().length <= remaingSpace);
 	}
 
 	private String createChunkName(String fileNo, int chunkNo){
-		return new String(diskDIR + CHUNKSDIR + chunkNo+ fileNo);
+		return new String(diskDIR + Util.CHUNKS_DIR + chunkNo+ fileNo);
 	}
 
 	public void restoreFile(String filename, HashMap<Integer, byte[]> restores) throws IOException
 	{
 		System.out.println("entrou");
-		//Verificar se ja existe o folder 'RESTORES'
-		File dir = new File(new String(diskDIR + RESTORESDIR));
-		if(!(dir.exists() && dir.isDirectory()))
-		{
-			dir.mkdir();
-		}
-
-		FileOutputStream out = new FileOutputStream(diskDIR + RESTORESDIR +filename);
+		
+		FileOutputStream out = new FileOutputStream(diskDIR + Util.RESTORES_DIR +filename);
 
 		for (int i = 0; i < restores.size(); i++) 
 		{			
@@ -240,9 +237,8 @@ public class FileManager {
 				byte data[] = restores.get(new Integer(i));
 				out.write(data);
 			}
-			else
-			{
-				System.out.print("Erro restoring file");
+			else{
+				Logs.errorRestoringFile(filename);
 			}
 		}
 		

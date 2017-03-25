@@ -5,6 +5,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import resources.Logs;
 import resources.Util;
 import peer.Chunk;
 import peer.Peer;
@@ -56,7 +57,7 @@ public class MessageHandler extends Thread
 				break;
 			}
 			
-			System.out.println("(Received) Type : "+ msg.getType() + " from sender : "+ msg.getSenderId() + " with chunk "+ msg.getChunkNo());
+			Logs.receivedMessageLog(msg);
 		}
 	}
 	
@@ -69,8 +70,8 @@ public class MessageHandler extends Thread
 
 		//response message : STORED
 		Message msg = new Message(Util.MessageType.STORED,peer.getVersion(),peer.getID(),c.getFileId(),c.getChunkNo());
-		System.out.println("(Sent) Type : "+ msg.getType() + " from sender : "+ msg.getSenderId() + " with chunk "+ msg.getChunkNo());
-
+		Logs.sentMessageLog(msg);
+		
 		//verifies chunk existence in this peer
 		boolean alreadyExists = peer.fileManager.chunkExists(c.getFileId(),c.getChunkNo());
 
@@ -118,7 +119,7 @@ public class MessageHandler extends Thread
 				//chunk still needed by the initiator peer
 				if(!peer.chunkRestored(fileId, chunkNo))
 				{
-					System.out.println("(Sent) Type : "+ msg.getType() + " from sender : "+ msg.getSenderId() + " with chunk "+ msg.getChunkNo());
+					Logs.sentMessageLog(msg);
 					peer.getMdr().send(msg);
 				}
 			}
@@ -133,7 +134,7 @@ public class MessageHandler extends Thread
 		{
 			//chunk restore
 			if(peer.getMulticastRecord().recordRestoreChunks(fileId,chunkNo,body))
-				System.out.println("Chunk Number "+chunkNo+" restored");
+				Logs.chunkRestored(chunkNo);
 		}
 
 		//save history of chunks at mdr (chunkNo, fileId)

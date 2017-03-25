@@ -4,13 +4,15 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import resources.Logs;
+
 public class BackupSystem 
 {
 	public static void main(String[] args) throws IOException
 	{
 		if(args.length != 6)
 		{
-			System.out.println("Usage: java BackupSystem <version> <peer_id> <peer_ap> <MC> <MDB> <MDR>");
+			Logs.argsBackupSystemInfo();
 			return;
 		}
 	
@@ -22,6 +24,8 @@ public class BackupSystem
 		String[] parts_mc = addressVerification(args[3]);
 		String[] parts_mdb = addressVerification(args[4]);
 		String[] parts_mdr = addressVerification(args[5]);
+		
+		System.out.println(peer_id);
 		
 		new Peer(protocol_version,peer_id,parts_ap,parts_mc,parts_mdb,parts_mdr);		
 	}
@@ -35,12 +39,10 @@ public class BackupSystem
 		//localhost
 		if(parts_ap.length == 1)
 		{
-			try
-			{
+			try{
 				parts[0] = InetAddress.getLocalHost().getHostName();
 			} 
-			catch (UnknownHostException e) 
-			{
+			catch (UnknownHostException e) {
 				e.printStackTrace();
 			}
 			parts[1] = parts_ap[0];

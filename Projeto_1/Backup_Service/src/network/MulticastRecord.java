@@ -161,7 +161,7 @@ public class MulticastRecord {
 			int a = restoreConfirms.get(info).size();
 			int b = info.getNumChunks();
 			
-			System.out.println(a+" , "+b);
+			//System.out.println(a+" , "+b);
 			
 			return (a==b);
 		}

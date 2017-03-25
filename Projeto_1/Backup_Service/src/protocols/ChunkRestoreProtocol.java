@@ -1,15 +1,10 @@
 package protocols;
-import java.security.NoSuchAlgorithmException;
-
-import network.Message;
-import peer.FileInfo;
 import peer.Peer;
-import resources.Util.MessageType;
 
 public class ChunkRestoreProtocol extends Protocol{
 
-	private Peer peer;
-	private String filename;
+	private Peer peer = null;
+	private String filename = null;
 
 	public ChunkRestoreProtocol(Peer peer, String filename){
 		this.peer = peer;
