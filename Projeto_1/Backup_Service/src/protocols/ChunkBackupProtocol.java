@@ -64,7 +64,7 @@ public class ChunkBackupProtocol extends Protocol{
 		}
 		if(!end)
 		{
-			System.out.println("Replication Degree not pleased for chunk number " + msg.getChunkNo());
+			System.out.println(stored + " Replication Degree not pleased for chunk number " + msg.getChunkNo());
 		}
 		
 	}

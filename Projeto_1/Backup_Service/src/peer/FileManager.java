@@ -9,14 +9,14 @@ import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import javax.xml.bind.DatatypeConverter;
+import java.util.HashMap;
 
-import resources.Util;
+import javax.xml.bind.DatatypeConverter;
 
 public class FileManager {
 
-	private final String DIR = "../resources/";
 	private final String CHUNKSDIR = "/chunks/";
+	private final String RESTORESDIR = "/restores/";
 	private String diskDIR = null;
 	private final int CHUNKLENGTH = 64*1000;
 	private int peerID = -1;
@@ -46,7 +46,7 @@ public class FileManager {
 	public ArrayList<Chunk> splitFileInChunks(String filename) 
 	{
 		ArrayList<Chunk> chunkList = new ArrayList<>();	//list of chunks created for this file
-		File file = new File(DIR+filename);	//open file
+		File file = new File(filename);	//open file
 
 		//verifies file existence
 		if(file.exists())
@@ -111,13 +111,13 @@ public class FileManager {
 
 		return chunkList;
 	}
-	
+
 	/*
 	 * Search by filename
 	 */
 	public int getFileNumChunks(String filename)
 	{
-		File file = new File(DIR + filename);
+		File file = new File(filename);
 		if(file.exists())
 		{
 			return (int) (file.length() / CHUNKLENGTH) + 1;
@@ -127,12 +127,12 @@ public class FileManager {
 
 	public String getFileIdFromResources(String filename) throws NoSuchAlgorithmException
 	{
-		File file = new File(DIR + filename);
+		File file = new File(filename);
 		if(file.exists())
 			return getFileID(file);
 		return null;
 	}
-	
+
 	private String getFileID(File file) throws NoSuchAlgorithmException
 	{
 		//filename, last modification, ownwer
@@ -147,12 +147,12 @@ public class FileManager {
 
 		return DatatypeConverter.printHexBinary(hash);
 	}
-	
+
 	//Receives a fileNo and chunkNo
 	public boolean chunkExists(String fileNo, int chunkNo){
 		String chunkName = createChunkName(fileNo,chunkNo);
 		File file = new File(chunkName);
-		
+
 		return (file.exists() && file.isFile());
 	}
 
@@ -184,12 +184,12 @@ public class FileManager {
 
 		remaingSpace -= data.length;
 	}
-	
+
 	public byte[] getChunkContent(String fileNo,int chunkNo){
 		String chunkName = createChunkName(fileNo,chunkNo);
 		File file = new File(chunkName);
 		byte[] data = null;
-		
+
 		if(file.exists() && file.isFile()){
 			FileInputStream in;
 			data = new byte[(int) file.length()];
@@ -215,9 +215,37 @@ public class FileManager {
 	{
 		return (c.getData().length <= remaingSpace);
 	}
-	
+
 	private String createChunkName(String fileNo, int chunkNo){
 		return new String(diskDIR + CHUNKSDIR + chunkNo+ fileNo);
+	}
+
+	public void restoreFile(String filename, HashMap<Integer, byte[]> restores) throws IOException
+	{
+		//Verificar se ja existe o folder 'RESTORES'
+		File dir = new File(new String(diskDIR + RESTORESDIR));
+		if(!(dir.exists() && dir.isDirectory()))
+		{
+			dir.mkdir();
+		}
+
+		FileOutputStream out = new FileOutputStream(filename);
+
+		for (int i = 0; i < restores.size(); i++) 
+		{			
+			//search for chunks from 0 to size
+			if(restores.containsKey(new Integer(i)))
+			{
+				byte data[] = restores.get(new Integer(i));
+				out.write(data);
+			}
+			else
+			{
+				System.out.print("Erro restoring file");
+			}
+		}
+		
+		out.close();
 	}
 
 }
