@@ -92,9 +92,6 @@ public class Peer {
 			System.out.println("Peer error");
 			e.printStackTrace();
 		}
-		/* catch (InterruptedException e) {
-			e.printStackTrace();
-		}*/
 	}
 
 	/**
@@ -108,103 +105,7 @@ public class Peer {
 			e.printStackTrace();
 		}
 	}
-
-	/*
-	 * Peer triggers
-	 */
-
-	/**
-	 * Peer initiator response to client request for backup
-	 * @param action
-	 * @param filename
-	 * @param replicationDegree
-	 */
-	public void BackupTrigger(String filename, int replicationDegree){
-
-		//split file in chunks
-		ArrayList<Chunk> chunks = fileManager.splitFileInChunks(filename);	
-
-		for (int i = 0; i < chunks.size(); i++) 
-		{
-			//create message for each chunk
-			Chunk c = chunks.get(i);
-			Message msg = new Message(MessageType.PUTCHUNK,version,ID,c.getFileId(),c.getChunkNo(),replicationDegree,c.getData());
-			System.out.println("(Sent) Type : "+ msg.getType() + " from sender : "+ msg.getSenderId() + " with chunk "+ msg.getChunkNo());
-
-			//initiate file record
-			FileInfo fileinfo = new FileInfo(msg.getFileId(),filename,chunks.size());
-			record.startRecordStores(fileinfo);
-
-			//warn other peers
-			new ChunkBackupProtocol(mdb,record,msg).start();
-		}
-	}
-
-	/**
-	 * Peer initiator response to client request for RESTORE
-	 * @param filename
-	 * @throws NoSuchAlgorithmException 
-	 */
-	public void RestoreTrigger(String filename)
-	{
-		/*
-		String fileId;
-		try 
-		{
-			fileId = fileManager.getFileIdFromResources(filename);
-		} 
-		catch (NoSuchAlgorithmException e) 
-		{
-			System.out.println("Error searching for fileId of "+filename);
-			return;
-		}
-		int chunks = fileManager.getFileNumChunks(filename);
-
-		//start recording chunk restores
-		FileInfo info = new FileInfo(fileId,filename,chunks);
-
-		record.startRecordRestores(info);
-
-		//create and send message for each chunk
-		for(int i = 0; i < chunks; i++)
-		{
-			Message msg = new Message(MessageType.GETCHUNK,version,ID,fileId,i);
-			System.out.println("(Sent) Type : "+msg.getType() + " from sender : "+ msg.getSenderId() + " with chunk "+ msg.getChunkNo());
-			mc.send(msg);
-			//new ChunkRestoreProtocol(mdr,mc,record,msg).start();
-		}*/
-		new ChunkRestoreProtocol(this, filename).start();
-	}
-
-	/**
-	 * Peer initiator response to client request for DELETE
-	 * @param action
-	 * @param filename
-	 * @param replicationDegree
-	 */
-	public void DeleteTrigger(){
-
-	}
-
-	/**
-	 * Peer initiator response to client request for RECLAIM
-	 * @param action
-	 * @param filename
-	 * @param replicationDegree
-	 */
-	public void ReclaimTrigger(){
-
-	}
-
-	/**
-	 * Peer initiator response to client request for STATE
-	 * @param action
-	 * @param filename
-	 * @param replicationDegree
-	 */
-	public void StateTrigger(){
-
-	}
+	
 
 	/*
 	 * Peer responses

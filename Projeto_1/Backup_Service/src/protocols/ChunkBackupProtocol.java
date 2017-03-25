@@ -38,12 +38,10 @@ public class ChunkBackupProtocol extends Protocol{
 			
 			mdb.send(msg);		//msg PutChunk
 			
-			try 
-			{
+			try {
 				Thread.sleep(waitingTime);
 			} 
-			catch (InterruptedException e) 
-			{
+			catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 			
@@ -62,8 +60,7 @@ public class ChunkBackupProtocol extends Protocol{
 			waitingTime *= Util.TIME_REINFORCEMENT;	//doubles time for each rep
 			rep++;
 		}
-		if(!end)
-		{
+		if(!end){
 			System.out.println(stored + " Replication Degree not pleased for chunk number " + msg.getChunkNo());
 		}
 		

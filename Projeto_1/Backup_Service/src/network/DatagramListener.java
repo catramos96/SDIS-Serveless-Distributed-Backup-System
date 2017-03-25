@@ -5,6 +5,11 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 
+import initiators.BackupTrigger;
+import initiators.DeleteTrigger;
+import initiators.ReclaimTrigger;
+import initiators.RestoreTrigger;
+import initiators.StateTrigger;
 import peer.Peer;
 
 public class DatagramListener extends Thread
@@ -62,17 +67,18 @@ public class DatagramListener extends Thread
 	{
 		String message = new String(data);
 		String[] parts = message.split("\\s");
+		String filename = parts[1];
 		
 		if(parts[0].equals("BACKUP"))
-			peer.BackupTrigger(parts[1], Integer.parseInt(parts[2]));	//file name + replicationDegree
+			new BackupTrigger(peer,filename, Integer.parseInt(parts[2])).start();	//file name + replicationDegree
 		else if(parts[0].equals("RESTORE"))
-			peer.RestoreTrigger(parts[1]);		//fileName
+			new RestoreTrigger(peer,filename).start();	
 		else if(parts[0].equals("DELETE"))
-			peer.DeleteTrigger();
+			new DeleteTrigger().start();
 		else if(parts[0].equals("RECLAIM"))
-			peer.ReclaimTrigger();
+			new ReclaimTrigger().start();
 		else if(parts[0].equals("STATE"))
-			peer.StateTrigger();
+			new StateTrigger().start();
 			
 	}
 
