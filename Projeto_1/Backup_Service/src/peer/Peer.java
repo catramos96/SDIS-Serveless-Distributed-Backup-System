@@ -180,8 +180,10 @@ public class Peer {
 	 * Peer response to other peer PUTCHUNK message
 	 * @param c
 	 */
-	public synchronized void receivedPutchunk(Chunk c)
+	public synchronized void receivedPutchunk(String fileId, int chunkNo, byte[] body)
 	{	
+		Chunk c = new Chunk(fileId, chunkNo, body);
+		
 		//response message : STORED
 		Message msg = new Message(Util.MessageType.STORED,version,ID,c.getFileId(),c.getChunkNo());
 		System.out.println("(Sent) Type : "+ msg.getType() + " from sender : "+ msg.getSenderId() + " with chunk "+ msg.getChunkNo());
@@ -212,12 +214,49 @@ public class Peer {
 	/**
 	 * Peer response to other peer STORE message
 	 */
-	public synchronized void storeAction(String fileId,int chunkNo,int sender)
+	public synchronized void receivedStore(String fileId,int chunkNo,int sender)
 	{
 		//record chunk only if this peer is the initiator peer
 		record.recordStoreChunks(fileId, chunkNo, sender);
 	}
 
+	/**
+	 * Peer response to other peer GETCHUNK message
+	 */
+	public synchronized void receivedGetchunk(String fileNo, int chunkNo){
+		Message msg = new Message(Util.MessageType.CHUNK,version,ID,fileNo,chunkNo);
+
+		if(fileManager.chunkExists(fileNo,chunkNo)){
+			randomDelay();
+			System.out.println("(Sent) Type : "+ msg.getType() + " from sender : "+ msg.getSenderId() + " with chunk "+ msg.getChunkNo());
+			mc.send(msg);
+		}
+			
+	}
+	
+	/**
+	 * Peer response to other peer CHUNK message
+	 */
+	public synchronized void receivedChunk(String fileNo,int chunkNo){
+		
+	}
+	
+	/**
+	 * Peer response to other peer DELETE message
+	 */
+	public synchronized void receivedDelete(String fileNo){
+		//fileChunksExists?
+		//Remove all chunks from fileNo
+	}
+	
+	/**
+	 * Peer response to other peer REMOVED message
+	 */
+	public synchronized void receivedRemoved(String fileNo,int chunkNo){
+		//fileChunksExists?
+		//Remove all chunks from fileNo
+	}
+	
 	/*
 	 * Peer getters and setters
 	 */

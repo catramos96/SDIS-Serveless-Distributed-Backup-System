@@ -125,8 +125,16 @@ public class FileManager {
 		return DatatypeConverter.printHexBinary(hash);
 	}
 
+	//Receives a chunk
 	public boolean chunkExists(Chunk c){
-		String chunkName = createChunkName(c);
+		String chunkName = createChunkName(c.getFileId(),c.getChunkNo());
+		File file = new File(chunkName);
+		return (file.exists() && file.isFile());
+	}
+	
+	//Receives a fileNo and chunkNo
+	public boolean chunkExists(String fileNo, int chunkNo){
+		String chunkName = createChunkName(fileNo,chunkNo);
 		File file = new File(chunkName);
 		return (file.exists() && file.isFile());
 	}
@@ -144,7 +152,7 @@ public class FileManager {
 		FileOutputStream out;
 		try 
 		{
-			out = new FileOutputStream(createChunkName(c));
+			out = new FileOutputStream(createChunkName(c.getFileId(),c.getChunkNo()));
 			out.write(data);
 			out.close();
 		} 
@@ -170,8 +178,8 @@ public class FileManager {
 		return (c.getData().length <= remaingSpace);
 	}
 	
-	private String createChunkName(Chunk c){
-		return new String(diskDIR + CHUNKSDIR + c.getChunkNo()+ c.getFileId());
+	private String createChunkName(String fileNo, int chunkNo){
+		return new String(diskDIR + CHUNKSDIR + chunkNo+ fileNo);
 	}
 
 }
