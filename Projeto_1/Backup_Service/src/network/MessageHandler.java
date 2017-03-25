@@ -35,24 +35,22 @@ public class MessageHandler extends Thread
 		{			
 			switch (msg.getType()) {
 			case PUTCHUNK:
-				Chunk c = new Chunk(msg.getFileId(), msg.getChunkNo(), msg.getBody());
-				//peer.receivedPutchunk(c, msg.getReplicationDeg()); //later??
-				peer.receivedPutchunk(c);
+				peer.receivedPutchunk(msg.getFileId(), msg.getChunkNo(), msg.getBody());
 				break;
 			case STORED:
-				peer.storeAction(msg.getFileId(), msg.getChunkNo(),msg.getSenderId());	
+				peer.receivedStore(msg.getFileId(), msg.getChunkNo(),msg.getSenderId());	
 				break;
 			case GETCHUNK:
-				//restoreProt.executeProtocolAction();
+				peer.receivedGetchunk(msg.getFileId(),msg.getChunkNo());
 				break;
 			case CHUNK:
-				//spaceReclProt.executeProtocolAction();
+				peer.receivedChunk(msg.getFileId(),msg.getChunkNo());
 				break;
 			case DELETE:
-				//deleteProt.executeProtocolAction();
+				peer.receivedDelete(msg.getFileId());
 				break;
 			case REMOVED:
-				
+				peer.receivedRemoved(msg.getFileId(),msg.getChunkNo());
 				break;
 			default:
 				break;
