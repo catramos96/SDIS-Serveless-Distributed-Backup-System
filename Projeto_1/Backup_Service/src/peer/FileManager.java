@@ -24,7 +24,7 @@ public class FileManager {
 		this.peerID = peerId;
 		this.totalSpace = totalSpace;
 		this.remaingSpace = this.totalSpace;
-		
+
 		diskDIR = new String("../peersDisk/");
 		File dir = new File(new String(diskDIR));
 		if(!(dir.exists() && dir.isDirectory()))
@@ -37,7 +37,7 @@ public class FileManager {
 		{
 			dir.mkdir();
 		}
-		
+
 	}
 
 	public ArrayList<Chunk> splitFileInChunks(String filename) 
@@ -108,12 +108,32 @@ public class FileManager {
 
 		return chunkList;
 	}
+	
+	/*
+	 * Search by filename
+	 */
+	public int getFileNumChunks(String filename)
+	{
+		File file = new File(DIR + filename);
+		if(file.exists())
+		{
+			return (int) (file.length() / CHUNKLENGTH) + 1;
+		}	
+		return -1;
+	}
 
+	public String getFileIdFromResources(String filename) throws NoSuchAlgorithmException
+	{
+		File file = new File(DIR + filename);
+		if(file.exists())
+			return getFileID(file);
+		return null;
+	}
+	
 	private String getFileID(File file) throws NoSuchAlgorithmException
 	{
 		//filename, last modification, ownwer
-		String textToEncrypt = file.getName() + file.lastModified() + peerID;
-
+		String textToEncrypt = file.getName() + file.lastModified() + peerID;	
 		return sha256(textToEncrypt);
 	}
 
@@ -130,7 +150,7 @@ public class FileManager {
 		File file = new File(chunkName);
 		return (file.exists() && file.isFile());
 	}
-	
+
 	public void save(Chunk c)
 	{			
 		//Verificar se ja existe o folder 'CHUNKS'
@@ -169,7 +189,7 @@ public class FileManager {
 	{
 		return (c.getData().length <= remaingSpace);
 	}
-	
+
 	private String createChunkName(Chunk c){
 		return new String(diskDIR + CHUNKSDIR + c.getChunkNo()+ c.getFileId());
 	}

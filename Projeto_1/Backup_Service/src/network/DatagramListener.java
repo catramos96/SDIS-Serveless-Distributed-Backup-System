@@ -64,9 +64,9 @@ public class DatagramListener extends Thread
 		String[] parts = message.split("\\s");
 		
 		if(parts[0].equals("BACKUP"))
-			peer.BackupTrigger(parts[1], Integer.parseInt(parts[2]));
+			peer.BackupTrigger(parts[1], Integer.parseInt(parts[2]));	//file name + replicationDegree
 		else if(parts[0].equals("RESTORE"))
-			peer.RestoreTrigger();
+			peer.RestoreTrigger(parts[1]);	//fileName
 		else if(parts[0].equals("DELETE"))
 			peer.DeleteTrigger();
 		else if(parts[0].equals("RECLAIM"))

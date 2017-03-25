@@ -2,6 +2,7 @@ package peer;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -11,6 +12,7 @@ import resources.Util.MessageType;
 import network.MulticastListener;
 import network.MulticastRecord;
 import protocols.ChunkBackupProtocol;
+import protocols.ChunkRestoreProtocol;
 import resources.Util;
 
 public class Peer {
@@ -134,12 +136,30 @@ public class Peer {
 
 	/**
 	 * Peer initiator response to client request for RESTORE
-	 * @param action
 	 * @param filename
-	 * @param replicationDegree
+	 * @throws NoSuchAlgorithmException 
 	 */
-	public void RestoreTrigger(){
-
+	public void RestoreTrigger(String filename)
+	{
+		String fileId;
+		try 
+		{
+			fileId = fileManager.getFileIdFromResources(filename);
+		} 
+		catch (NoSuchAlgorithmException e) 
+		{
+			System.out.println("Error searching for fileId of "+filename);
+			return;
+		}
+		int chunks = fileManager.getFileNumChunks(filename);
+		
+		//create message for each chunk
+		for(int i = 0; i < chunks; i++)
+		{
+			Message msg = new Message(MessageType.GETCHUNK,version,ID,fileId,i);
+			System.out.println("(Sent) Type : "+msg.getType() + " from sender : "+ msg.getSenderId() + " with chunk "+ msg.getChunkNo());
+			new ChunkRestoreProtocol(mdr,mc,record,msg).start();
+		}
 	}
 
 	/**
