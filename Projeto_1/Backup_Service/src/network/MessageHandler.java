@@ -44,7 +44,7 @@ public class MessageHandler extends Thread
 				peer.receivedGetchunk(msg.getFileId(),msg.getChunkNo());
 				break;
 			case CHUNK:
-				peer.receivedChunk(msg.getFileId(),msg.getChunkNo());
+				peer.receivedChunk(msg.getChunkNo(), msg.getBody());
 				break;
 			case DELETE:
 				peer.receivedDelete(msg.getFileId());

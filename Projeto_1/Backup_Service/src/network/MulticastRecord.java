@@ -12,16 +12,18 @@ public class MulticastRecord {
 	 * ArrayList -> PeersID
 	 */
 	private volatile HashMap<String, HashMap<Integer, ArrayList<Integer>>> storedConfirms = null;
+	private volatile HashMap<Integer, byte[] > restoreConfirms = null;
 	
-	/*private volatile HashMap<int[], ArrayList<Integer>> restoreConfirms = null;
+	/*
 	private volatile HashMap<int[], ArrayList<Integer>> putChunks = null;
 	private volatile HashMap<int[], ArrayList<Integer>> restoreChunks = null;*/
 	
 	public MulticastRecord()
 	{
 		storedConfirms = new HashMap<String, HashMap<Integer, ArrayList<Integer>>>();
-		/*restoreConfirms = new HashMap<int[], ArrayList<Integer>>();
-		putChunks = new HashMap<int[], ArrayList<Integer>>();
+		restoreConfirms = new HashMap<Integer, byte[]>();
+		
+		/*putChunks = new HashMap<int[], ArrayList<Integer>>();
 		restoreChunks = new HashMap<int[], ArrayList<Integer>>();*/
 	};
 	
@@ -84,5 +86,24 @@ public class MulticastRecord {
 			}
 		}
 		return null;
+	}
+	
+	/**
+	 * 
+	 * @param chunkNo
+	 * @param chunkBody
+	 * @return
+	 */
+	public synchronized boolean recordRestoreChunks(int chunkNo, byte[] chunkBody)
+	{
+		Integer i = new Integer(chunkNo);
+		//first chunkRestore
+		if(!restoreConfirms.containsKey(i))
+		{
+			restoreConfirms.put(chunkNo,chunkBody);
+			return true;
+		}
+			
+		return false;	
 	}
 }

@@ -2,7 +2,6 @@ package protocols;
 import network.Message;
 import network.MulticastListener;
 import network.MulticastRecord;
-import resources.Util;
 
 public class ChunkRestoreProtocol extends Protocol{
 
@@ -15,21 +14,21 @@ public class ChunkRestoreProtocol extends Protocol{
 	
 	@Override
 	public void run()  {
-		int rep = 0;
+		//int rep = 0;
 		
-		while(rep < Util.MAX_TRIES){
+	//	while(rep < Util.MAX_TRIES){
 			
 			mc.send(msg);		//msg GetChunk
 			
-			try {
+		/*	try {
 				Thread.sleep(Util.WAITING_TIME);	
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 			
-			/*if(file_chunk_received) break*/
+			/*if(file_chunk_received) break
 			
 			rep++;
-		}
+		}*/
 	}
 }

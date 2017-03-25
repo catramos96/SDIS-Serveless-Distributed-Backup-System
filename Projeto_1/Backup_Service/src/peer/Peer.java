@@ -249,7 +249,7 @@ public class Peer {
 		if(fileManager.chunkExists(fileNo,chunkNo)){
 			randomDelay();
 			System.out.println("(Sent) Type : "+ msg.getType() + " from sender : "+ msg.getSenderId() + " with chunk "+ msg.getChunkNo());
-			mc.send(msg);
+			mdr.send(msg);
 		}
 			
 	}
@@ -257,10 +257,15 @@ public class Peer {
 	/**
 	 * Peer response to other peer CHUNK message
 	 */
-	public synchronized void receivedChunk(String fileNo,int chunkNo){
+	public synchronized void receivedChunk(int chunkNo, byte[] chunkBody)
+	{
+		//TODO falta verificacao do ficheiro --> initiator peer
+		//TODO falta nao enviar o chunk caso seja inititor peer
 		
+		if(!record.recordRestoreChunks(chunkNo,chunkBody))
+			System.out.println("Store for chunk "+ chunkNo+" already exist");				
 	}
-	
+
 	/**
 	 * Peer response to other peer DELETE message
 	 */
