@@ -9,7 +9,7 @@ import resources.Logs;
 public class BackupSystem 
 {
 	public static void main(String[] args) throws IOException
-	{
+	{		
 		if(args.length != 6)
 		{
 			Logs.argsBackupSystemInfo();
@@ -27,7 +27,7 @@ public class BackupSystem
 		
 		System.out.println(peer_id);
 		
-		new Peer(protocol_version,peer_id,parts_ap,parts_mc,parts_mdb,parts_mdr);		
+		new Peer(protocol_version,peer_id,parts_ap,parts_mc,parts_mdb,parts_mdr);	
 	}
 	
 	
@@ -52,4 +52,6 @@ public class BackupSystem
 		
 		return parts;
 	}
+	
+	
 }

@@ -1,12 +1,14 @@
 package network;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 import peer.FileInfo;
 
-public class MulticastRecord {
-
+public class MulticastRecord implements Serializable {
+	
+	private static final long serialVersionUID = 1L;
 	/*
 	 * HashMap<String, HashMap<Integer, ArrayList<Integer>>>
 	 * String -> FileNo
@@ -160,9 +162,7 @@ public class MulticastRecord {
 		{
 			int a = restoreConfirms.get(info).size();
 			int b = info.getNumChunks();
-			
-			//System.out.println(a+" , "+b);
-			
+		
 			return (a==b);
 		}
 		return false;

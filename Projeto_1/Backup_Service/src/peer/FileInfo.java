@@ -1,7 +1,10 @@
 package peer;
 
-public class FileInfo 
+import java.io.Serializable;
+
+public class FileInfo implements Serializable
 {
+	private static final long serialVersionUID = 1L;
 	private String fileId;
 	private String filename;
 	private int numChunks;
@@ -11,10 +14,6 @@ public class FileInfo
 		this.fileId = fileId;
 		this.numChunks = numChunks;
 		String[] parts = filename.split("/+");
-		
-		for (int i = 0; i < parts.length; i++) {
-			System.out.println(parts[i]);
-		}
 		
 		this.filename = parts[parts.length-1];
 	}

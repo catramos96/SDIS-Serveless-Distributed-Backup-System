@@ -1,18 +1,17 @@
 package peer;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.InetAddress;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Random;
 
 import network.DatagramListener;
-import network.Message;
-import resources.Util.MessageType;
 import network.MulticastListener;
 import network.MulticastRecord;
-import protocols.ChunkBackupProtocol;
-import protocols.ChunkRestoreProtocol;
 import resources.Util;
 
 public class Peer {
@@ -47,13 +46,27 @@ public class Peer {
 	 */
 	public Peer(char[] protocolVs, int id, String[] access_point, String[] mc_ap, String[] mdb_ap, String[] mdr_ap)
 	{
+		loadRecord();
+
+		//shutdown
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			public void run() {
+				try {
+					System.out.println("Shouting down ...");
+					Thread.sleep(200);
+					saveRecord();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+
 		mdrRestores = new ArrayList<String>();
 
 		this.ID = id;
 		this.version = protocolVs;
 
 		fileManager = new FileManager(ID,Util.DISK_SPACE_DEFAULT);
-		record = new MulticastRecord();
 
 		try 
 		{
@@ -93,6 +106,50 @@ public class Peer {
 			e.printStackTrace();
 		}
 	}
+	
+	/*
+	 * MulticastRecord Serialization 
+	 */
+
+	public void saveRecord() {
+		try 
+		{
+			FileOutputStream fileOut = new FileOutputStream("../peersDisk/peer"+ID+"/record.ser");
+			ObjectOutputStream out = new ObjectOutputStream(fileOut);
+			out.writeObject(record);
+			out.close();
+			fileOut.close();
+			System.out.printf("Serialized data is saved in peersDisk/peer"+ID+"/record.ser");
+		}
+		catch(IOException i) 
+		{
+			i.printStackTrace();
+			System.out.println("ok");
+		}
+	}
+
+	public void loadRecord() {
+		record = new MulticastRecord();
+		try 
+		{
+			FileInputStream fileIn = new FileInputStream("../peersDisk/peer"+ID+"/record.ser");
+			ObjectInputStream in  = new ObjectInputStream(fileIn);
+			record = (MulticastRecord) in.readObject();
+			in.close();
+			fileIn.close();
+			System.out.printf("Serialized data loaded from peersDisk/peer"+ID+"/record.ser");
+		} 
+		catch (FileNotFoundException e) {
+			//e.printStackTrace();
+			System.out.println("Restore object created");
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+		catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
 
 
 	/*
@@ -101,19 +158,13 @@ public class Peer {
 
 	public synchronized boolean chunkRestored(String fileId, int chunkNo) {
 		String chunkName = chunkNo+fileId;
-
-		if(mdrRestores.contains(chunkName))
-			System.out.println("sim!");
-		else
-			System.out.println("nao...");
-
 		return mdrRestores.contains(chunkName);
 	}
-	
+
 	public synchronized void addRestoredChunk(int chunkNo, String fileId){
 		mdrRestores.add(chunkNo+fileId);
 	}
-	
+
 	public char[] getVersion() {
 		return version;
 	}
@@ -137,7 +188,7 @@ public class Peer {
 	public MulticastListener getMdb(){
 		return mdb;
 	}
-	
+
 	public MulticastListener getMdr(){
 		return mdr;
 	}
