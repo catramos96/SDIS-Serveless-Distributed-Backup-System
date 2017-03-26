@@ -225,8 +225,6 @@ public class FileManager {
 
 	public void restoreFile(String filename, HashMap<Integer, byte[]> restores) throws IOException
 	{
-		System.out.println("entrou");
-		
 		FileOutputStream out = new FileOutputStream(diskDIR + Util.RESTORES_DIR +filename);
 
 		for (int i = 0; i < restores.size(); i++) 
@@ -243,6 +241,30 @@ public class FileManager {
 		}
 		
 		out.close();
+	}
+
+	public void deleteChunks(String fileId) 
+	{
+		File dir = new File(diskDIR + Util.CHUNKS_DIR);
+		if(dir.exists() && dir.isDirectory())
+		{
+			File[] files = dir.listFiles();
+			
+			for(File file : files)
+			{
+				String filename = file.getName();
+				String fileIdCalc = filename.substring(1,filename.length());
+				if(fileIdCalc.equals(fileId))
+				{
+					System.out.println(fileIdCalc);
+					try {
+						Files.delete(file.toPath());
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
 	}
 
 }

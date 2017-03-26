@@ -76,7 +76,7 @@ public class DatagramListener extends Thread
 		else if(parts[0].equals("RESTORE"))
 			new RestoreTrigger(peer,filename).start();	
 		else if(parts[0].equals("DELETE"))
-			new DeleteTrigger().start();
+			new DeleteTrigger(peer,filename).start();	
 		else if(parts[0].equals("RECLAIM"))
 			new ReclaimTrigger().start();
 		else if(parts[0].equals("STATE"))

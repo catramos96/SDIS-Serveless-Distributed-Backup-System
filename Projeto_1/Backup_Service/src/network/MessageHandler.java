@@ -159,7 +159,7 @@ public class MessageHandler extends Thread
 	 * Peer response to other peer DELETE message
 	 */
 	private void handleDelete(String fileId){
-		/* ... */
+		peer.fileManager.deleteChunks(fileId);
 	}
 	
 	/**

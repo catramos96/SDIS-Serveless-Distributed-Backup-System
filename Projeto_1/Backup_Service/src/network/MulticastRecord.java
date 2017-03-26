@@ -7,7 +7,7 @@ import java.util.HashMap;
 import peer.FileInfo;
 
 public class MulticastRecord implements Serializable {
-	
+
 	private static final long serialVersionUID = 1L;
 	/*
 	 * HashMap<String, HashMap<Integer, ArrayList<Integer>>>
@@ -61,7 +61,7 @@ public class MulticastRecord implements Serializable {
 			if(fileinfo.getFileId().equals(fileID))
 			{
 				HashMap<Integer,ArrayList<Integer>> tmp = storedConfirms.get(fileinfo);
-			
+
 				//other peers already stored this chunkNo
 				if(tmp.containsKey(chunkNo))
 				{	
@@ -93,7 +93,7 @@ public class MulticastRecord implements Serializable {
 			if(fileinfo.getFileId().equals(fileId))
 			{
 				HashMap<Integer,ArrayList<Integer>> tmp = storedConfirms.get(fileinfo);
-				
+
 				if(tmp.containsKey(chunkNo))
 				{
 					return tmp.get(chunkNo);
@@ -101,6 +101,18 @@ public class MulticastRecord implements Serializable {
 			}
 		}
 		return null;
+	}
+	
+	public void deleteStored(String fileId) {
+		
+		for (FileInfo fileinfo : storedConfirms.keySet()) 
+		{
+			if(fileinfo.getFileId().equals(fileId))
+			{
+				storedConfirms.remove(fileinfo);
+				return;
+			}
+		}
 	}
 
 	/*
@@ -162,7 +174,7 @@ public class MulticastRecord implements Serializable {
 		{
 			int a = restoreConfirms.get(info).size();
 			int b = info.getNumChunks();
-		
+
 			return (a==b);
 		}
 		return false;

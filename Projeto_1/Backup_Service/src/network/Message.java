@@ -30,8 +30,22 @@ public class Message
 	 * REMOVED <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
 	 */
 	
+	public Message(Util.MessageType type, char[] version, int senderId, String fileId) {
+		if(!type.name().equals("DELETE"))
+			System.out.println("Wrong Constructor delete");
+		else
+		{
+			this.type = type;
+			this.version = version;
+			this.senderId = senderId;
+			this.fileId = fileId;
+		}
+	}
+	
 	public Message(Util.MessageType type, char[] version, int senderId, String fileId, int chunkNo, int ReplicationDeg, byte[] body)
 	{
+		if(!type.name().equals("PUTCHUNK"))
+			System.out.println("Wrong Constructor putchunk");
 		this.type = type;
 		this.version = version;
 		this.senderId = senderId;
@@ -43,6 +57,8 @@ public class Message
 	
 	public Message(Util.MessageType type, char[] version, int senderId, String fileId, int chunkNo)
 	{
+		if(!type.name().equals("STORED") || !type.name().equals("GETCHUNK"))
+			System.out.println("Wrong Constructor stored/getchunk");
 		this.type = type;
 		this.version = version;
 		this.senderId = senderId;
@@ -52,14 +68,20 @@ public class Message
 	
 	public Message(Util.MessageType type, char[] version, int senderId, String fileId, int chunkNo, byte[] body)
 	{
-		this.type = type;
-		this.version = version;
-		this.senderId = senderId;
-		this.fileId = fileId;
-		this.chunkNo = chunkNo;
-		this.body = body;
+		if(!type.name().equals("CHUNK"))
+			System.out.println("Wrong Constructor chunk");
+		else
+		{
+			this.type = type;
+			this.version = version;
+			this.senderId = senderId;
+			this.fileId = fileId;
+			this.chunkNo = chunkNo;
+			this.body = body;
+		}
 	}
-	
+
+
 	/**
 	 * Create new message
 	 * @return

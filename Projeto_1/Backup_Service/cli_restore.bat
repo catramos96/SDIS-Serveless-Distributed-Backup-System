@@ -1,0 +1,1 @@
+start java cli.TestApp 8000 RESTORE ../resources/hello.png
