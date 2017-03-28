@@ -292,9 +292,12 @@ public class FileManager implements Serializable{
 		{
 			File[] files = dir.listFiles();
 			
+			int spaceReleased = 0;
+			
 			for(File file : files)
 			{
-				spaceToReclaim -= file.getTotalSpace();
+				remaingSpace += file.getTotalSpace();	//Atualiza o espaço disponível
+				
 				String filename = file.getName();
 				String fileId = filename.substring(1,filename.length());	//TMP - JUST 4 PRINT
 				Integer chunkNo = Integer.parseInt(filename.substring(0,1));
@@ -312,9 +315,11 @@ public class FileManager implements Serializable{
 					e.printStackTrace();
 				}*/
 				
-				if(spaceToReclaim <= 0)
+				if(remaingSpace >= spaceToReclaim)
 					break;
 			}
+			
+			totalSpace = spaceToReclaim;
 			
 		}
 		

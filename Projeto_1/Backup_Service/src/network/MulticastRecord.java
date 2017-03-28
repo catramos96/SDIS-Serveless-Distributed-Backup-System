@@ -114,7 +114,58 @@ public class MulticastRecord implements Serializable {
 			}
 		}
 	}
+	
+	public boolean deleteStored(String fileId, int chunkNo,int peerNo){
+		for (FileInfo fileinfo : storedConfirms.keySet()) 
+		{
+			if(fileinfo.getFileId().equals(fileId))
+			{
+				//chunks of file
+				HashMap<Integer, ArrayList<Integer>> chunkPeersStored = storedConfirms.get(fileinfo);
+				
+				if(chunkPeersStored.containsKey(chunkNo)){
+					//peers of file
+					ArrayList<Integer> peersList = chunkPeersStored.get(chunkNo);
+					
+					//remove peer from list of stored
+					peersList.remove(peerNo);			
+					
+					//update chunkNo peersList
+					chunkPeersStored.put(chunkNo, peersList);
+					
+					//No more peers for chunk ?
+					if(peersList.size() == 0){		
+						
+						//Remove chunk
+						chunkPeersStored.remove(chunkNo);
+						
+						//No more chunks for file ?
+						if(chunkPeersStored.size() == 0){	
+							
+							//Remove file
+							storedConfirms.remove(fileinfo);
+							return true;
+						}
+					}
+					
+					//update on hashmap
+					storedConfirms.put(fileinfo,chunkPeersStored);
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 
+	
+	
+	/*public int replicationDegreeLeft(String fileId, int chunkNo){
+		int n = 0;
+		int repDeg = 0;
+		ArrayList<Integer> stored = checkStored(fileId, chunkNo);
+		
+	}*/
+	
 	/*
 	 * RESTORE
 	 */
@@ -188,4 +239,5 @@ public class MulticastRecord implements Serializable {
 		}
 		return null;
 	}
+
 }
