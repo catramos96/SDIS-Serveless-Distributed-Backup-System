@@ -8,8 +8,10 @@ import java.util.Random;
 
 import resources.Logs;
 import resources.Util;
+import resources.Util.MessageType;
 import peer.Chunk;
 import peer.Peer;
+import protocols.ChunkBackupProtocol;
 
 public class MessageHandler extends Thread
 {
@@ -165,13 +167,24 @@ public class MessageHandler extends Thread
 	 */
 	private void handleRemoved(String fileId, int chunkNo, int peerNo){
 		
+		MulticastRecord record = peer.getMulticastRecord();
+		
+		String filename = record.getFilename(fileId);
+		
 		//if peer is owner of original file
-		if(peer.getMulticastRecord().deleteStored(fileId, chunkNo, peerNo)){
+		if(record.deleteStored(fileId, chunkNo, peerNo) && filename != null){
 			
 			//calculate replicationDegreeLeft
+			int repDegree = record.getReplicationDegree(fileId);
 			
-			//initiate backup protocol
+			Chunk c = peer.fileManager.splitFileInChunks(filename).get(chunkNo);
 			
+			randomDelay();
+			
+			if(!record.checkPutchunk(fileId, chunkNo)){
+				Message msg = new Message(MessageType.PUTCHUNK,peer.getVersion(),peer.getID(),fileId,chunkNo,repDegree,c.getData());
+				new ChunkBackupProtocol(peer.getMdb(), record, msg);
+			}
 		}
 		
 	}

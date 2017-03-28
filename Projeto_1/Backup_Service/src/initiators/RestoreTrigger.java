@@ -38,7 +38,7 @@ public class RestoreTrigger extends Thread{
 		int chunks = peer.fileManager.getFileNumChunks(filename);
 
 		//start recording chunk restores
-		FileInfo info = new FileInfo(fileId,filename,chunks);
+		FileInfo info = new FileInfo(fileId,filename,chunks,1);			//1 - TMP -> REPLICATION DEGREE
 		
 		peer.record.startRecordRestores(info);
 

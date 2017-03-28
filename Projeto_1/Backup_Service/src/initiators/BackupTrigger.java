@@ -39,7 +39,7 @@ public class BackupTrigger extends Thread{
 			Logs.sentMessageLog(msg);
 			
 			//initiate file record
-			FileInfo fileinfo = new FileInfo(msg.getFileId(),filename,chunks.size());
+			FileInfo fileinfo = new FileInfo(msg.getFileId(),filename,chunks.size(),replicationDegree);
 			peer.getMulticastRecord().startRecordStores(fileinfo);
 
 			//warn other peers

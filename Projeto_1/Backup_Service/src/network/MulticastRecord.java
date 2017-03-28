@@ -17,18 +17,13 @@ public class MulticastRecord implements Serializable {
 	 */
 	private volatile HashMap<FileInfo, HashMap<Integer, ArrayList<Integer>>> storedConfirms = null;
 	private volatile HashMap<FileInfo, HashMap<Integer, byte[] >> restoreConfirms = null;
-
-	/*
-	private volatile HashMap<int[], ArrayList<Integer>> putChunks = null;
-	private volatile HashMap<int[], ArrayList<Integer>> restoreChunks = null;*/
+	private volatile HashMap<String, ArrayList<Integer>> putchunkConfirms = null;		//for spacereclaim confirmation
 
 	public MulticastRecord()
 	{
 		storedConfirms = new HashMap<FileInfo, HashMap<Integer, ArrayList<Integer>>>();
 		restoreConfirms = new HashMap<FileInfo, HashMap<Integer, byte[] >>();
-
-		/*putChunks = new HashMap<int[], ArrayList<Integer>>();
-		restoreChunks = new HashMap<int[], ArrayList<Integer>>();*/
+		putchunkConfirms = new HashMap<String, ArrayList<Integer>>();
 	};
 
 	/*
@@ -103,7 +98,7 @@ public class MulticastRecord implements Serializable {
 		return null;
 	}
 	
-	public void deleteStored(String fileId) {
+	public synchronized void deleteStored(String fileId) {
 		
 		for (FileInfo fileinfo : storedConfirms.keySet()) 
 		{
@@ -115,7 +110,7 @@ public class MulticastRecord implements Serializable {
 		}
 	}
 	
-	public boolean deleteStored(String fileId, int chunkNo,int peerNo){
+	public synchronized boolean deleteStored(String fileId, int chunkNo,int peerNo){
 		for (FileInfo fileinfo : storedConfirms.keySet()) 
 		{
 			if(fileinfo.getFileId().equals(fileId))
@@ -138,14 +133,6 @@ public class MulticastRecord implements Serializable {
 						
 						//Remove chunk
 						chunkPeersStored.remove(chunkNo);
-						
-						//No more chunks for file ?
-						if(chunkPeersStored.size() == 0){	
-							
-							//Remove file
-							storedConfirms.remove(fileinfo);
-							return true;
-						}
 					}
 					
 					//update on hashmap
@@ -157,14 +144,30 @@ public class MulticastRecord implements Serializable {
 		return false;
 	}
 
-	
-	
-	/*public int replicationDegreeLeft(String fileId, int chunkNo){
-		int n = 0;
-		int repDeg = 0;
-		ArrayList<Integer> stored = checkStored(fileId, chunkNo);
+	public synchronized String getFilename(String fileId){
 		
-	}*/
+		for (FileInfo fileinfo : storedConfirms.keySet()) 
+		{
+			if(fileinfo.getFileId().equals(fileId))
+			{
+				return fileinfo.getFilename();
+			}
+		}
+		
+		return null;
+	}
+	
+	public synchronized int getReplicationDegree(String fileId){
+		
+		for (FileInfo fileinfo : storedConfirms.keySet()) 
+		{
+			if(fileinfo.getFileId().equals(fileId))
+			{
+				return fileinfo.getRepDegree();
+			}
+		}
+		return 0;
+	}
 	
 	/*
 	 * RESTORE
@@ -208,7 +211,7 @@ public class MulticastRecord implements Serializable {
 		return false;	
 	}
 
-	public boolean checkRestore(String fileId) {
+	public synchronized boolean checkRestore(String fileId) {
 
 		//finds file at restored file of this initiator peer
 		for (FileInfo fileinfo : restoreConfirms.keySet()) 
@@ -219,7 +222,7 @@ public class MulticastRecord implements Serializable {
 		return false;
 	}
 
-	public boolean allRestored(FileInfo info)
+	public synchronized boolean allRestored(FileInfo info)
 	{
 		if(restoreConfirms.containsKey(info))
 		{
@@ -231,7 +234,7 @@ public class MulticastRecord implements Serializable {
 		return false;
 	}
 
-	public HashMap<Integer,byte[] > getRestores(FileInfo info) 
+	public synchronized HashMap<Integer,byte[] > getRestores(FileInfo info) 
 	{
 		if(restoreConfirms.containsKey(info))
 		{
@@ -240,4 +243,31 @@ public class MulticastRecord implements Serializable {
 		return null;
 	}
 
+	/*
+	 * PUTCHUNK (SpaceReclaiming);
+	 */
+	
+	public synchronized void startRecordPutchunks(String fileId){
+		putchunkConfirms.put(fileId, new ArrayList());
+	}
+	
+	public synchronized boolean recordPutchunk(String fileId, int chunkNo){
+		
+		if(putchunkConfirms.containsKey(fileId)){
+			ArrayList<Integer> chunks = putchunkConfirms.get(fileId);
+			chunks.add(chunkNo);
+			putchunkConfirms.put(fileId, chunks);
+			return true;
+		}
+		
+		return false;
+	}
+	
+	public synchronized boolean checkPutchunk(String fileId, int chunkNo){
+		if(putchunkConfirms.containsKey(fileId)){
+			if(putchunkConfirms.get(fileId).contains(chunkNo))
+				return true;
+		}
+		return false;			
+	}
 }
