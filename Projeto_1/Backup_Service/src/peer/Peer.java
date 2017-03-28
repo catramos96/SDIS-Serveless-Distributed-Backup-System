@@ -19,6 +19,7 @@ public class Peer {
 	//TEMPORARIO
 	private ArrayList<String> mdrRestores;
 
+	/*informations*/
 	private int ID = 0;
 	private char[] version;
 
@@ -29,7 +30,7 @@ public class Peer {
 	public MulticastListener mdb = null;
 	public MulticastListener mdr = null;
 
-	/*objects*/
+	/*FileManeger*/
 	public FileManager fileManager = null;
 
 	/*MulticastRecord*/
@@ -71,7 +72,7 @@ public class Peer {
 			//socket de conexao com o cliente
 			InetAddress address = InetAddress.getByName(access_point[0]);
 			int port = Integer.parseInt(access_point[1]);
-			socket = new DatagramListener(address, port+id,this);	
+			socket = new DatagramListener(address, port,this);	
 
 			//sockets multicast
 			if(mc_ap[0] == "")

@@ -32,8 +32,9 @@ public class DatagramListener extends Thread
 	{	
 		try 
 		{
+			System.out.println("Abriu o socket na porta "+this.port + " "+this.address);
 			//abrir a conexao
-			socket = new DatagramSocket(this.port);
+			socket = new DatagramSocket(this.port, this.address);
 			setRunning(true);
 			DatagramPacket r_packet;
 			DatagramPacket s_packet;
@@ -72,7 +73,7 @@ public class DatagramListener extends Thread
 		System.out.println(parts[0]);
 		
 		if(parts[0].equals("BACKUP"))
-			new BackupTrigger(peer,arg1, Integer.parseInt(parts[2])).start();	//file name + replicationDegree
+			new BackupTrigger(peer,arg1,Integer.parseInt(parts[2])).start();	//file name + replicationDegree
 		else if(parts[0].equals("RESTORE"))
 			new RestoreTrigger(peer,arg1).start();	
 		else if(parts[0].equals("DELETE"))

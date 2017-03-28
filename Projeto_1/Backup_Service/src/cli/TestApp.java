@@ -36,11 +36,15 @@ public class TestApp
 		
 		//abrir o socket de ligacao com o peer
 		socket = new DatagramSocket();
+		
+		System.out.println("abriu o socket");
 	
 		//trasmitir informacao
 		byte[] sbuf = (message+'\n').getBytes();	//oper + args
 		DatagramPacket packet = new DatagramPacket(sbuf, sbuf.length,address,port);
 		socket.send(packet);
+		
+		System.out.println("enviou mensagem "+message);
 		
 		//receber informacao
 		byte[] rbuf = new byte[256];
