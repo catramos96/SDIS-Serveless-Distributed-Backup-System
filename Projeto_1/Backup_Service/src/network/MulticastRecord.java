@@ -239,6 +239,9 @@ public class MulticastRecord implements Serializable {
 		return false;
 	}
 
+	/*
+	 * Gets e sets
+	 */
 	public synchronized HashMap<Integer,byte[] > getRestores(FileInfo info) 
 	{
 		if(restoreConfirms.containsKey(info))
@@ -247,7 +250,11 @@ public class MulticastRecord implements Serializable {
 		}
 		return null;
 	}
-
+	
+	public HashMap<FileInfo, HashMap<Integer, ArrayList<Integer>>> getStored() {
+		return storedConfirms;
+	}
+	
 	/*
 	 * PUTCHUNK (SpaceReclaiming);
 	 */

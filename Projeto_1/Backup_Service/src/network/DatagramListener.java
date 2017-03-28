@@ -39,9 +39,9 @@ public class DatagramListener extends Thread
 			DatagramPacket r_packet;
 			DatagramPacket s_packet;
 			
-			//receber a informacao
 			while(isRunning())
 			{
+				//recebe a informacao
 				byte[] rbuf = new byte[256];
 				r_packet = new DatagramPacket(rbuf, rbuf.length);
 				socket.receive(r_packet);
@@ -50,7 +50,15 @@ public class DatagramListener extends Thread
 				handle(r_packet.getData());
 				
 				//envia uma confirmacao da rececao
-				byte[] sbuf = ("bye").getBytes();
+				String message;
+				do
+				{
+					message = peer.getMessage();
+				}while(message == null);
+				
+				peer.resetMessage();
+				
+				byte[] sbuf = message.getBytes();
 				s_packet = new DatagramPacket(sbuf, sbuf.length,r_packet.getAddress(),r_packet.getPort());
 				socket.send(s_packet);
 			}
@@ -81,8 +89,12 @@ public class DatagramListener extends Thread
 		else if(parts[0].equals("RECLAIM"))
 			new ReclaimTrigger(peer,Integer.parseInt(arg1)).start();
 		else if(parts[0].equals("STATE"))
-			new StateTrigger().start();
-			
+			new StateTrigger(peer).start();
+	}
+	
+	public byte[] write(String message) 
+	{
+		return message.getBytes();
 	}
 
 	protected boolean isRunning() {

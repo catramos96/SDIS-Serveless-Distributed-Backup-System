@@ -23,7 +23,7 @@ public class DeleteTrigger extends Thread{
 		String fileId;
 		
 		try	{
-			fileId = peer.fileManager.getFileIdFromResources(filename);
+			fileId = peer.fileManager.getFileIdFromFilename(filename);
 		} 
 		catch (NoSuchAlgorithmException e){
 			Logs.errorFileId(filename);
@@ -44,5 +44,7 @@ public class DeleteTrigger extends Thread{
 		peer.mc.send(msg);
 		
 		peer.getMulticastRecord().deleteStored(fileId);		
+		
+		peer.setMessage("delete file");
 	}
 }

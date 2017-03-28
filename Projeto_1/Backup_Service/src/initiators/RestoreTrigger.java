@@ -28,7 +28,7 @@ public class RestoreTrigger extends Thread{
 		String fileId;
 		
 		try	{
-			fileId = peer.fileManager.getFileIdFromResources(filename);
+			fileId = peer.fileManager.getFileIdFromFilename(filename);
 		} 
 		catch (NoSuchAlgorithmException e){
 			Logs.errorFileId(filename);
@@ -67,5 +67,7 @@ public class RestoreTrigger extends Thread{
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		peer.setMessage("restore");
 	}
 }

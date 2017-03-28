@@ -24,7 +24,7 @@ public class ReclaimTrigger extends Thread{
 	
 	public void run(){
 		
-		//Calcula a memória necessária a libertar
+		//Calcula a memï¿½ria necessï¿½ria a libertar
 		int memoryToRelease = peer.fileManager.memoryToRelease(spaceToReclaim);
 		
 		System.out.println("SPACE: " + spaceToReclaim);
@@ -32,7 +32,7 @@ public class ReclaimTrigger extends Thread{
 		
 		if(memoryToRelease > 0){
 			
-			//elimina os ficheiros conforme o espaço necessário
+			//elimina os ficheiros conforme o espaï¿½o necessï¿½rio
 			ArrayList<String> backupChunks = peer.fileManager.deleteNecessaryChunks(memoryToRelease);
 			
 			for(String chunk : backupChunks){
@@ -57,6 +57,7 @@ public class ReclaimTrigger extends Thread{
 		System.out.println("TOTAL MEMORY: " + peer.fileManager.getTotalSpace());
 		System.out.println("REMAING MEMORY. " + peer.fileManager.getRemaingSpace());
 		
+		peer.setMessage("reclaim");
 	}
-	
+
 }
