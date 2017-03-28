@@ -46,5 +46,6 @@ public class BackupTrigger extends Thread{
 			new ChunkBackupProtocol(peer.getMdb(),peer.getMulticastRecord(),msg).start(); // fazer aqui !!!
 		}
 		
+		peer.setMessage("backup file");
 	}
 }

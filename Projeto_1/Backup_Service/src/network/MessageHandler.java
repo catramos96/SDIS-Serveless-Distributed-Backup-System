@@ -102,7 +102,7 @@ public class MessageHandler extends Thread
 			peer.getMc().send(msg);
 			//only save if file doesn't exist
 			if(!alreadyExists)
-				peer.fileManager.save(c);
+				peer.fileManager.saveChunk(c);
 
 			/*}	*/
 		}

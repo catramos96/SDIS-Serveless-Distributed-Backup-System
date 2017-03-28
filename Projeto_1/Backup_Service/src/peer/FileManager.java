@@ -19,18 +19,20 @@ import resources.Logs;
 
 public class FileManager implements Serializable{
 	private static final long serialVersionUID = 1L;
-	
+
 	private String diskDIR = null;
 	private final int CHUNKLENGTH = 64*1000;
 	private int peerID = -1;
 	private int totalSpace = 0;
 	private int remaingSpace = 0;
 
-	FileManager(int peerId, int totalSpace){
+	FileManager(int peerId, int totalSpace)
+	{
 		this.peerID = peerId;
 		this.totalSpace = totalSpace;
 		this.remaingSpace = this.totalSpace;
 
+		//create directories
 		diskDIR = Util.PEERS_DIR;
 		File dir = new File(new String(diskDIR));
 		if(!(dir.exists() && dir.isDirectory()))
@@ -43,20 +45,23 @@ public class FileManager implements Serializable{
 		{
 			dir.mkdir();
 		}
-		
+
 		dir = new File(new String(diskDIR + Util.CHUNKS_DIR));
 		if(!(dir.exists() && dir.isDirectory()))
 		{
 			dir.mkdir();
 		}
-		
+
 		dir = new File(new String(diskDIR + Util.RESTORES_DIR));
 		if(!(dir.exists() && dir.isDirectory()))
 		{
 			dir.mkdir();
 		}
-
 	}
+
+	/*
+	 * BACKUP
+	 */
 
 	public ArrayList<Chunk> splitFileInChunks(String filename) 
 	{
@@ -68,7 +73,7 @@ public class FileManager implements Serializable{
 		{
 			try 
 			{
-				String fileID = getFileID(file);
+				String fileID = hashFileId(file);
 				int numChunks = (int) (file.length() / CHUNKLENGTH) + 1; 
 				byte[] bytes = Files.readAllBytes(file.toPath());
 				int byteCount = 0;
@@ -94,22 +99,6 @@ public class FileManager implements Serializable{
 					chunkList.add(c);
 				}
 
-				//Teste de clonagem de ficheiro
-				/*byte[] clonedData = new byte[(int)file.length()];
-				byteCount = 0;
-				for (Chunk c : chunkList) {
-
-					for (byte b : c.getData()) {
-						clonedData[byteCount] = b;
-						byteCount++;
-					}
-				}
-				System.out.println("Writing test clone file");
-				FileOutputStream fos = new FileOutputStream("test_file.png");
-				fos.write(clonedData);
-				fos.close();
-				System.out.println("Test clone file written.");*/
-
 			} 
 			catch (NoSuchAlgorithmException e) 
 			{
@@ -128,28 +117,7 @@ public class FileManager implements Serializable{
 		return chunkList;
 	}
 
-	/*
-	 * Search by filename
-	 */
-	public int getFileNumChunks(String filename)
-	{
-		File file = new File(filename);
-		if(file.exists())
-		{
-			return (int) (file.length() / CHUNKLENGTH) + 1;
-		}	
-		return -1;
-	}
-
-	public String getFileIdFromResources(String filename) throws NoSuchAlgorithmException
-	{
-		File file = new File(filename);
-		if(file.exists())
-			return getFileID(file);
-		return null;
-	}
-
-	private String getFileID(File file) throws NoSuchAlgorithmException
+	private String hashFileId(File file) throws NoSuchAlgorithmException
 	{
 		//filename, last modification, ownwer
 		String textToEncrypt = file.getName() + file.lastModified() + peerID;	
@@ -164,15 +132,7 @@ public class FileManager implements Serializable{
 		return DatatypeConverter.printHexBinary(hash);
 	}
 
-	//Receives a fileNo and chunkNo
-	public boolean chunkExists(String fileNo, int chunkNo){
-		String chunkName = createChunkName(fileNo,chunkNo);
-		File file = new File(chunkName);
-
-		return (file.exists() && file.isFile());
-	}
-
-	public void save(Chunk c)
+	public void saveChunk(Chunk c)
 	{
 		byte data[] = c.getData();
 		FileOutputStream out;
@@ -192,7 +152,141 @@ public class FileManager implements Serializable{
 		remaingSpace -= data.length;
 	}
 
-	public byte[] getChunkContent(String fileNo,int chunkNo){
+	/*
+	 * RESTORE
+	 */
+
+	public void restoreFile(String filename, HashMap<Integer, byte[]> restores) throws IOException
+	{
+		FileOutputStream out = new FileOutputStream(diskDIR + Util.RESTORES_DIR +filename);
+
+		for (int i = 0; i < restores.size(); i++) 
+		{			
+			//search for chunks from 0 to size
+			if(restores.containsKey(new Integer(i)))
+			{
+				byte data[] = restores.get(new Integer(i));
+				out.write(data);
+			}
+			else{
+				Logs.errorRestoringFile(filename);
+			}
+		}
+
+		out.close();
+	}
+
+	/*
+	 * DELETE
+	 */
+
+	public void deleteChunks(String fileId) 
+	{
+		File[] files = getFilesFromDirectory(diskDIR + Util.CHUNKS_DIR);
+		
+		if(files != null)
+		{
+			for(File file : files)
+			{
+				String filename = file.getName();
+				String fileIdCalc = filename.substring(1,filename.length());
+				if(fileIdCalc.equals(fileId))
+				{
+					System.out.println(fileIdCalc);
+					try {
+						Files.delete(file.toPath());
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+	}
+
+	/*
+	 * RECALIMING
+	 */
+
+	public int memoryToRelease(int newTotalSpace){
+		int needRelease = newTotalSpace - (totalSpace - remaingSpace);
+
+		System.out.println("NewTotal Space: " + newTotalSpace);
+		System.out.println("Need release: " + needRelease);
+		System.out.println("Total space: " + totalSpace);
+		System.out.println("Remaing Space: " + remaingSpace);
+
+		if(needRelease < 0)
+			return needRelease;
+		else
+			return 0;	
+	}
+
+	public ArrayList<String> deleteNecessaryChunks(int spaceToReclaim){
+
+		ArrayList<String> chunksDeleted = new ArrayList();
+
+		File dir = new File(diskDIR + Util.CHUNKS_DIR);
+		if(dir.exists() && dir.isDirectory())
+		{
+			File[] files = dir.listFiles();
+
+			int spaceReleased = 0;
+
+			for(File file : files)
+			{
+				remaingSpace += file.getTotalSpace();	//Atualiza o espaço disponível
+
+				String filename = file.getName();
+				String fileId = filename.substring(1,filename.length());	//TMP - JUST 4 PRINT
+				Integer chunkNo = Integer.parseInt(filename.substring(0,1));
+
+				System.out.println("FILEID: " + fileId);
+				System.out.println("CHUNKNO: " + chunkNo);
+
+				//try {
+
+				chunksDeleted.add(filename); //chunkNo + fileId
+
+				//Files.delete(file.toPath());
+
+				/*} catch (IOException e) {
+					e.printStackTrace();
+				}*/
+
+				if(remaingSpace >= spaceToReclaim)
+					break;
+			}
+
+			totalSpace = spaceToReclaim;
+
+		}
+
+		return chunksDeleted;
+	}
+
+	/*
+	 * Gets e Sets
+	 */
+	public String getFileIdFromFilename(String filename) throws NoSuchAlgorithmException
+	{
+		File file = new File(filename);
+		if(file.exists())
+			return hashFileId(file);
+		return null;
+	}
+
+	public int getFileNumChunks(String filename)
+	{
+		File file = new File(filename);
+		if(file.exists())
+		{
+			return (int) (file.length() / CHUNKLENGTH) + 1;
+		}	
+		return -1;
+	}
+
+	public byte[] getChunkContent(String fileNo,int chunkNo)
+	{
 		String chunkName = createChunkName(fileNo,chunkNo);
 		File file = new File(chunkName);
 		byte[] data = null;
@@ -212,119 +306,49 @@ public class FileManager implements Serializable{
 		}
 		return data;
 	}
+	
+	public File[] getFilesFromDirectory(String dirName)
+	{
+		File dir = new File(dirName);
+		if(dir.exists() && dir.isDirectory())
+		{
+			return dir.listFiles();
+		}
+		return null;
+	}
+
+	public int getRemainingSpace(){
+		return this.remaingSpace;
+	}
+
+	public int getTotalSpace(){
+		return this.totalSpace;
+	}
 
 	public boolean fileExists(File file){
 		return file.exists();
+	}
+	
+	//Receives a fileNo and chunkNo
+	public boolean chunkExists(String fileId, int chunkNo)
+	{
+		String chunkName = createChunkName(fileId,chunkNo);
+		File file = new File(chunkName);
+
+		return (file.exists() && file.isFile());
 	}
 
 	public boolean hasSpaceAvailable(Chunk c){
 		return (c.getData().length <= remaingSpace);
 	}
 
-	private String createChunkName(String fileNo, int chunkNo){
+	/*
+	 * OTHERS
+	 */
+
+	private String createChunkName(String fileNo, int chunkNo)
+	{
 		return new String(diskDIR + Util.CHUNKS_DIR + chunkNo+ fileNo);
 	}
 
-	public void restoreFile(String filename, HashMap<Integer, byte[]> restores) throws IOException
-	{
-		FileOutputStream out = new FileOutputStream(diskDIR + Util.RESTORES_DIR +filename);
-
-		for (int i = 0; i < restores.size(); i++) 
-		{			
-			//search for chunks from 0 to size
-			if(restores.containsKey(new Integer(i)))
-			{
-				byte data[] = restores.get(new Integer(i));
-				out.write(data);
-			}
-			else{
-				Logs.errorRestoringFile(filename);
-			}
-		}
-		
-		out.close();
-	}
-
-	public void deleteChunks(String fileId) 
-	{
-		File dir = new File(diskDIR + Util.CHUNKS_DIR);
-		if(dir.exists() && dir.isDirectory())
-		{
-			File[] files = dir.listFiles();
-			
-			for(File file : files)
-			{
-				String filename = file.getName();
-				String fileIdCalc = filename.substring(1,filename.length());
-				if(fileIdCalc.equals(fileId))
-				{
-					System.out.println(fileIdCalc);
-					try {
-						Files.delete(file.toPath());
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			}
-		}
-	}
-
-	public int memoryToRelease(int newTotalSpace){
-		int needRelease = newTotalSpace - (totalSpace - remaingSpace);
-		
-		System.out.println("NewTotal Space: " + newTotalSpace);
-		System.out.println("Need release: " + needRelease);
-		System.out.println("Total space: " + totalSpace);
-		System.out.println("Remaing Space: " + remaingSpace);
-		
-		if(needRelease < 0)
-			return needRelease;
-		else
-			return 0;	
-	}
-	
-	public ArrayList<String> deleteNecessaryChunks(int spaceToReclaim){
-		
-		ArrayList<String> chunksDeleted = new ArrayList();
-		
-		File dir = new File(diskDIR + Util.CHUNKS_DIR);
-		if(dir.exists() && dir.isDirectory())
-		{
-			File[] files = dir.listFiles();
-			
-			int spaceReleased = 0;
-			
-			for(File file : files)
-			{
-				remaingSpace += file.getTotalSpace();	//Atualiza o espaço disponível
-				
-				String filename = file.getName();
-				String fileId = filename.substring(1,filename.length());	//TMP - JUST 4 PRINT
-				Integer chunkNo = Integer.parseInt(filename.substring(0,1));
-				
-				System.out.println("FILEID: " + fileId);
-				System.out.println("CHUNKNO: " + chunkNo);
-				
-				//try {
-				
-					chunksDeleted.add(filename); //chunkNo + fileId
-						
-					//Files.delete(file.toPath());
-					
-				/*} catch (IOException e) {
-					e.printStackTrace();
-				}*/
-				
-				if(remaingSpace >= spaceToReclaim)
-					break;
-			}
-			
-			totalSpace = spaceToReclaim;
-			
-		}
-		
-		return chunksDeleted;
-	}
-		  
-	
 }

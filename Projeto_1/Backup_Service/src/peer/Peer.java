@@ -18,6 +18,7 @@ public class Peer {
 
 	//TEMPORARIO
 	private ArrayList<String> mdrRestores;
+	String message;
 
 	/*informations*/
 	private int ID = 0;
@@ -47,10 +48,8 @@ public class Peer {
 	 */
 	public Peer(char[] protocolVs, int id, String[] access_point, String[] mc_ap, String[] mdb_ap, String[] mdr_ap)
 	{
-		
-		
+		//init record
 		loadRecord();
-		
 
 		//shutdown
 		Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -224,5 +223,17 @@ public class Peer {
 
 	public MulticastRecord getMulticastRecord(){
 		return record;
+	}
+
+	public String getMessage() {
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+	public void resetMessage() {
+		message = null;
 	}
 }

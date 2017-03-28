@@ -240,4 +240,12 @@ public class MulticastRecord implements Serializable {
 		return null;
 	}
 
+	/*
+	 * Gets e sets
+	 */
+	
+	public HashMap<FileInfo, HashMap<Integer, ArrayList<Integer>>> getStored() {
+		return storedConfirms;
+	}
+
 }

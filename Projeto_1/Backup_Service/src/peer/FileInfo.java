@@ -42,4 +42,8 @@ public class FileInfo implements Serializable
 		this.fileId = fileId;
 	}
 
+	public int getReplicationDeg() {
+		return 0;
+	}
+
 }

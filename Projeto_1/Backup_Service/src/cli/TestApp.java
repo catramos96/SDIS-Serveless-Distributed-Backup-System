@@ -4,6 +4,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Scanner;
 
 import resources.Logs;
 
@@ -17,7 +18,7 @@ public class TestApp
 	{
 		int argsLength = args.length;
 		
-		if(argsLength < 3)
+		if(argsLength < 2)
 		{
 			Logs.argsClientInfo();
 			return;
@@ -37,24 +38,30 @@ public class TestApp
 		//abrir o socket de ligacao com o peer
 		socket = new DatagramSocket();
 		
-		System.out.println("abriu o socket");
+		System.out.println("open socket");
 	
 		//trasmitir informacao
 		byte[] sbuf = (message+'\n').getBytes();	//oper + args
 		DatagramPacket packet = new DatagramPacket(sbuf, sbuf.length,address,port);
 		socket.send(packet);
 		
-		System.out.println("enviou mensagem "+message);
+		System.out.println("sent message : "+message);
 		
 		//receber informacao
 		byte[] rbuf = new byte[256];
 		packet = new DatagramPacket(rbuf, rbuf.length);
 		socket.receive(packet);
 		
-		System.out.println(new String(packet.getData()));
+		System.out.println("received message : " + new String(packet.getData()));
 		
 		//fechar socket
 		socket.close();
+		
+		System.out.println("Press ENTER to exit...");
+		
+		Scanner scanner = new Scanner(System.in);
+		scanner.nextLine();
+		scanner.close();
 		
 	}
 

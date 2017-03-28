@@ -47,7 +47,7 @@ public class ReclaimTrigger extends Thread{
 			}
 		
 		}
-		
+		peer.setMessage("reclaim");
 	}
-	
+
 }
