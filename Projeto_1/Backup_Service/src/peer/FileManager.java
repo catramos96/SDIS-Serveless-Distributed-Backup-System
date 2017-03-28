@@ -311,9 +311,10 @@ public class FileManager{
 		return totalSpace;
 	}
 	
-	public int getRemaingSpace(){
-		return remaingSpace;
+	public int getRemainingSpace(){
+		return this.remaingSpace;
 	}
+	
 	
 	public void setTotalSpace(int NewSpace){
 		remaingSpace = NewSpace - totalSpace - remaingSpace;
@@ -331,13 +332,7 @@ public class FileManager{
 		return null;
 	}
 
-	public int getRemainingSpace(){
-		return this.remaingSpace;
-	}
-
-	public int getTotalSpace(){
-		return this.totalSpace;
-	}
+	
 
 	public boolean fileExists(File file){
 		return file.exists();

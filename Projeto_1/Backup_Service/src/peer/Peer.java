@@ -119,7 +119,7 @@ public class Peer {
 	public synchronized void saveRecord() {
 		
 		record.totalMemory = fileManager.getTotalSpace();
-		record.remaingMemory = fileManager.getRemaingSpace();
+		record.remaingMemory = fileManager.getRemainingSpace();
 		
 		try 
 		{

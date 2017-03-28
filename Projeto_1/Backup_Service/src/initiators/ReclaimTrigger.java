@@ -55,7 +55,7 @@ public class ReclaimTrigger extends Thread{
 		peer.fileManager.setTotalSpace(spaceToReclaim);
 		
 		System.out.println("TOTAL MEMORY: " + peer.fileManager.getTotalSpace());
-		System.out.println("REMAING MEMORY. " + peer.fileManager.getRemaingSpace());
+		System.out.println("REMAING MEMORY. " + peer.fileManager.getRemainingSpace());
 		
 		peer.setMessage("reclaim");
 	}
