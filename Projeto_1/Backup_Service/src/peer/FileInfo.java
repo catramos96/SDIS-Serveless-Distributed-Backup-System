@@ -8,14 +8,16 @@ public class FileInfo implements Serializable
 	private String fileId;
 	private String filename;
 	private int numChunks;
+	private int repDegree;
 	
-	public FileInfo(String fileId, String filename, int numChunks)
+	public FileInfo(String fileId, String filename, int numChunks,int repDegree)
 	{
 		this.fileId = fileId;
 		this.numChunks = numChunks;
 		String[] parts = filename.split("/+");
 		
 		this.filename = parts[parts.length-1];
+		this.repDegree = repDegree;
 	}
 
 	public int getNumChunks() {
@@ -28,6 +30,10 @@ public class FileInfo implements Serializable
 
 	public String getFilename() {
 		return filename;
+	}
+	
+	public int getRepDegree() {
+		return repDegree;
 	}
 
 	public void setFilename(String filename) {
