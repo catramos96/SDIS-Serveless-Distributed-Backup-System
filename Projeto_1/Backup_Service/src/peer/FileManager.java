@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -16,8 +17,9 @@ import javax.xml.bind.DatatypeConverter;
 
 import resources.Logs;
 
-public class FileManager {
-
+public class FileManager implements Serializable{
+	private static final long serialVersionUID = 1L;
+	
 	private String diskDIR = null;
 	private final int CHUNKLENGTH = 64*1000;
 	private int peerID = -1;
@@ -267,4 +269,65 @@ public class FileManager {
 		}
 	}
 
+	public int memoryToRelease(int newTotalSpace){
+		int needRelease = newTotalSpace - (totalSpace - remaingSpace);
+		
+		System.out.println("NewTotal Space: " + newTotalSpace);
+		System.out.println("Need release: " + needRelease);
+		System.out.println("Total space: " + totalSpace);
+		System.out.println("Remaing Space: " + remaingSpace);
+		
+		if(needRelease < 0)
+			return needRelease;
+		else
+			return 0;	
+	}
+	
+	public HashMap<String,ArrayList<Integer>> deleteNecessaryChunks(int spaceToReclaim){
+		
+		HashMap<String,ArrayList<Integer>> chunksDeleted = new HashMap<String,ArrayList<Integer>>();
+		
+		File dir = new File(diskDIR + Util.CHUNKS_DIR);
+		if(dir.exists() && dir.isDirectory())
+		{
+			File[] files = dir.listFiles();
+			
+			for(File file : files)
+			{
+				spaceToReclaim -= file.getTotalSpace();
+				String filename = file.getName();
+				String fileId = filename.substring(1,filename.length());
+				Integer chunkNo = Integer.parseInt(filename.substring(0,1));
+				
+				System.out.println("FILEID: " + fileId);
+				System.out.println("CHUNKNO: " + chunkNo);
+				
+				//Como calcular o chunk ?
+				ArrayList<Integer> fileChunks;
+				
+				//try {
+					if(chunksDeleted.containsKey(fileId))
+						fileChunks = chunksDeleted.get(fileId);
+					else
+						fileChunks = new ArrayList<Integer>();
+					
+					fileChunks.add(chunkNo);
+					chunksDeleted.put(fileId, fileChunks);
+						
+					//Files.delete(file.toPath());
+					
+				/*} catch (IOException e) {
+					e.printStackTrace();
+				}*/
+				
+				if(spaceToReclaim <= 0)
+					break;
+			}
+			
+		}
+		
+		return chunksDeleted;
+	}
+		  
+	
 }

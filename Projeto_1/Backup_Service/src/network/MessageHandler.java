@@ -113,9 +113,7 @@ public class MessageHandler extends Thread
 	 */
 	private void handleStore(String fileId, int chunkNo, int senderId){
 		peer.getMulticastRecord().recordStoreChunks(fileId, chunkNo, senderId);
-	}
-	
-	
+	}	
 
 	/**
 	 * Peer response to other peer GETCHUNK message
@@ -166,7 +164,10 @@ public class MessageHandler extends Thread
 	 * Peer response to other peer REMOVED message
 	 */
 	private void handleRemoved(String fileId, int chunkNo){
-		/* ... */
+		/*
+		 * if fileid local ?
+		 * Backup chunkNo
+		 */
 	}
 	
 	/*

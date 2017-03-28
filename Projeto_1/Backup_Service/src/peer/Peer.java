@@ -66,8 +66,6 @@ public class Peer {
 		this.ID = id;
 		this.version = protocolVs;
 
-		fileManager = new FileManager(ID,Util.DISK_SPACE_DEFAULT);
-
 		try 
 		{
 			//socket de conexao com o cliente
@@ -114,12 +112,23 @@ public class Peer {
 	public void saveRecord() {
 		try 
 		{
+			//record
+			
 			FileOutputStream fileOut = new FileOutputStream("../peersDisk/peer"+ID+"/record.ser");
 			ObjectOutputStream out = new ObjectOutputStream(fileOut);
 			out.writeObject(record);
 			out.close();
 			fileOut.close();
 			System.out.printf("Serialized data is saved in peersDisk/peer"+ID+"/record.ser");
+			
+			//filemanager
+			
+			fileOut = new FileOutputStream("../peersDisk/peer"+ID+"/filemanager.ser");
+			out = new ObjectOutputStream(fileOut);
+			out.writeObject(fileManager);
+			out.close();
+			fileOut.close();
+			System.out.printf("Serialized data is saved in peersDisk/peer"+ID+"/filemanager.ser");
 		}
 		catch(IOException i) 
 		{
@@ -130,14 +139,27 @@ public class Peer {
 
 	public void loadRecord() {
 		record = new MulticastRecord();
+		fileManager = new FileManager(ID,Util.DISK_SPACE_DEFAULT);
 		try 
 		{
+			//record
+			
 			FileInputStream fileIn = new FileInputStream("../peersDisk/peer"+ID+"/record.ser");
 			ObjectInputStream in  = new ObjectInputStream(fileIn);
 			record = (MulticastRecord) in.readObject();
 			in.close();
 			fileIn.close();
 			System.out.printf("Serialized data loaded from peersDisk/peer"+ID+"/record.ser");
+			
+			//filemanager
+			
+			fileIn = new FileInputStream("../peersDisk/peer"+ID+"/filemanager.ser");
+			in  = new ObjectInputStream(fileIn);
+			fileManager = (FileManager) in.readObject();
+			in.close();
+			fileIn.close();
+			System.out.printf("Serialized data loaded from peersDisk/peer"+ID+"/filemanager.ser");
+			
 		} 
 		catch (FileNotFoundException e) {
 			//e.printStackTrace();

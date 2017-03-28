@@ -67,18 +67,18 @@ public class DatagramListener extends Thread
 	{
 		String message = new String(data);
 		String[] parts = message.split("\\s");
-		String filename = parts[1];
+		String arg1 = parts[1];			//filename or space to reclaim
 		
 		System.out.println(parts[0]);
 		
 		if(parts[0].equals("BACKUP"))
-			new BackupTrigger(peer,filename, Integer.parseInt(parts[2])).start();	//file name + replicationDegree
+			new BackupTrigger(peer,arg1, Integer.parseInt(parts[2])).start();	//file name + replicationDegree
 		else if(parts[0].equals("RESTORE"))
-			new RestoreTrigger(peer,filename).start();	
+			new RestoreTrigger(peer,arg1).start();	
 		else if(parts[0].equals("DELETE"))
-			new DeleteTrigger(peer,filename).start();	
+			new DeleteTrigger(peer,arg1).start();	
 		else if(parts[0].equals("RECLAIM"))
-			new ReclaimTrigger().start();
+			new ReclaimTrigger(peer,Integer.parseInt(arg1)).start();
 		else if(parts[0].equals("STATE"))
 			new StateTrigger().start();
 			
