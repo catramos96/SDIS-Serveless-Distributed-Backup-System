@@ -283,9 +283,9 @@ public class FileManager implements Serializable{
 			return 0;	
 	}
 	
-	public HashMap<String,ArrayList<Integer>> deleteNecessaryChunks(int spaceToReclaim){
+	public ArrayList<String> deleteNecessaryChunks(int spaceToReclaim){
 		
-		HashMap<String,ArrayList<Integer>> chunksDeleted = new HashMap<String,ArrayList<Integer>>();
+		ArrayList<String> chunksDeleted = new ArrayList();
 		
 		File dir = new File(diskDIR + Util.CHUNKS_DIR);
 		if(dir.exists() && dir.isDirectory())
@@ -296,23 +296,15 @@ public class FileManager implements Serializable{
 			{
 				spaceToReclaim -= file.getTotalSpace();
 				String filename = file.getName();
-				String fileId = filename.substring(1,filename.length());
+				String fileId = filename.substring(1,filename.length());	//TMP - JUST 4 PRINT
 				Integer chunkNo = Integer.parseInt(filename.substring(0,1));
 				
 				System.out.println("FILEID: " + fileId);
 				System.out.println("CHUNKNO: " + chunkNo);
 				
-				//Como calcular o chunk ?
-				ArrayList<Integer> fileChunks;
-				
 				//try {
-					if(chunksDeleted.containsKey(fileId))
-						fileChunks = chunksDeleted.get(fileId);
-					else
-						fileChunks = new ArrayList<Integer>();
-					
-					fileChunks.add(chunkNo);
-					chunksDeleted.put(fileId, fileChunks);
+				
+					chunksDeleted.add(filename); //chunkNo + fileId
 						
 					//Files.delete(file.toPath());
 					
