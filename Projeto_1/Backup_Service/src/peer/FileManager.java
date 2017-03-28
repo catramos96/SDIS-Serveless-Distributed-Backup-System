@@ -17,42 +17,49 @@ import javax.xml.bind.DatatypeConverter;
 
 import resources.Logs;
 
-public class FileManager implements Serializable{
-	private static final long serialVersionUID = 1L;
+public class FileManager{	
 	
-	private String diskDIR = null;
+	private String diskDIR = Util.PEERS_DIR;;
 	private final int CHUNKLENGTH = 64*1000;
 	private int peerID = -1;
-	private int totalSpace = 0;
-	private int remaingSpace = 0;
-
-	FileManager(int peerId, int totalSpace){
-		this.peerID = peerId;
+	private int totalSpace = Util.DISK_SPACE_DEFAULT;
+	private int remaingSpace = Util.DISK_SPACE_DEFAULT;
+	
+	
+	FileManager(int id, int totalSpace, int remaingSpace){
+		this.peerID = id;
 		this.totalSpace = totalSpace;
-		this.remaingSpace = this.totalSpace;
+		this.remaingSpace = remaingSpace;
 
-		diskDIR = Util.PEERS_DIR;
+		System.out.println("PEERID" + peerID);
+		
 		File dir = new File(new String(diskDIR));
 		if(!(dir.exists() && dir.isDirectory()))
 		{
 			dir.mkdir();
 		}
-		diskDIR += "Peer"+ peerId;
+		diskDIR += "Peer"+ peerID;
+		System.out.println(diskDIR);
 		dir = new File(new String(diskDIR));
 		if(!(dir.exists() && dir.isDirectory()))
 		{
+			System.out.println("CRIAR DISK PEER");
 			dir.mkdir();
 		}
 		
 		dir = new File(new String(diskDIR + Util.CHUNKS_DIR));
+		System.out.println(diskDIR + Util.CHUNKS_DIR);
 		if(!(dir.exists() && dir.isDirectory()))
 		{
+			System.out.println("CRIAR DISK CHUNKS");
 			dir.mkdir();
 		}
 		
 		dir = new File(new String(diskDIR + Util.RESTORES_DIR));
+		System.out.println(diskDIR + Util.RESTORES_DIR);
 		if(!(dir.exists() && dir.isDirectory()))
 		{
+			System.out.println("CRIAR DISK RESTORE");
 			dir.mkdir();
 		}
 
@@ -278,25 +285,26 @@ public class FileManager implements Serializable{
 		System.out.println("Remaing Space: " + remaingSpace);
 		
 		if(needRelease < 0)
-			return needRelease;
+			return -needRelease;
 		else
 			return 0;	
 	}
 	
-	public ArrayList<String> deleteNecessaryChunks(int spaceToReclaim){
+	public ArrayList<String> deleteNecessaryChunks(int spaceToFree){
 		
 		ArrayList<String> chunksDeleted = new ArrayList();
+		
+		int spaceReleased = 0;
 		
 		File dir = new File(diskDIR + Util.CHUNKS_DIR);
 		if(dir.exists() && dir.isDirectory())
 		{
 			File[] files = dir.listFiles();
 			
-			int spaceReleased = 0;
-			
 			for(File file : files)
 			{
-				remaingSpace += file.getTotalSpace();	//Atualiza o espaço disponível
+				remaingSpace += file.length();	//Atualiza o espaço disponível
+				spaceReleased += file.length();
 				
 				String filename = file.getName();
 				String fileId = filename.substring(1,filename.length());	//TMP - JUST 4 PRINT
@@ -304,27 +312,34 @@ public class FileManager implements Serializable{
 				
 				System.out.println("FILEID: " + fileId);
 				System.out.println("CHUNKNO: " + chunkNo);
+				System.out.println("SPACE RELEASED: " + spaceReleased);
+				System.out.println("SPACE TO FREE: " + spaceToFree);
 				
-				//try {
-				
+			
 					chunksDeleted.add(filename); //chunkNo + fileId
-						
-					//Files.delete(file.toPath());
-					
-				/*} catch (IOException e) {
-					e.printStackTrace();
-				}*/
+					file.delete();
 				
-				if(remaingSpace >= spaceToReclaim)
+				
+				if(spaceReleased >=  spaceToFree)
 					break;
-			}
-			
-			totalSpace = spaceToReclaim;
-			
+			}			
 		}
 		
 		return chunksDeleted;
 	}
-		  
 	
+	public int getTotalSpace(){
+		return totalSpace;
+	}
+	
+	public int getRemaingSpace(){
+		return remaingSpace;
+	}
+	
+	public void setTotalSpace(int NewSpace){
+		remaingSpace = NewSpace - totalSpace - remaingSpace;
+		totalSpace = NewSpace;
+		if(remaingSpace < 0)
+			remaingSpace = totalSpace;
+	}
 }

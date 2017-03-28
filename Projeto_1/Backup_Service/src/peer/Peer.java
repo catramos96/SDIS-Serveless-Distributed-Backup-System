@@ -47,11 +47,14 @@ public class Peer {
 	 */
 	public Peer(char[] protocolVs, int id, String[] access_point, String[] mc_ap, String[] mdb_ap, String[] mdr_ap)
 	{
-		
+		this.ID = id;
 		
 		loadRecord();
+		fileManager = new FileManager(this.ID,record.totalMemory,record.remaingMemory);
 		
-
+		System.out.println("TotalMemory: " + record.totalMemory);
+		System.out.println("RemaingMemory: " + record.remaingMemory);
+		
 		//shutdown
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {
@@ -66,11 +69,8 @@ public class Peer {
 		});
 
 		mdrRestores = new ArrayList<String>();
-
-		this.ID = id;
 		this.version = protocolVs;
-		fileManager = new FileManager(ID,Util.DISK_SPACE_DEFAULT);
-
+		
 		try 
 		{
 			//socket de conexao com o cliente
@@ -108,69 +108,52 @@ public class Peer {
 			System.out.println("Peer error");
 			e.printStackTrace();
 		}
+		
 	}
 	
 	/*
 	 * MulticastRecord Serialization 
 	 */
 
-	public void saveRecord() {
+	public synchronized void saveRecord() {
+		
+		record.totalMemory = fileManager.getTotalSpace();
+		record.remaingMemory = fileManager.getRemaingSpace();
+		
 		try 
 		{
-			//record
-			
 			FileOutputStream fileOut = new FileOutputStream("../peersDisk/peer"+ID+"/record.ser");
 			ObjectOutputStream out = new ObjectOutputStream(fileOut);
 			out.writeObject(record);
 			out.close();
 			fileOut.close();
 			System.out.printf("Serialized data is saved in peersDisk/peer"+ID+"/record.ser");
-			
-			//filemanager
-			/*
-			fileOut = new FileOutputStream("../peersDisk/peer"+ID+"/filemanager.ser");
-			out = new ObjectOutputStream(fileOut);
-			out.writeObject(fileManager);
-			out.close();
-			fileOut.close();
-			System.out.printf("Serialized data is saved in peersDisk/peer"+ID+"/filemanager.ser");*/
 		}
-		catch(IOException i) 
-		{
-			i.printStackTrace();
-			System.out.println("ok");
+		catch (FileNotFoundException e) {
+			//e.printStackTrace();
+			System.out.println("Restore object created");
+		}
+		catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
-	public void loadRecord() {
+	public synchronized void loadRecord() {
+		
 		record = new MulticastRecord();
 		
 		try 
 		{
-			//record
-			
 			FileInputStream fileIn = new FileInputStream("../peersDisk/peer"+ID+"/record.ser");
 			ObjectInputStream in  = new ObjectInputStream(fileIn);
 			record = (MulticastRecord) in.readObject();
 			in.close();
 			fileIn.close();
 			System.out.printf("Serialized data loaded from peersDisk/peer"+ID+"/record.ser");
-			
-			//filemanager
-		/*	
-			fileIn = new FileInputStream("../peersDisk/peer"+ID+"/filemanager.ser");
-			in  = new ObjectInputStream(fileIn);
-			fileManager = (FileManager) in.readObject();
-			in.close();
-			fileIn.close();
-			System.out.printf("Serialized data loaded from peersDisk/peer"+ID+"/filemanager.ser");
-			
-			*/
-			
 		} 
 		catch (FileNotFoundException e) {
 			//e.printStackTrace();
-			System.out.println("Restore object created");
+			System.out.println("FileNotFound");
 		}
 		catch (IOException e) {
 			e.printStackTrace();

@@ -15,8 +15,9 @@ public class BackupSystem
 			Logs.argsBackupSystemInfo();
 			return;
 		}
-	
+		
 		char[] protocol_version = args[0].toCharArray();
+		
 		int peer_id = Integer.parseInt(args[1]);
 		
 		//peer_ap <address>:<port>
@@ -24,8 +25,6 @@ public class BackupSystem
 		String[] parts_mc = addressVerification(args[3]);
 		String[] parts_mdb = addressVerification(args[4]);
 		String[] parts_mdr = addressVerification(args[5]);
-		
-		System.out.println(peer_id);
 		
 		new Peer(protocol_version,peer_id,parts_ap,parts_mc,parts_mdb,parts_mdr);	
 	}

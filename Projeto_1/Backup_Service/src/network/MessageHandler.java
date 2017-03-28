@@ -173,9 +173,10 @@ public class MessageHandler extends Thread
 		
 		//if peer is owner of original file
 		if(record.deleteStored(fileId, chunkNo, peerNo) && filename != null){
-			
+			System.out.println("OWNER");
 			//calculate replicationDegreeLeft
-			int repDegree = record.getReplicationDegree(fileId);
+			/*int repDegree = record.getReplicationDegree(fileId);
+			System.out.println("REPDEGREE: " + repDegree);
 			
 			Chunk c = peer.fileManager.splitFileInChunks(filename).get(chunkNo);
 			
@@ -184,7 +185,7 @@ public class MessageHandler extends Thread
 			if(!record.checkPutchunk(fileId, chunkNo)){
 				Message msg = new Message(MessageType.PUTCHUNK,peer.getVersion(),peer.getID(),fileId,chunkNo,repDegree,c.getData());
 				new ChunkBackupProtocol(peer.getMdb(), record, msg);
-			}
+			}*/
 		}
 		
 	}

@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import peer.FileInfo;
+import peer.FileManager;
+import resources.Util;
 
 public class MulticastRecord implements Serializable {
 
@@ -18,6 +20,9 @@ public class MulticastRecord implements Serializable {
 	private volatile HashMap<FileInfo, HashMap<Integer, ArrayList<Integer>>> storedConfirms = null;
 	private volatile HashMap<FileInfo, HashMap<Integer, byte[] >> restoreConfirms = null;
 	private volatile HashMap<String, ArrayList<Integer>> putchunkConfirms = null;		//for spacereclaim confirmation
+	
+	public int totalMemory = Util.DISK_SPACE_DEFAULT;	//Just for loads and saves
+	public int remaingMemory = Util.DISK_SPACE_DEFAULT;
 
 	public MulticastRecord()
 	{
