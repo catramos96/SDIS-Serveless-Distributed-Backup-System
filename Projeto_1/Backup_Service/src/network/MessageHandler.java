@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Random;
 
 import resources.Logs;
@@ -171,21 +172,40 @@ public class MessageHandler extends Thread
 		
 		String filename = record.getFilename(fileId);
 		
+		int repChunks = 0;
+		ArrayList<Integer> tmp = record.checkStored(fileId, chunkNo);
+		
+		if(tmp != null)
+			repChunks = tmp.size();
+			
+		System.out.println("STORED: " + repChunks);
+		
 		//if peer is owner of original file
 		if(record.deleteStored(fileId, chunkNo, peerNo) && filename != null){
 			System.out.println("OWNER");
 			//calculate replicationDegreeLeft
-			/*int repDegree = record.getReplicationDegree(fileId);
+			int repDegree = record.getReplicationDegree(fileId);
 			System.out.println("REPDEGREE: " + repDegree);
 			
-			Chunk c = peer.fileManager.splitFileInChunks(filename).get(chunkNo);
+			tmp = record.checkStored(fileId, chunkNo);
 			
-			randomDelay();
+			if(tmp !=null)
+				repChunks = tmp.size();
 			
-			if(!record.checkPutchunk(fileId, chunkNo)){
-				Message msg = new Message(MessageType.PUTCHUNK,peer.getVersion(),peer.getID(),fileId,chunkNo,repDegree,c.getData());
-				new ChunkBackupProtocol(peer.getMdb(), record, msg);
-			}*/
+			//if(repDegree<repChunks){
+				System.out.println("STORED: " + repChunks);
+				System.out.println("Filename: " + filename);
+				
+				Chunk c = peer.fileManager.splitFileInChunks(filename).get(chunkNo);
+				
+				randomDelay();
+				
+				/*if(!record.checkPutchunk(fileId, chunkNo)){
+					Message msg = new Message(MessageType.PUTCHUNK,peer.getVersion(),peer.getID(),fileId,chunkNo,repDegree,c.getData());
+					new ChunkBackupProtocol(peer.getMdb(), record, msg);
+				}*/
+			//}
+			
 		}
 		
 	}

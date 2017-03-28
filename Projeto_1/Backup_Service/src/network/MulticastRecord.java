@@ -115,7 +115,7 @@ public class MulticastRecord implements Serializable {
 		}
 	}
 	
-	public synchronized boolean deleteStored(String fileId, int chunkNo,int peerNo){
+	public synchronized boolean deleteStored(String fileId, int chunkNo,Integer peerNo){
 		for (FileInfo fileinfo : storedConfirms.keySet()) 
 		{
 			if(fileinfo.getFileId().equals(fileId))
@@ -128,22 +128,28 @@ public class MulticastRecord implements Serializable {
 					ArrayList<Integer> peersList = chunkPeersStored.get(chunkNo);
 					
 					//remove peer from list of stored
-					peersList.remove(peerNo);			
+					if(peersList.contains(peerNo)){
+						
+						//No more peers for chunk ?
+						if(peersList.size() == 1){		
+							
+							//Remove chunk
+							if(chunkPeersStored.containsKey(chunkNo))
+								chunkPeersStored.remove(chunkNo);
+						}
+						else
+							peersList.remove(peerNo);
+							
+					}	
 					
 					//update chunkNo peersList
 					chunkPeersStored.put(chunkNo, peersList);
-					
-					//No more peers for chunk ?
-					if(peersList.size() == 0){		
-						
-						//Remove chunk
-						chunkPeersStored.remove(chunkNo);
-					}
-					
+	
 					//update on hashmap
 					storedConfirms.put(fileinfo,chunkPeersStored);
 					return true;
 				}
+				return false;
 			}
 		}
 		return false;
