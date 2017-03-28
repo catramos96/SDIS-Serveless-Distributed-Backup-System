@@ -52,7 +52,7 @@ public class MessageHandler extends Thread
 				handleDelete(msg.getFileId());
 				break;
 			case REMOVED:
-				handleRemoved(msg.getFileId(),msg.getChunkNo());
+				handleRemoved(msg.getFileId(),msg.getChunkNo(),msg.getSenderId());
 				break;
 			default:
 				break;
@@ -163,11 +163,17 @@ public class MessageHandler extends Thread
 	/**
 	 * Peer response to other peer REMOVED message
 	 */
-	private void handleRemoved(String fileId, int chunkNo){
-		/*
-		 * if fileid local ?
-		 * Backup chunkNo
-		 */
+	private void handleRemoved(String fileId, int chunkNo, int peerNo){
+		
+		//if peer is owner of original file
+		if(peer.getMulticastRecord().deleteStored(fileId, chunkNo, peerNo)){
+			
+			//calculate replicationDegreeLeft
+			
+			//initiate backup protocol
+			
+		}
+		
 	}
 	
 	/*
