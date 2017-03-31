@@ -23,6 +23,7 @@ public class BackupTrigger extends Thread{
 	 */
 	public BackupTrigger(Peer peer, String filename, int replicationDegree){
 		//split file in chunks
+		filename = peer.fileManager.checkPath(filename);
 		chunks = peer.fileManager.splitFileInChunks(filename);	
 		this.peer = peer;
 		this.filename = filename;

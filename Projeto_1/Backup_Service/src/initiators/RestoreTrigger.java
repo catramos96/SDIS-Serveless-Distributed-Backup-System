@@ -33,6 +33,7 @@ public class RestoreTrigger extends Thread{
 		boolean restored = false;
 		
 		try	{
+			filename = peer.fileManager.checkPath(filename);
 			fileId = peer.fileManager.getFileIdFromFilename(filename);
 			
 			int chunks = peer.fileManager.getFileNumChunks(filename);

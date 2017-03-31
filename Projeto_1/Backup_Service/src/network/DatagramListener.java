@@ -50,7 +50,7 @@ public class DatagramListener extends Thread
 				handle(r_packet.getData());
 				
 				//envia uma confirmacao da rececao
-				String message;
+				String message = null;
 				do
 				{
 					message = peer.getMessage();

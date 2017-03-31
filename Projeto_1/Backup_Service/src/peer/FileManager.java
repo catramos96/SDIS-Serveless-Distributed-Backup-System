@@ -20,7 +20,6 @@ import resources.Logs;
 public class FileManager{	
 	
 	private String diskDIR = Util.PEERS_DIR;;
-	private final int CHUNKLENGTH = 64*1000;
 	private int peerID = -1;
 	private int totalSpace = Util.DISK_SPACE_DEFAULT;
 	private int remaingSpace = Util.DISK_SPACE_DEFAULT;
@@ -30,38 +29,7 @@ public class FileManager{
 		this.peerID = id;
 		this.totalSpace = totalSpace;
 		this.remaingSpace = remaingSpace;
-
-		System.out.println("PEERID" + peerID);
-		
-		File dir = new File(new String(diskDIR));
-		if(!(dir.exists() && dir.isDirectory()))
-		{
-			dir.mkdir();
-		}
-		diskDIR += "Peer"+ peerID;
-		System.out.println(diskDIR);
-		dir = new File(new String(diskDIR));
-		if(!(dir.exists() && dir.isDirectory()))
-		{
-			System.out.println("CRIAR DISK PEER");
-			dir.mkdir();
-		}
-
-		dir = new File(new String(diskDIR + Util.CHUNKS_DIR));
-		System.out.println(diskDIR + Util.CHUNKS_DIR);
-		if(!(dir.exists() && dir.isDirectory()))
-		{
-			System.out.println("CRIAR DISK CHUNKS");
-			dir.mkdir();
-		}
-
-		dir = new File(new String(diskDIR + Util.RESTORES_DIR));
-		System.out.println(diskDIR + Util.RESTORES_DIR);
-		if(!(dir.exists() && dir.isDirectory()))
-		{
-			System.out.println("CRIAR DISK RESTORE");
-			dir.mkdir();
-		}
+		checkDirectories();	
 	}
 
 	/*
@@ -79,23 +47,23 @@ public class FileManager{
 			try 
 			{
 				String fileID = hashFileId(file);
-				int numChunks = (int) (file.length() / CHUNKLENGTH) + 1; 
+				int numChunks = (int) (file.length() / Util.CHUNK_MAX_SIZE) + 1; 
 				byte[] bytes = Files.readAllBytes(file.toPath());
 				int byteCount = 0;
 
 
 				for(int i = 0; i < numChunks; i++)
 				{
-					int length = CHUNKLENGTH;
+					int length = Util.CHUNK_MAX_SIZE;
 
 					if (i == numChunks-1) 
 					{	
-						length = (int) (bytes.length % CHUNKLENGTH);
+						length = (int) (bytes.length % Util.CHUNK_MAX_SIZE);
 					}
 					byteCount = 0;
 					byte[] data = new byte[length];
 
-					for (int j = i*CHUNKLENGTH; j < CHUNKLENGTH*i+length; j++) 
+					for (int j = i*Util.CHUNK_MAX_SIZE; j < Util.CHUNK_MAX_SIZE*i+length; j++) 
 					{
 						data[byteCount] = bytes[j];
 						byteCount++;
@@ -280,7 +248,7 @@ public class FileManager{
 		File file = new File(filename);
 		if(file.exists())
 		{
-			return (int) (file.length() / CHUNKLENGTH) + 1;
+			return (int) (file.length() / Util.CHUNK_MAX_SIZE) + 1;
 		}	
 		return -1;
 	}
@@ -338,8 +306,6 @@ public class FileManager{
 		return null;
 	}
 
-	
-
 	public boolean fileExists(File file){
 		return file.exists();
 	}
@@ -365,5 +331,55 @@ public class FileManager{
 	{
 		return new String(diskDIR + Util.CHUNKS_DIR + chunkNo+ fileNo);
 	}
+	
+	private void checkDirectories(){
+		System.out.println("PEERID" + peerID);
+		
+		File dir = new File(new String(diskDIR));
+		if(!(dir.exists() && dir.isDirectory()))
+		{
+			dir.mkdir();
+		}
+		
+		diskDIR += "Peer"+ peerID;
+		System.out.println(diskDIR);
+		
+		dir = new File(new String(diskDIR));
+		if(!(dir.exists() && dir.isDirectory()))
+		{
+			System.out.println("CRIAR DISK PEER");
+			dir.mkdir();
+		}
 
+		dir = new File(new String(diskDIR + Util.CHUNKS_DIR));
+		System.out.println(diskDIR + Util.CHUNKS_DIR);
+		if(!(dir.exists() && dir.isDirectory()))
+		{
+			System.out.println("CRIAR DISK CHUNKS");
+			dir.mkdir();
+		}
+
+		dir = new File(new String(diskDIR + Util.RESTORES_DIR));
+		System.out.println(diskDIR + Util.RESTORES_DIR);
+		if(!(dir.exists() && dir.isDirectory()))
+		{
+			System.out.println("CRIAR DISK RESTORE");
+			dir.mkdir();
+		}
+		
+		dir = new File(new String(diskDIR + Util.LOCAL_DIR));
+		System.out.println(diskDIR + Util.LOCAL_DIR);
+		if(!(dir.exists() && dir.isDirectory()))
+		{
+			System.out.println("CRIAR DISK LOCAL");
+			dir.mkdir();
+		}
+	}
+
+	public String checkPath(String path){
+		if(!path.contains("/")){
+			return new String(diskDIR + Util.LOCAL_DIR + path);
+		}
+		return path;
+	}
 }

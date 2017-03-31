@@ -17,13 +17,15 @@ public class Util {
 	{
 		PUTCHUNK, STORED, GETCHUNK, CHUNK, DELETE, REMOVED
 	}
+	public static int PACKET_MAX_SIZE = 65000;
 	
 	//chunk
-	public static int PACKET_MAX_SIZE = 65000;
+	public static int CHUNK_MAX_SIZE = 64000;
 	
 	//fileManager
 	public static final String PEERS_DIR = new String("../peersDisk/");
 	public static final String CHUNKS_DIR = new String("/chunks/");
 	public static final String RESTORES_DIR = new String("/restores/");
+	public static final String LOCAL_DIR = new String("/localFiles/");
 
 }
