@@ -9,7 +9,7 @@
 * Enhancemente ...
 
 ### Restore
-* *TRATADO* - Recovery feito por chunks: a confirmação também terá que ser por chunks. Este protocolo terá que ter uma estrutura igual ao do backup: reenvio das mensagens e etc POR CHUNK. À medida que se vai recebendo as confirmações põem se no record. O protocolo no trigger espera um tempo igual ao das 5 tentativas do reenvio das mensagens, se não receber todos os chunks então o protocolo falha! Isto é posssível no caso em que existam peers que não estejam ativos.
+* ~~Recovery feito por chunks: a confirmação também terá que ser por chunks. Este protocolo terá que ter uma estrutura igual ao do backup: reenvio das mensagens e etc POR CHUNK. À medida que se vai recebendo as confirmações põem se no record. O protocolo no trigger espera um tempo igual ao das 5 tentativas do reenvio das mensagens, se não receber todos os chunks então o protocolo falha! Isto é posssível no caso em que existam peers que não estejam ativos.~~
 * É preciso limpar a lista de chunks restaurados de um peer (no record) no final. Suponto que se fazem dois restores do mesmo ficheiro, se se não se limpar o record de restores, um peer que contenha o chunk, na segunda vez que há o pedido, ele não o iria enviar porque no record há a informação de que já houveram outros peers a enviar o chunk (record do primeiro pedido).
 * Enhancement -> criar um outro canal só para o envio desta informação particular ?
 
