@@ -11,6 +11,7 @@ import resources.Logs;
 import resources.Util;
 import resources.Util.MessageType;
 import peer.Chunk;
+import peer.FileInfo;
 import peer.Peer;
 import protocols.ChunkBackupProtocol;
 
@@ -170,41 +171,58 @@ public class MessageHandler extends Thread
 		
 		MulticastRecord record = peer.getMulticastRecord();
 		
-		String filename = record.getFilename(fileId);
+		String filename = record.getFilename(fileId);	//from stored
+		
+		if(filename == null)
+			return;
 		
 		int repChunks = 0;
 		ArrayList<Integer> tmp = record.checkStored(fileId, chunkNo);
 		
 		if(tmp != null)
 			repChunks = tmp.size();
+		else
+			return;
 			
-		System.out.println("STORED: " + repChunks);
+		//System.out.println("STORED: " + repChunks);
 		
 		//if peer is owner of original file
-		if(record.deleteStored(fileId, chunkNo, peerNo) && filename != null){
+		if(record.deleteStored(fileId, chunkNo, peerNo)){
+			
 			System.out.println("OWNER");
+			
 			//calculate replicationDegreeLeft
 			int repDegree = record.getReplicationDegree(fileId);
-			System.out.println("REPDEGREE: " + repDegree);
+			//System.out.println("REPDEGREE: " + repDegree);
 			
+			//array de peers que fizeram backup
 			tmp = record.checkStored(fileId, chunkNo);
 			
 			if(tmp !=null)
 				repChunks = tmp.size();
 			
-			//if(repDegree<repChunks){
-				System.out.println("STORED: " + repChunks);
-				System.out.println("Filename: " + filename);
+			if(repDegree<repChunks){
+				//System.out.println("STORED: " + repChunks);
+				//System.out.println("Filename: " + filename);
 				
-				Chunk c = peer.fileManager.splitFileInChunks(filename).get(chunkNo);
+				ArrayList<Chunk> chunks = peer.fileManager.splitFileInChunks(Util.PEERS_DIR + "Peer" + peer.getID() + Util.RESTORES_DIR + filename);
+				if(chunks.size() < chunkNo){
+					System.out.println("Ficheiro não foi recuperado totalmente");
+					return;
+				}
+				
+				Chunk c = chunks.get(chunkNo);
 				
 				randomDelay();
 				
-				/*if(!record.checkPutchunk(fileId, chunkNo)){
+				//if(!record.checkPutchunk(fileId, chunkNo)){
 					Message msg = new Message(MessageType.PUTCHUNK,peer.getVersion(),peer.getID(),fileId,chunkNo,repDegree,c.getData());
-					new ChunkBackupProtocol(peer.getMdb(), record, msg);
-				}*/
-			//}
+					Logs.sentMessageLog(msg);
+					//FileInfo fileinfo = new FileInfo(msg.getFileId(),filename,chunks.size(),repDegree);
+					//record.startRecordStores(fileinfo);
+					new ChunkBackupProtocol(peer.getMdb(), record, msg).start();
+				//}
+			}//
 			
 		}
 		

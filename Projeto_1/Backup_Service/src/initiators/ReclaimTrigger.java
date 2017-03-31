@@ -24,11 +24,11 @@ public class ReclaimTrigger extends Thread{
 	
 	public void run(){
 		
-		//Calcula a mem�ria necess�ria a libertar
+		//Calcula a memoria necessaria a libertar
 		int memoryToRelease = peer.fileManager.memoryToRelease(spaceToReclaim);
 		
-		System.out.println("SPACE: " + spaceToReclaim);
-		System.out.println("RELEASE MEMORY: " + memoryToRelease);
+		//System.out.println("SPACE: " + spaceToReclaim);
+		//System.out.println("RELEASE MEMORY: " + memoryToRelease);
 		
 		if(memoryToRelease > 0){
 			
@@ -40,9 +40,9 @@ public class ReclaimTrigger extends Thread{
 				Integer chunkNo = Integer.parseInt(chunk.substring(0,1));
 				String fileId = chunk.substring(1,chunk.length());	
 				
-				System.out.println(fileId + "." + chunkNo);
+				//System.out.println(fileId + "." + chunkNo);
 				
-				System.out.println(peer.getMulticastRecord().checkStored(fileId, chunkNo));
+				//System.out.println(peer.getMulticastRecord().checkStored(fileId, chunkNo));
 				
 				Message msg = new Message(MessageType.REMOVED,peer.getVersion(),peer.getID(),fileId,chunkNo);
 				

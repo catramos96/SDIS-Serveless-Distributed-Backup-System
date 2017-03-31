@@ -317,11 +317,17 @@ public class FileManager{
 	
 	
 	public void setTotalSpace(int NewSpace){
-		remaingSpace = NewSpace - totalSpace - remaingSpace;
+		
+		int spaceInUse = totalSpace - remaingSpace;
+		
+		remaingSpace = NewSpace - spaceInUse;
+		
 		totalSpace = NewSpace;
+		
 		if(remaingSpace < 0)
 			remaingSpace = totalSpace;
 	}
+	
 	public File[] getFilesFromDirectory(String dirName)
 	{
 		File dir = new File(dirName);
