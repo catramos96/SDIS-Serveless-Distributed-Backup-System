@@ -4,7 +4,7 @@
 
 ### Backup
 * Guardar path da localização do ficheiro a fazer backup no fileinfo ? Assim ao fazer reclaim space, quando o owner recebesse a mensagem poderia executar o chunkBackupProtocol passando o path do ficheiro automaticamente (ia busca-lo ao fileinfo dos storeds).
-* Ter um path default para os ficheiros locais. Exemplo: o meu input é image.png eu assumo que a pasta em que ele está é a pasta local dentro da pasta daquele Peer. O prof tem um exemplo assim nas especificações. Podemos facilmente identificar se o que ele nos dá é um path ou não basta verificar se existem '/'.
+* ~~Ter um path default para os ficheiros locais. Exemplo: o meu input é image.png eu assumo que a pasta em que ele está é a pasta local dentro da pasta daquele Peer. O prof tem um exemplo assim nas especificações. Podemos facilmente identificar se o que ele nos dá é um path ou não basta verificar se existem '/'.~~
 * Ficheiros com o mesmo nome e conteúdo diferente (versões diferentes) são tratados como ficheiros diferentes porque originam fileIds diferentes. Paragrafo 4, linha 4 da secção 2.1 diz que se se fizer backup a um ficheiro e já houver chunks que pertençam a um ficheiro com o mesmo nome então faz-se delete ao da versão mais antiga.
 * Parag 7 da secção 3.2. Um peer que fez stored de um chunk deve guardar a contagem de stores do chunk (em memória não volátil). Assim depois é mais fácil escolher no reclaim space, os chunks a eliminar confirme o replication degree vs o replication degree desejado.
 * Enhancemente ...
@@ -30,3 +30,4 @@
 * Implementar métodos para escolha de acções dependendo das versões.
 * Demos para a apresentação.
 * Considerar a possibilidade de implementar novos tipos de mensagens, apenas para a versão 2 do programa ( com enhancements ) se o caso assim o justificar.
+* Se abrirmos os peers, abrir uma consola para o client e executar algo, fechar o client e depois abrir um outro, da segunda vez que se manda executar alguma coisa o initiator peer não recebe a informação do client.
