@@ -6,6 +6,7 @@ public class Util {
 	public static final int MAX_TRIES = 5;
 	public static final int RND_DELAY = 400;
 	public static final int WAITING_TIME = 1000;
+	public static final int MAX_AVG_DELAY_TIME = 14000; //400+800+1600+3200+6400 (5 rep) + AVG1600
 	public static final int TIME_REINFORCEMENT = 2;
 	
 	//peers

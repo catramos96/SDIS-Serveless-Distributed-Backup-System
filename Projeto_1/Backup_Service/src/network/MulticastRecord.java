@@ -232,6 +232,18 @@ public class MulticastRecord implements Serializable {
 		}
 		return false;
 	}
+	
+	public synchronized boolean checkChunkRestored(String fileId,int chunkNo){
+		for (FileInfo fileinfo : restoreConfirms.keySet()) 
+		{
+			if(fileinfo.getFileId().equals(fileId)){
+				HashMap<Integer,byte[] > chunks = restoreConfirms.get(fileinfo);
+				if(chunks.containsKey(chunkNo))
+					return true;
+			}
+		}
+		return false;
+	}
 
 	public synchronized boolean allRestored(FileInfo info)
 	{
