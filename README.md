@@ -20,6 +20,8 @@
 
 ### Space Reclaim
 * Método de selecção dos chunks tendo em conta os replication degrees vs os desejados.
+* Se entretanto for necessário executar o chunkBackupProtocol para um chunk eliminado, é necessario esperar x tempo para saber se um outro peer iniciou este mesmo protocolo.
+* Atualizar a contagem dos chunks quando um peer recebe o remove.
 * Enhancement -> Ponto 1 da secção Geral (abaixo) + Se não houver stores nem mais putchunks durante x tempo (então o peer que iniciou o protocolo pode ter sofrido um erro etc) então um peer inicia o protocolo de backupChunkProtocolo.
 
 ### Status
