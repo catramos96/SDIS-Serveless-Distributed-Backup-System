@@ -2,7 +2,6 @@ package initiators;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Timer;
 
 import network.Message;
 import peer.FileInfo;
@@ -63,10 +62,7 @@ public class RestoreTrigger extends Thread{
 			    }
 			}
 		} 
-		catch (NoSuchAlgorithmException e){
-			Logs.errorFileId(filename);
-			return;
-		} catch (IOException e) {
+		catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

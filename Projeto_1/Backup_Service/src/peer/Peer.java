@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import network.DatagramListener;
 import network.MulticastListener;
 import network.MulticastRecord;
-import resources.Util;
 
 public class Peer {
 

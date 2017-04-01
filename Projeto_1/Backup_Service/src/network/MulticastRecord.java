@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import peer.FileInfo;
-import peer.FileManager;
 import resources.Util;
 
 public class MulticastRecord implements Serializable {
@@ -103,13 +102,25 @@ public class MulticastRecord implements Serializable {
 		return null;
 	}
 	
-	public synchronized void deleteStored(String fileId) {
+	public synchronized void deleteStoreEntry(String fileId) {
 		
 		for (FileInfo fileinfo : storedConfirms.keySet()) 
 		{
 			if(fileinfo.getFileId().equals(fileId))
 			{
 				storedConfirms.remove(fileinfo);
+				return;
+			}
+		}
+	}
+	
+
+	public void deleteRestoreEntry(String fileId) {
+		for (FileInfo fileinfo : restoreConfirms.keySet()) 
+		{
+			if(fileinfo.getFileId().equals(fileId))
+			{
+				restoreConfirms.remove(fileinfo);
 				return;
 			}
 		}
@@ -278,7 +289,7 @@ public class MulticastRecord implements Serializable {
 	 */
 	
 	public synchronized void startRecordPutchunks(String fileId){
-		putchunkConfirms.put(fileId, new ArrayList());
+		putchunkConfirms.put(fileId, new ArrayList<Integer>());
 	}
 	
 	public synchronized boolean recordPutchunk(String fileId, int chunkNo){
@@ -299,5 +310,22 @@ public class MulticastRecord implements Serializable {
 				return true;
 		}
 		return false;			
+	}
+
+	/**
+	 * Verifies if some file with this filename started its backup from this peer.
+	 * @param filename
+	 * @return
+	 */
+	public FileInfo fileBackup(String filename) 
+	{
+		for (FileInfo fileinfo : storedConfirms.keySet()) 
+		{
+			if(fileinfo.getPath().equals(filename))
+			{
+				return fileinfo;
+			}
+		}
+		return null;
 	}
 }

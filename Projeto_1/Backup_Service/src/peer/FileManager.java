@@ -5,7 +5,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -19,16 +18,16 @@ import resources.Logs;
 
 public class FileManager{	
 	
-	private String diskDIR = Util.PEERS_DIR;;
+	public String diskDIR = Util.PEERS_DIR;
 	private int peerID = -1;
 	private int totalSpace = Util.DISK_SPACE_DEFAULT;
-	private int remaingSpace = Util.DISK_SPACE_DEFAULT;
+	private int remainingSpace = Util.DISK_SPACE_DEFAULT;
 	
 	
 	FileManager(int id, int totalSpace, int remaingSpace){
 		this.peerID = id;
 		this.totalSpace = totalSpace;
-		this.remaingSpace = remaingSpace;
+		this.remainingSpace = remaingSpace;
 		checkDirectories();	
 	}
 
@@ -122,7 +121,7 @@ public class FileManager{
 			e.printStackTrace();
 		}
 
-		remaingSpace -= data.length;
+		remainingSpace -= data.length;
 	}
 
 	/*
@@ -153,6 +152,18 @@ public class FileManager{
 	 * DELETE
 	 */
 
+	public void deleteFile(String path)
+	{
+		File file = new File(path);
+		if(fileExists(file))
+			try {
+				Files.delete(file.toPath());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	}
+
 	public void deleteChunks(String fileId) 
 	{
 		File[] files = getFilesFromDirectory(diskDIR + Util.CHUNKS_DIR);
@@ -165,28 +176,29 @@ public class FileManager{
 				String fileIdCalc = filename.substring(1,filename.length());
 				if(fileIdCalc.equals(fileId))
 				{
-					System.out.println(fileIdCalc);
+					long length = file.length();
 					try {
 						Files.delete(file.toPath());
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
+					remainingSpace += length;
 				}
 			}
 		}
 	}
-
+	
 	/*
 	 * RECALIMING
 	 */
 
 	public int memoryToRelease(int newTotalSpace){
-		int needRelease = newTotalSpace - (totalSpace - remaingSpace);
+		int needRelease = newTotalSpace - (totalSpace - remainingSpace);
 
 		System.out.println("NewTotal Space: " + newTotalSpace);
 		System.out.println("Need release: " + needRelease);
 		System.out.println("Total space: " + totalSpace);
-		System.out.println("Remaing Space: " + remaingSpace);
+		System.out.println("Remaing Space: " + remainingSpace);
 
 		if(needRelease < 0)
 			return -needRelease;
@@ -196,7 +208,7 @@ public class FileManager{
 	
 	public ArrayList<String> deleteNecessaryChunks(int spaceToFree){
 		
-		ArrayList<String> chunksDeleted = new ArrayList();
+		ArrayList<String> chunksDeleted = new ArrayList<String>();
 		
 		int spaceReleased = 0;
 		
@@ -207,7 +219,7 @@ public class FileManager{
 			
 			for(File file : files)
 			{
-				remaingSpace += file.length();	//Atualiza o espa�o dispon�vel
+				remainingSpace += file.length();	//Atualiza o espa�o dispon�vel
 				spaceReleased += file.length();
 				
 				String filename = file.getName();
@@ -235,11 +247,16 @@ public class FileManager{
 	/*
 	 * Gets e Sets
 	 */
-	public String getFileIdFromFilename(String filename) throws NoSuchAlgorithmException
+	public String getFileIdFromFilename(String filename)
 	{
 		File file = new File(filename);
 		if(file.exists())
-			return hashFileId(file);
+			try {
+				return hashFileId(file);
+			} catch (NoSuchAlgorithmException e) {
+				Logs.errorFileId(filename);
+				e.printStackTrace();
+			}
 		return null;
 	}
 
@@ -280,20 +297,20 @@ public class FileManager{
 	}
 	
 	public int getRemainingSpace(){
-		return this.remaingSpace;
+		return this.remainingSpace;
 	}
 	
 	
 	public void setTotalSpace(int NewSpace){
 		
-		int spaceInUse = totalSpace - remaingSpace;
+		int spaceInUse = totalSpace - remainingSpace;
 		
-		remaingSpace = NewSpace - spaceInUse;
+		remainingSpace = NewSpace - spaceInUse;
 		
 		totalSpace = NewSpace;
 		
-		if(remaingSpace < 0)
-			remaingSpace = totalSpace;
+		if(remainingSpace < 0)
+			remainingSpace = totalSpace;
 	}
 	
 	public File[] getFilesFromDirectory(String dirName)
@@ -307,7 +324,7 @@ public class FileManager{
 	}
 
 	public boolean fileExists(File file){
-		return file.exists();
+		return file.exists() && file.isFile();
 	}
 	
 	//Receives a fileNo and chunkNo
@@ -320,7 +337,7 @@ public class FileManager{
 	}
 
 	public boolean hasSpaceAvailable(Chunk c){
-		return (c.getData().length <= remaingSpace);
+		return (c.getData().length <= remainingSpace);
 	}
 
 	/*
@@ -376,10 +393,13 @@ public class FileManager{
 		}
 	}
 
-	public String checkPath(String path){
-		if(!path.contains("/")){
+	public String checkPath(String path)
+	{
+		String[] parts = path.split("/+");
+		
+		if(parts.length == 1)
 			return new String(diskDIR + Util.LOCAL_DIR + path);
-		}
+		
 		return path;
 	}
 }
