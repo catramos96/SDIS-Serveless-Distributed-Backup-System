@@ -32,4 +32,5 @@
 * Implementar métodos para escolha de acções dependendo das versões.
 * Demos para a apresentação.
 * Considerar a possibilidade de implementar novos tipos de mensagens, apenas para a versão 2 do programa ( com enhancements ) se o caso assim o justificar.
-* Se abrirmos os peers, abrir uma consola para o client e executar algo, fechar o client e depois abrir um outro, da segunda vez que se manda executar alguma coisa o initiator peer não recebe a informação do client.
+* ~~Se abrirmos os peers, abrir uma consola para o client e executar algo, fechar o client e depois abrir um outro, da segunda vez que se manda executar alguma coisa o initiator peer não recebe a informação do client.~~
+* Receber feedback dos peers de acordo com o sucesso/insucesso da execução dos protocolos e enviar essa informação para o client.
