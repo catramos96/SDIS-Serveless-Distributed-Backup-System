@@ -12,6 +12,7 @@ import resources.Util;
 import resources.Util.MessageType;
 import peer.Chunk;
 import peer.Peer;
+import peer.Record;
 import protocols.ChunkBackupProtocol;
 
 public class MessageHandler extends Thread
@@ -37,9 +38,7 @@ public class MessageHandler extends Thread
 	{
 		//Don't process messages that were sent by himself
 		if(peer.getID() != msg.getSenderId())
-		{		
-			Logs.receivedMessageLog(msg);
-			
+		{			
 			switch (msg.getType()) {
 			case PUTCHUNK:
 				peer.getMessageRecord().addPutchunkMessage(msg.getFileId(), msg.getChunkNo());
@@ -65,6 +64,8 @@ public class MessageHandler extends Thread
 			default:
 				break;
 			}
+			
+			Logs.receivedMessageLog(msg);
 		}
 	}
 	
@@ -146,7 +147,7 @@ public class MessageHandler extends Thread
 				if(!peer.chunkRestored(fileId, chunkNo))
 				{
 					Logs.sentMessageLog(msg);
-					peer.mdr.send(msg);
+					peer.getMdr().send(msg);
 				}
 			}
 			//peer.getMessageRecord().removeChunkMessages(fileId, chunkNo);
@@ -219,7 +220,7 @@ public class MessageHandler extends Thread
 				
 				ArrayList<Chunk> chunks = peer.fileManager.splitFileInChunks(Util.PEERS_DIR + "Peer" + peer.getID() + Util.RESTORES_DIR + filename);
 				if(chunks.size() < chunkNo){
-					System.out.println("Ficheiro nï¿½o foi recuperado totalmente");
+					System.out.println("Ficheiro não foi recuperado totalmente");
 					return;
 				}
 				
@@ -232,7 +233,7 @@ public class MessageHandler extends Thread
 					Logs.sentMessageLog(msg);
 					//FileInfo fileinfo = new FileInfo(msg.getFileId(),filename,chunks.size(),repDegree);
 					//record.startRecordStores(fileinfo);
-					new ChunkBackupProtocol(peer.mdb, record, msg).start();
+					new ChunkBackupProtocol(peer.getMdb(), record, msg).start();
 				//}
 			}//
 			
@@ -254,7 +255,7 @@ public class MessageHandler extends Thread
 		{
 			String header = reader.readLine();	//a primeira linha corresponde a header
 			
-			//interpretaï¿½ï¿½o da header
+			//interpretação da header
 			String[] parts = header.split("\\s");
 			
 			Util.MessageType type_rcv = validateMessageType(parts[0]);

@@ -23,7 +23,6 @@ public class BackupTrigger extends Thread{
 	 * @param replicationDegree
 	 */
 	public BackupTrigger(Peer peer, String filename, int replicationDegree){	
-	
 		this.peer = peer;
 		this.filename = filename;
 		this.replicationDegree = replicationDegree;
@@ -45,6 +44,7 @@ public class BackupTrigger extends Thread{
 			//no : it means that this new file is a modification
 			this.deleteFirst = true;
 		}
+		
 	}
 	
 	public void run()
