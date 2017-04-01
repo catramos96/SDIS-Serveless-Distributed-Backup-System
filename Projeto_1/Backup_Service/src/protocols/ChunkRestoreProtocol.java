@@ -4,12 +4,12 @@ import java.util.Random;
 
 import network.Message;
 import network.MulticastListener;
-import network.MulticastRecord;
+import peer.Record;
 import resources.Util;
 
 public class ChunkRestoreProtocol extends Protocol{
 
-	public ChunkRestoreProtocol(MulticastListener mc, MulticastRecord record, Message msg){
+	public ChunkRestoreProtocol(MulticastListener mc, Record record, Message msg){
 		this.mc = mc;
 		this.record = record;
 		this.msg = msg;

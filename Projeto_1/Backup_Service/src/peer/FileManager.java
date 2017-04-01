@@ -377,7 +377,7 @@ public class FileManager{
 	}
 
 	public String checkPath(String path){
-		if(!path.contains("/")){
+		if(!path.contains("/") && !path.contains("\\")){
 			return new String(diskDIR + Util.LOCAL_DIR + path);
 		}
 		return path;

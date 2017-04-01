@@ -13,6 +13,7 @@ import resources.Util.MessageType;
 import peer.Chunk;
 import peer.FileInfo;
 import peer.Peer;
+import peer.Record;
 import protocols.ChunkBackupProtocol;
 
 public class MessageHandler extends Thread
@@ -41,15 +42,18 @@ public class MessageHandler extends Thread
 		{			
 			switch (msg.getType()) {
 			case PUTCHUNK:
+				//peer.getMessageRecord().addPutchunkMessage(msg.getFileId(), msg.getChunkNo());
 				handlePutchunk(msg.getFileId(),msg.getChunkNo(),msg.getBody());
 				break;
 			case STORED:
+				//peer.getMessageRecord().addStoredMessage(msg.getFileId(), msg.getChunkNo(), msg.getSenderId());
 				handleStore(msg.getFileId(), msg.getChunkNo(),msg.getSenderId());	
 				break;
 			case GETCHUNK:
 				handleGetchunk(msg.getFileId(),msg.getChunkNo());
 				break;
 			case CHUNK:
+				//peer.getMessageRecord().addChunkMessage(msg.getFileId(), msg.getChunkNo());
 				handleChunk(msg.getFileId(), msg.getChunkNo(), msg.getBody());
 				break;
 			case DELETE:
@@ -99,16 +103,15 @@ public class MessageHandler extends Thread
 		{
 			//waiting time
 			randomDelay();
-
-			/*if(record.checkStored(msg.getFileId(), msg.getChunkNo()) < c.getReplicationDeg()){*/
-
-			//send STORED message
-			peer.getMc().send(msg);
-			//only save if file doesn't exist
-			if(!alreadyExists)
-				peer.fileManager.saveChunk(c);
-
-			/*}	*/
+			
+			//If the replication degree is lower thatn the desired
+			//if(peer.getMessageRecord().getChunkReplication(msg.getFileId(), msg.getChunkNo()) < c.getReplicationDeg()){
+				//send STORED message
+				peer.getMc().send(msg);
+				//only save if file doesn't exist
+				if(!alreadyExists)
+					peer.fileManager.saveChunk(c);
+			//}	
 		}
 	}
 
@@ -124,7 +127,8 @@ public class MessageHandler extends Thread
 	 */
 	private void handleGetchunk(String fileId, int chunkNo){
 		//peers has stored this chunk
-			if(peer.fileManager.chunkExists(fileId,chunkNo))
+			//if(peer.fileManager.chunkExists(fileId,chunkNo) && !peer.getMessageRecord().receivedChunkMessage(fileId, chunkNo))
+		if(peer.fileManager.chunkExists(fileId,chunkNo))
 			{
 				//body
 				byte[] body = peer.fileManager.getChunkContent(fileId, chunkNo);
@@ -138,6 +142,7 @@ public class MessageHandler extends Thread
 					peer.getMdr().send(msg);
 				}
 			}
+			//peer.getMessageRecord().removeChunkMessages(fileId, chunkNo);
 	}
 	
 	/**
@@ -169,7 +174,7 @@ public class MessageHandler extends Thread
 	 */
 	private void handleRemoved(String fileId, int chunkNo, int peerNo){
 		
-		MulticastRecord record = peer.getMulticastRecord();
+		Record record = peer.getMulticastRecord();
 		
 		String filename = record.getFilename(fileId);	//from stored
 		

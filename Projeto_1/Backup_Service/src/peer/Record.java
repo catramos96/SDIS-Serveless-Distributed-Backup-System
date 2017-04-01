@@ -1,14 +1,12 @@
-package network;
+package peer;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import peer.FileInfo;
-import peer.FileManager;
 import resources.Util;
 
-public class MulticastRecord implements Serializable {
+public class Record implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 	/*
@@ -17,18 +15,16 @@ public class MulticastRecord implements Serializable {
 	 * Integer -> ChunkNo
 	 * ArrayList -> PeersID
 	 */
-	private volatile HashMap<FileInfo, HashMap<Integer, ArrayList<Integer>>> storedConfirms = null;
-	private volatile HashMap<FileInfo, HashMap<Integer, byte[] >> restoreConfirms = null;
-	private volatile HashMap<String, ArrayList<Integer>> putchunkConfirms = null;		//for spacereclaim confirmation
+	private HashMap<FileInfo, HashMap<Integer, ArrayList<Integer>>> storedConfirms = null;				//from my backup files
+	private HashMap<FileInfo, HashMap<Integer, byte[] >> restoreConfirms = null;						//for my restored files
 	
 	public int totalMemory = Util.DISK_SPACE_DEFAULT;	//Just for loads and saves
 	public int remaingMemory = Util.DISK_SPACE_DEFAULT;
 
-	public MulticastRecord()
+	public Record()
 	{
 		storedConfirms = new HashMap<FileInfo, HashMap<Integer, ArrayList<Integer>>>();
 		restoreConfirms = new HashMap<FileInfo, HashMap<Integer, byte[] >>();
-		putchunkConfirms = new HashMap<String, ArrayList<Integer>>();
 	};
 
 	/*
@@ -271,33 +267,5 @@ public class MulticastRecord implements Serializable {
 	
 	public HashMap<FileInfo, HashMap<Integer, ArrayList<Integer>>> getStored() {
 		return storedConfirms;
-	}
-	
-	/*
-	 * PUTCHUNK (SpaceReclaiming);
-	 */
-	
-	public synchronized void startRecordPutchunks(String fileId){
-		putchunkConfirms.put(fileId, new ArrayList());
-	}
-	
-	public synchronized boolean recordPutchunk(String fileId, int chunkNo){
-		
-		if(putchunkConfirms.containsKey(fileId)){
-			ArrayList<Integer> chunks = putchunkConfirms.get(fileId);
-			chunks.add(chunkNo);
-			putchunkConfirms.put(fileId, chunks);
-			return true;
-		}
-		
-		return false;
-	}
-	
-	public synchronized boolean checkPutchunk(String fileId, int chunkNo){
-		if(putchunkConfirms.containsKey(fileId)){
-			if(putchunkConfirms.get(fileId).contains(chunkNo))
-				return true;
-		}
-		return false;			
 	}
 }

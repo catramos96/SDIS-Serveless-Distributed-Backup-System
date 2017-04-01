@@ -2,7 +2,7 @@ package protocols;
 
 import network.Message;
 import network.MulticastListener;
-import network.MulticastRecord;
+import peer.Record;
 
 public class SpaceReclaimingProtocol extends Protocol{
 
@@ -11,7 +11,7 @@ public class SpaceReclaimingProtocol extends Protocol{
 	 * 								 --> Peer					replication degree
 	 */
 	
-	public SpaceReclaimingProtocol(MulticastListener mc, MulticastRecord record, Message msg){
+	public SpaceReclaimingProtocol(MulticastListener mc, Record record, Message msg){
 		this.mc = mc;
 		this.record = record;
 		this.msg = msg;

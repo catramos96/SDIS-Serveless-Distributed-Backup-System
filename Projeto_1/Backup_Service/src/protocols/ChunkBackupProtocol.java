@@ -5,7 +5,7 @@ import java.util.Random;
 
 import network.Message;
 import network.MulticastListener;
-import network.MulticastRecord;
+import peer.Record;
 import resources.Logs;
 import resources.Util;
 
@@ -16,7 +16,7 @@ public class ChunkBackupProtocol extends Protocol{
 	 * 								  --> Peer		Random Delay
 	 */
 	
-	public ChunkBackupProtocol(MulticastListener mdb, MulticastRecord record, Message msg){
+	public ChunkBackupProtocol(MulticastListener mdb, Record record, Message msg){
 		this.mdb = mdb;
 		this.delay = new Random();
 		this.record = record;
