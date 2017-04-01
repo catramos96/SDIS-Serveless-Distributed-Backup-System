@@ -12,6 +12,7 @@ import resources.Util;
 import resources.Util.MessageType;
 import peer.Chunk;
 import peer.Peer;
+import peer.Record;
 import protocols.ChunkBackupProtocol;
 
 public class MessageHandler extends Thread
