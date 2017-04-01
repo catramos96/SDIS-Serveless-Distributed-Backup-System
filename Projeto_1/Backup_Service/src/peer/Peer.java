@@ -10,8 +10,9 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 
 import network.DatagramListener;
+import network.MessageRecord;
 import network.MulticastListener;
-import network.MulticastRecord;
+import resources.Util;
 
 public class Peer {
 
@@ -25,16 +26,17 @@ public class Peer {
 
 	/*listeners*/
 	public DatagramListener socket = null; 	//socket for communication with client
-
 	public MulticastListener mc = null;
 	public MulticastListener mdb = null;
 	public MulticastListener mdr = null;
+	/*MessageRecord*/
+	public MessageRecord msgRecord = null;
 
 	/*FileManeger*/
 	public FileManager fileManager = null;
 
-	/*MulticastRecord*/
-	public MulticastRecord record = null;
+	/*Record*/
+	public Record record = null;
 
 	/**
 	 * Create peer
@@ -50,6 +52,7 @@ public class Peer {
 		this.ID = id;
 		
 		loadRecord();
+		msgRecord = new MessageRecord();
 		fileManager = new FileManager(this.ID,record.totalMemory,record.remaingMemory);
 		
 		System.out.println("TotalMemory: " + record.totalMemory);
@@ -112,7 +115,7 @@ public class Peer {
 	}
 	
 	/*
-	 * MulticastRecord Serialization 
+	 * Record Serialization 
 	 */
 
 	public synchronized void saveRecord() {
@@ -140,13 +143,13 @@ public class Peer {
 
 	public synchronized void loadRecord() {
 		
-		record = new MulticastRecord();
+		record = new Record();
 		
 		try 
 		{
 			FileInputStream fileIn = new FileInputStream("../peersDisk/peer"+ID+"/record.ser");
 			ObjectInputStream in  = new ObjectInputStream(fileIn);
-			record = (MulticastRecord) in.readObject();
+			record = (Record) in.readObject();
 			in.close();
 			fileIn.close();
 			System.out.printf("Serialized data loaded from peersDisk/peer"+ID+"/record.ser");
@@ -205,7 +208,7 @@ public class Peer {
 		return mdr;
 	}
 
-	public MulticastRecord getMulticastRecord(){
+	public Record getMulticastRecord(){
 		return record;
 	}
 
@@ -219,5 +222,9 @@ public class Peer {
 
 	public void resetMessage() {
 		message = null;
+	}
+	
+	public MessageRecord getMessageRecord(){
+		return msgRecord;
 	}
 }
