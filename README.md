@@ -7,7 +7,7 @@
 * ~~Ter um path default para os ficheiros locais. Exemplo: o meu input é image.png eu assumo que a pasta em que ele está é a pasta local dentro da pasta daquele Peer. O prof tem um exemplo assim nas especificações. Podemos facilmente identificar se o que ele nos dá é um path ou não basta verificar se existem '/'.~~
 * ~~Ficheiros com o mesmo nome e conteúdo diferente (versões diferentes) são tratados como ficheiros diferentes porque originam fileIds diferentes. Paragrafo 4, linha 4 da secção 2.1 diz que se se fizer backup a um ficheiro e já houver chunks que pertençam a um ficheiro com o mesmo nome então faz-se delete ao da versão mais antiga.~~
 * Parag 7 da secção 3.2. Um peer que fez stored de um chunk deve guardar a contagem de stores do chunk (em memória não volátil). Assim depois é mais fácil escolher no reclaim space, os chunks a eliminar confirme o replication degree vs o replication degree desejado.
-* Enhancement : não guardar quando atual replicationDegree já é igual ou superior ao desejado
+* ~~Enhancement : não guardar quando atual replicationDegree já é igual ou superior ao desejado~~
 
 ### Restore
 * ~~Recovery feito por chunks: a confirmação também terá que ser por chunks. Este protocolo terá que ter uma estrutura igual ao do backup: reenvio das mensagens e etc POR CHUNK. À medida que se vai recebendo as confirmações põem se no record. O protocolo no trigger espera um tempo igual ao das 5 tentativas do reenvio das mensagens, se não receber todos os chunks então o protocolo falha! Isto é posssível no caso em que existam peers que não estejam ativos.~~
