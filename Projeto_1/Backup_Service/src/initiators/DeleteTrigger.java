@@ -28,10 +28,17 @@ public class DeleteTrigger extends Thread{
 			//create message
 			String fileId = info.getFileId();
 			Message msg = new Message(MessageType.DELETE,peer.getVersion(),peer.getID(),info.getFileId());
-		
+			Logs.sentMessageLog(msg);
+			
 			//send message twice because UDP is not reliable
 			peer.mc.send(msg);
-			Logs.sentMessageLog(msg);
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			peer.mc.send(msg);
 			
 			//delete restores
 			String dir = peer.fileManager.diskDIR + Util.RESTORES_DIR+info.getFilename();
@@ -49,5 +56,15 @@ public class DeleteTrigger extends Thread{
 		}
 		else
 			peer.setMessage("delete file problem");
+		
+		/*try	
+		{
+			
+			fileId = peer.fileManager.getFileIdFromFilename(filename);
+		} 
+		catch (NoSuchAlgorithmException e){
+			Logs.errorFileId(filename);
+			return;
+		}*/
 	}
 }
