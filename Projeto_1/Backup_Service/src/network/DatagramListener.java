@@ -50,12 +50,13 @@ public class DatagramListener extends Thread
 				handle(r_packet.getData());
 				
 				//envia uma confirmacao da rececao
-				String message = null;
-				do
+				String message = "bye";
+				/*do
 				{
 					message = peer.getMessage();
-					System.out.println(message);
-				}while(message == null);
+					
+				}while(message == null);*/
+				
 				
 				byte[] sbuf = message.getBytes();
 				s_packet = new DatagramPacket(sbuf, sbuf.length,r_packet.getAddress(),r_packet.getPort());

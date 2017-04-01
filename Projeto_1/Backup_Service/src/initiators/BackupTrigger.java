@@ -21,13 +21,15 @@ public class BackupTrigger extends Thread{
 	 * @param filename
 	 * @param replicationDegree
 	 */
-	public BackupTrigger(Peer peer, String filename, int replicationDegree){
-		//split file in chunks
-		filename = peer.fileManager.checkPath(filename);
-		chunks = peer.fileManager.splitFileInChunks(filename);	
+	public BackupTrigger(Peer peer, String filename, int replicationDegree){	
 		this.peer = peer;
 		this.filename = filename;
 		this.replicationDegree = replicationDegree;
+		
+		filename = peer.fileManager.checkPath(filename);
+		
+		//split file in chunks
+		chunks = peer.fileManager.splitFileInChunks(filename);	
 	}
 	
 	public void run(){
@@ -47,6 +49,6 @@ public class BackupTrigger extends Thread{
 			new ChunkBackupProtocol(peer.getMdb(),peer.getMulticastRecord(),msg).start(); // fazer aqui !!!
 		}
 		
-		peer.setMessage("backup file");
+		peer.setMessage("backup file");	//feedback for client
 	}
 }
