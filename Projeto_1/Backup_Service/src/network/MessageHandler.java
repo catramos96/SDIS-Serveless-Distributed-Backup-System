@@ -37,7 +37,9 @@ public class MessageHandler extends Thread
 	{
 		//Don't process messages that were sent by himself
 		if(peer.getID() != msg.getSenderId())
-		{			
+		{		
+			Logs.receivedMessageLog(msg);
+			
 			switch (msg.getType()) {
 			case PUTCHUNK:
 				handlePutchunk(msg.getFileId(),msg.getChunkNo(),msg.getBody());
@@ -60,8 +62,6 @@ public class MessageHandler extends Thread
 			default:
 				break;
 			}
-			
-			Logs.receivedMessageLog(msg);
 		}
 	}
 	
@@ -86,7 +86,6 @@ public class MessageHandler extends Thread
 
 		//response message : STORED
 		Message msg = new Message(Util.MessageType.STORED,peer.getVersion(),peer.getID(),c.getFileId(),c.getChunkNo());
-		Logs.sentMessageLog(msg);
 		
 		//verifies chunk existence in this peer
 		boolean alreadyExists = peer.fileManager.chunkExists(c.getFileId(),c.getChunkNo());
@@ -98,16 +97,14 @@ public class MessageHandler extends Thread
 		{
 			//waiting time
 			randomDelay();
-
-			/*if(record.checkStored(msg.getFileId(), msg.getChunkNo()) < c.getReplicationDeg()){*/
-
+		
+			Logs.sentMessageLog(msg);
 			//send STORED message
-			peer.getMc().send(msg);
+			peer.mc.send(msg);
+			
 			//only save if file doesn't exist
 			if(!alreadyExists)
 				peer.fileManager.saveChunk(c);
-
-			/*}	*/
 		}
 	}
 
@@ -134,7 +131,7 @@ public class MessageHandler extends Thread
 				if(!peer.chunkRestored(fileId, chunkNo))
 				{
 					Logs.sentMessageLog(msg);
-					peer.getMdr().send(msg);
+					peer.mdr.send(msg);
 				}
 			}
 	}
@@ -219,7 +216,7 @@ public class MessageHandler extends Thread
 					Logs.sentMessageLog(msg);
 					//FileInfo fileinfo = new FileInfo(msg.getFileId(),filename,chunks.size(),repDegree);
 					//record.startRecordStores(fileinfo);
-					new ChunkBackupProtocol(peer.getMdb(), record, msg).start();
+					new ChunkBackupProtocol(peer.mdb, record, msg).start();
 				//}
 			}//
 			
