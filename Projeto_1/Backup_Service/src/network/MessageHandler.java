@@ -41,11 +41,11 @@ public class MessageHandler extends Thread
 		{			
 			switch (msg.getType()) {
 			case PUTCHUNK:
-				//peer.getMessageRecord().addPutchunkMessage(msg.getFileId(), msg.getChunkNo());
-				handlePutchunk(msg.getFileId(),msg.getChunkNo(),msg.getBody());
+				peer.getMessageRecord().addPutchunkMessage(msg.getFileId(), msg.getChunkNo());
+				handlePutchunk(msg.getFileId(),msg.getChunkNo(),msg.getReplicationDeg(),msg.getBody());
 				break;
 			case STORED:
-				//peer.getMessageRecord().addStoredMessage(msg.getFileId(), msg.getChunkNo(), msg.getSenderId());
+				peer.getMessageRecord().addStoredMessage(msg.getFileId(), msg.getChunkNo(), msg.getSenderId());
 				handleStore(msg.getFileId(), msg.getChunkNo(),msg.getSenderId());	
 				break;
 			case GETCHUNK:
@@ -85,12 +85,11 @@ public class MessageHandler extends Thread
 	 * Peer response to other peer PUTCHUNK message
 	 * @param c
 	 */
-	private void handlePutchunk(String fileId, int chunkNo,byte[] body){
+	private void handlePutchunk(String fileId, int chunkNo,int repDeg,byte[] body){
 		Chunk c = new Chunk(fileId, chunkNo, body);
 
 		//response message : STORED
 		Message msg = new Message(Util.MessageType.STORED,peer.getVersion(),peer.getID(),c.getFileId(),c.getChunkNo());
-		Logs.sentMessageLog(msg);
 		
 		//verifies chunk existence in this peer
 		boolean alreadyExists = peer.fileManager.chunkExists(c.getFileId(),c.getChunkNo());
@@ -102,15 +101,25 @@ public class MessageHandler extends Thread
 		{
 			//waiting time
 			randomDelay();
+			int rep, repdes;
+			rep = peer.getMessageRecord().getChunkReplication(msg.getFileId(), msg.getChunkNo());
 			
+			System.out.println("REPLICATION: " + rep + " DESIRED: " + repDeg);
+
 			//If the replication degree is lower thatn the desired
-			//if(peer.getMessageRecord().getChunkReplication(msg.getFileId(), msg.getChunkNo()) < c.getReplicationDeg()){
+			//if(rep < repDeg){							//--> Enhancement
+				
+				
 				//send STORED message
 				peer.getMc().send(msg);
+				Logs.sentMessageLog(msg);
+				
 				//only save if file doesn't exist
 				if(!alreadyExists)
 					peer.fileManager.saveChunk(c);
-			//}	
+			//}
+		//	else
+			//	peer.getMessageRecord().removeStoredMessages(fileId, chunkNo);	//only keeps the ones refered to his backupChunks --> Enhancement
 		}
 	}
 

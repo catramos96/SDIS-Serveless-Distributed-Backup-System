@@ -17,6 +17,7 @@ public class Record implements Serializable {
 	 */
 	private HashMap<FileInfo, HashMap<Integer, ArrayList<Integer>>> storedConfirms = null;				//from my backup files
 	private HashMap<FileInfo, HashMap<Integer, byte[] >> restoreConfirms = null;						//for my restored files
+	private HashMap<String, ArrayList<Chunk>> myChunks = null;
 	
 	public int totalMemory = Util.DISK_SPACE_DEFAULT;	//Just for loads and saves
 	public int remaingMemory = Util.DISK_SPACE_DEFAULT;
@@ -25,6 +26,7 @@ public class Record implements Serializable {
 	{
 		storedConfirms = new HashMap<FileInfo, HashMap<Integer, ArrayList<Integer>>>();
 		restoreConfirms = new HashMap<FileInfo, HashMap<Integer, byte[] >>();
+		myChunks = new HashMap<String,  ArrayList<Chunk>>();
 	};
 
 	/*
@@ -99,7 +101,7 @@ public class Record implements Serializable {
 		return null;
 	}
 	
-	public synchronized void deleteStored(String fileId) {
+	public synchronized void deleteStoreEntry(String fileId) { 
 		
 		for (FileInfo fileinfo : storedConfirms.keySet()) 
 		{
@@ -253,6 +255,49 @@ public class Record implements Serializable {
 		return false;
 	}
 
+	public void deleteRestoreEntry(String fileId) { 
+	    for (FileInfo fileinfo : restoreConfirms.keySet())  
+	    { 
+	      if(fileinfo.getFileId().equals(fileId)) 
+	      { 
+	        restoreConfirms.remove(fileinfo); 
+	        return; 
+	      } 
+	    } 
+	  } 
+	
+	/*
+	 * MY CHUNKS
+	 */
+	
+	public synchronized void addToMyChunks(String fileNo, int chunkNo, int repDegree){
+		
+		Chunk c = new Chunk(chunkNo,repDegree);
+		ArrayList<Chunk> chunks = new ArrayList<Chunk>();
+		
+		if(myChunks.containsKey(fileNo)){
+			chunks = myChunks.get(fileNo);
+			if(chunks.contains(c))
+				return;
+		}
+		chunks.add(c);
+		myChunks.put(fileNo,chunks);
+	}
+	
+	public synchronized void addRepToChunk(String fileNo, int chunkNo, int newRepDegree){
+		if(myChunks.containsKey(fileNo)){
+			ArrayList<Chunk>chunks = myChunks.get(fileNo);
+			for(Chunk c : chunks){
+				if(c.getChunkNo() == chunkNo){
+					c.setAtualRepDeg(newRepDegree);
+					/*
+					 * Se baixar executar o backupChunkProt mas nao pode ser executado aqui
+					 */
+				}
+			}
+		}
+	}
+	
 	/*
 	 * Gets e sets
 	 */
@@ -268,4 +313,21 @@ public class Record implements Serializable {
 	public HashMap<FileInfo, HashMap<Integer, ArrayList<Integer>>> getStored() {
 		return storedConfirms;
 	}
+	
+	 /** 
+	   * Verifies if some file with this filename started its backup from this peer. 
+	   * @param filename 
+	   * @return 
+	   */ 
+	  public FileInfo fileBackup(String filename)  
+	  { 
+	    for (FileInfo fileinfo : storedConfirms.keySet())  
+	    { 
+	      if(fileinfo.getPath().equals(filename)) 
+	      { 
+	        return fileinfo; 
+	      } 
+	    } 
+	    return null; 
+	  } 
 }

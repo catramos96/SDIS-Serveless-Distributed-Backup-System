@@ -5,11 +5,17 @@ import java.io.Serializable;
 public class FileInfo implements Serializable
 {
 	private static final long serialVersionUID = 1L;
-	private String fileId;
-	private String filename;
-	private String path;
-	private int numChunks;
-	private int repDegree;
+	private String fileId = null;
+	private String filename = null;
+	private String path = null;
+	private int numChunks = -1;
+	private int repDegree = -1;
+	
+	public FileInfo(String fileId, int repDegree)
+	{
+		this.fileId = fileId;
+		this.repDegree = repDegree;
+	}
 	
 	public FileInfo(String fileId, String filename, int numChunks,int repDegree)
 	{
