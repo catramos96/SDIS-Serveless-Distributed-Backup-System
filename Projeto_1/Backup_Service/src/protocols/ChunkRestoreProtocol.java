@@ -1,6 +1,4 @@
 package protocols;
-import java.util.ArrayList;
-import java.util.Random;
 
 import network.Message;
 import network.MulticastListener;

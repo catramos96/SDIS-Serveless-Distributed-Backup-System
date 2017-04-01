@@ -35,10 +35,12 @@ public class MessageHandler extends Thread
 	 * Execute actions depending on Message Type
 	 */
 	public void run() 
-	{
+	{		
 		//Don't process messages that were sent by himself
 		if(peer.getID() != msg.getSenderId())
-		{			
+		{	
+			Logs.receivedMessageLog(this.msg);
+			
 			switch (msg.getType()) {
 			case PUTCHUNK:
 				peer.getMessageRecord().addPutchunkMessage(msg.getFileId(), msg.getChunkNo());
@@ -64,8 +66,6 @@ public class MessageHandler extends Thread
 			default:
 				break;
 			}
-			
-			Logs.receivedMessageLog(msg);
 		}
 	}
 	
