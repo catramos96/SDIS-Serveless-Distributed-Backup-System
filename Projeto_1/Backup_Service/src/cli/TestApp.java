@@ -17,18 +17,25 @@ public class TestApp
 	public static void main(String[] args) throws IOException
 	{
 		int argsLength = args.length;
+		boolean error = false;
 		
 		if(argsLength < 2)
 		{
 			Logs.argsClientInfo();
-			return;
+			error = true;
 		}
 		
 		if(!addressVerification(args[0]))
-			return;
+			error = true;
 		
 		if(!protocolVerification(args[1], argsLength))
+			error = true;
+		
+		if(error)
+		{
+			wait_to_close();
 			return;
+		}
 		
 		String message = args[1];
 		for (int i = 2; i < argsLength; i++) {
@@ -56,13 +63,16 @@ public class TestApp
 		
 		//fechar socket
 		socket.close();
-		
+
+		wait_to_close();
+	}
+
+	private static void wait_to_close() {
 		System.out.println("Press ENTER to exit...");
 		
 		Scanner scanner = new Scanner(System.in);
 		scanner.nextLine();
 		scanner.close();
-		
 	}
 
 	private static boolean protocolVerification(String arg, int length) {		

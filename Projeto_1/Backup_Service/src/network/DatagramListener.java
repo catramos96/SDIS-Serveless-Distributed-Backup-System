@@ -54,13 +54,14 @@ public class DatagramListener extends Thread
 				do
 				{
 					message = peer.getMessage();
+					System.out.println(message);
 				}while(message == null);
-				
-				peer.resetMessage();
 				
 				byte[] sbuf = message.getBytes();
 				s_packet = new DatagramPacket(sbuf, sbuf.length,r_packet.getAddress(),r_packet.getPort());
 				socket.send(s_packet);
+				
+				peer.resetMessage();
 			}
 			
 			//fechar a conexao			

@@ -7,7 +7,7 @@ public class Logs {
 /*Arguments*/
 	
 	public static void argsBackupSystemInfo(){
-		System.out.println("Usage: java BackupSystem <version> <peer_id> <peer_ap> <MC> <MDB> <MDR>");
+		System.out.println("Usage: java BackupSystem <version> <peer_id> <peer_ap> <MC> <MDB> <MDR> ");
 	}
 	
 	public static void argsClientInfo(){
