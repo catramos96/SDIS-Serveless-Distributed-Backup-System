@@ -11,7 +11,6 @@ import resources.Logs;
 import resources.Util;
 import resources.Util.MessageType;
 import peer.Chunk;
-import peer.FileInfo;
 import peer.Peer;
 import peer.Record;
 import protocols.ChunkBackupProtocol;
@@ -252,17 +251,21 @@ public class MessageHandler extends Thread
 			
 			Util.MessageType type_rcv = validateMessageType(parts[0]);
 
+			//common
 			char[] version_rcv = validateVersion(parts[1]);
 			int senderId_rcv = Integer.parseInt(parts[2]);
 			String fileId_rcv = parts[3];
+			
+			//all except delete
 			int chunkNo_rcv = -1;
 			if(type_rcv.compareTo(Util.MessageType.DELETE) != 0)
 				chunkNo_rcv = Integer.parseInt(parts[4]);
+				
+			//just putchunk
 			int replicationDeg_rcv = -1;
 			if(type_rcv.compareTo(Util.MessageType.PUTCHUNK) == 0){
 				replicationDeg_rcv = Integer.parseInt(parts[5]);
 			}
-				
 			
 			//Removes the last sequences of white spaces (\s) and null characters (\0)
 			//String msg_received = (new String(packet.getData()).replaceAll("[\0 \\s]*$", ""));
@@ -271,8 +274,16 @@ public class MessageHandler extends Thread
 			byte[] body = new byte[64000];
 			System.arraycopy(message, offset, body, 0, 64000);
 			
-			parsed = new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv,chunkNo_rcv,replicationDeg_rcv,body);			
-		
+			//create messages
+			if(type_rcv.compareTo(Util.MessageType.DELETE) == 0)
+				parsed = new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv);	
+			else if(type_rcv.compareTo(Util.MessageType.GETCHUNK) == 0 || type_rcv.compareTo(Util.MessageType.STORED) == 0 || type_rcv.compareTo(Util.MessageType.REMOVED) == 0)
+				parsed = new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv,chunkNo_rcv) ;	
+			else if(type_rcv.compareTo(Util.MessageType.PUTCHUNK) == 0)
+				parsed = new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv,chunkNo_rcv,replicationDeg_rcv,body);
+			else if(type_rcv.compareTo(Util.MessageType.CHUNK) == 0)
+				parsed = new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv,chunkNo_rcv,body);
+			
 			reader.close();
 			stream.close();
 		} 

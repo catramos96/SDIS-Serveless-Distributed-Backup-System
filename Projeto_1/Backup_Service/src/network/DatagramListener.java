@@ -50,17 +50,19 @@ public class DatagramListener extends Thread
 				handle(r_packet.getData());
 				
 				//envia uma confirmacao da rececao
-				String message = null;
-				do
+				String message = "bye";
+				/*do
 				{
 					message = peer.getMessage();
-				}while(message == null);
+					
+				}while(message == null);*/
 				
-				peer.resetMessage();
 				
 				byte[] sbuf = message.getBytes();
 				s_packet = new DatagramPacket(sbuf, sbuf.length,r_packet.getAddress(),r_packet.getPort());
 				socket.send(s_packet);
+				
+				peer.resetMessage();
 			}
 			
 			//fechar a conexao			

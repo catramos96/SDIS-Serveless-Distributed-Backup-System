@@ -7,6 +7,7 @@ public class FileInfo implements Serializable
 	private static final long serialVersionUID = 1L;
 	private String fileId;
 	private String filename;
+	private String path;
 	private int numChunks;
 	private int repDegree;
 	
@@ -14,6 +15,8 @@ public class FileInfo implements Serializable
 	{
 		this.fileId = fileId;
 		this.numChunks = numChunks;
+		this.path = filename;
+		
 		String[] parts = filename.split("/+");
 		
 		this.filename = parts[parts.length-1];
@@ -49,7 +52,15 @@ public class FileInfo implements Serializable
 	}
 
 	public int getReplicationDeg() {
-		return 0;
+		return repDegree;
+	}
+
+	public String getPath() {
+		return path;
+	}
+
+	public void setPath(String path) {
+		this.path = path;
 	}
 
 }

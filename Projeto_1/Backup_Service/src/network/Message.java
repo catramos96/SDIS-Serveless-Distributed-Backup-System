@@ -22,25 +22,13 @@ public class Message
 	/**
 	 * <MessageType> <Version> <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF>
 	 * 
-	 * PUTCHUNK <Version> <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
-	 * STORED <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
-	 * GETCHUNK <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
-	 * CHUNK <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF><Body>
-	 * DELETE <Version> <SenderId> <FileId> <CRLF><CRLF>
-	 * REMOVED <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
+	 * PUTCHUNK	<Version> <SenderId> <FileId> <ChunkNo> <ReplicationDeg> 	<CRLF><CRLF>	<Body>
+	 * STORED 	<Version> <SenderId> <FileId> <ChunkNo> 					<CRLF><CRLF>
+	 * GETCHUNK <Version> <SenderId> <FileId> <ChunkNo> 					<CRLF><CRLF>
+	 * CHUNK 	<Version> <SenderId> <FileId> <ChunkNo> 					<CRLF><CRLF>	<Body>
+	 * DELETE 	<Version> <SenderId> <FileId> 								<CRLF><CRLF>
+	 * REMOVED 	<Version> <SenderId> <FileId> <ChunkNo> 					<CRLF><CRLF>
 	 */
-	
-	public Message(Util.MessageType type, char[] version, int senderId, String fileId) {
-		if(!type.name().equals("DELETE"))
-			System.out.println("Wrong Constructor delete");
-		else
-		{
-			this.type = type;
-			this.version = version;
-			this.senderId = senderId;
-			this.fileId = fileId;
-		}
-	}
 	
 	public Message(Util.MessageType type, char[] version, int senderId, String fileId, int chunkNo, int ReplicationDeg, byte[] body)
 	{
@@ -57,8 +45,8 @@ public class Message
 	
 	public Message(Util.MessageType type, char[] version, int senderId, String fileId, int chunkNo)
 	{
-		if(!type.name().equals("STORED") || !type.name().equals("GETCHUNK"))
-			System.out.println("Wrong Constructor stored/getchunk");
+		if(!(type.name().equals("STORED")|| type.name().equals("GETCHUNK") || type.name().equals("REMOVED")) )
+			System.out.println("Wrong Constructor stored/getchunk/removed");
 		this.type = type;
 		this.version = version;
 		this.senderId = senderId;
@@ -81,6 +69,18 @@ public class Message
 		}
 	}
 
+	public Message(Util.MessageType type, char[] version, int senderId, String fileId) {
+		if(!type.name().equals("DELETE"))
+			System.out.println("Wrong Constructor delete");
+		else
+		{
+			this.type = type;
+			this.version = version;
+			this.senderId = senderId;
+			this.fileId = fileId;
+		}
+	}
+	
 
 	/**
 	 * Create new message
