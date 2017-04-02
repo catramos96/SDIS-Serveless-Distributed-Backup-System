@@ -7,17 +7,15 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
-import java.util.ArrayList;
 
 import network.DatagramListener;
 import network.MessageRecord;
 import network.MulticastListener;
-import resources.Util;
 
 public class Peer {
 
 	//TEMPORARIO
-	private ArrayList<String> mdrRestores;
+	//private ArrayList<String> mdrRestores;
 	String message;
 
 	/*informations*/
@@ -71,7 +69,7 @@ public class Peer {
 			}
 		});
 
-		mdrRestores = new ArrayList<String>();
+		//mdrRestores = new ArrayList<String>();
 		this.version = protocolVs;
 		
 		try 
@@ -170,7 +168,7 @@ public class Peer {
 	/*
 	 * Peer getters and setters
 	 */
-
+/*
 	public synchronized boolean chunkRestored(String fileId, int chunkNo) {
 		String chunkName = chunkNo+fileId;
 		return mdrRestores.contains(chunkName);
@@ -179,6 +177,7 @@ public class Peer {
 	public synchronized void addRestoredChunk(int chunkNo, String fileId){
 		mdrRestores.add(chunkNo+fileId);
 	}
+	*/
 
 	public char[] getVersion() {
 		return version;

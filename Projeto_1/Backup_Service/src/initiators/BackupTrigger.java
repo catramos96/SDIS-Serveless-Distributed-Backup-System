@@ -78,7 +78,7 @@ public class BackupTrigger extends Thread{
 			peer.getMulticastRecord().startRecordStores(fileinfo);
 
 			//warn other peers
-			new ChunkBackupProtocol(peer.getMdb(),peer.getMulticastRecord(),msg).start(); // fazer aqui !!!
+			new ChunkBackupProtocol(peer.getMdb(),peer.getMulticastRecord(),msg).start(); 
 			
 		}
 		

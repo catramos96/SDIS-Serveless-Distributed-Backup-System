@@ -37,12 +37,15 @@ public class DeleteTrigger extends Thread{
 			String dir = peer.fileManager.diskDIR + Util.RESTORES_DIR+info.getFilename();
 			peer.fileManager.deleteFile(dir);
 			
-			//delete entries
+			//delete history from mdr
+			peer.msgRecord.resetChunkMessages(fileId);
+			
+			//delete entries from record
 			peer.getMulticastRecord().deleteStoreEntry(fileId);		
 			peer.getMulticastRecord().deleteRestoreEntry(fileId);
 			
-			//delete own file ?
-			//peer.fileManager.deleteFile(filename);
+			//delete own file 
+			peer.fileManager.deleteFile(filename);
 			
 			//client response
 			peer.setMessage("delete file");
