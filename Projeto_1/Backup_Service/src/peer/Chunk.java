@@ -1,12 +1,16 @@
 package peer;
 
-public class Chunk{
-	
+import java.io.Serializable;
+import java.util.ArrayList;
+
+public class Chunk implements Serializable{
+
+	private static final long serialVersionUID = 1L;
 	private int chunkNo = -1;
 	private String fileId = null;
 	private byte[] data = null;
 	private int replicationDeg = 0;	//Desired
-	private int atualRepDeg = 0;
+	private ArrayList<Integer> peers = new ArrayList<Integer>();
 	
 	public Chunk(int chunkNo, int replicationDeg){
 		this.chunkNo = chunkNo;
@@ -19,12 +23,20 @@ public class Chunk{
 		this.setData(data);
 	}
 	
-	public void setAtualRepDeg(int r){
-		atualRepDeg = r;
+	public synchronized void addPeerWithChunk(int peerNo){
+		if(!peers.contains(peerNo))
+		{
+			peers.add(peerNo);
+		}
 	}
 	
-	public int getAtualRepDeg(){
-		return atualRepDeg;
+	public synchronized void removePeerWithChunk(int peerNo){
+		if(peers.contains(peerNo))
+			peers.remove(peerNo);
+	}
+	
+	public synchronized int getAtualRepDeg(){
+		return peers.size();
 	}
 	
 	public void setReplicationDeg(int rep){

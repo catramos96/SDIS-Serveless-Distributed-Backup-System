@@ -284,24 +284,75 @@ public class Record implements Serializable {
 		myChunks.put(fileNo,chunks);
 	}
 	
-	public synchronized void addRepToChunk(String fileNo, int chunkNo, int newRepDegree){
+	public synchronized void setRepOnChunk(String fileNo, int chunkNo, ArrayList<Integer> peers){
+		if(peers == null)
+			return;
+		
 		if(myChunks.containsKey(fileNo)){
 			ArrayList<Chunk>chunks = myChunks.get(fileNo);
 			for(Chunk c : chunks){
 				if(c.getChunkNo() == chunkNo){
-					c.setAtualRepDeg(newRepDegree);
-					/*
-					 * Se baixar executar o backupChunkProt mas nao pode ser executado aqui
-					 */
+					for(int peerNo : peers)
+					{
+						c.addPeerWithChunk(peerNo);
+					}
+				}
+			}
+		}
+	}
+	
+	public synchronized void addRepOnChunk(String fileNo, int chunkNo, int peerNo){
+		if(myChunks.containsKey(fileNo)){
+			ArrayList<Chunk>chunks = myChunks.get(fileNo);
+			for(Chunk c : chunks){
+				if(c.getChunkNo() == chunkNo){
+					c.addPeerWithChunk(peerNo);
 				}
 			}
 		}
 	}
 	
 	/*
+	 * Returns the difference between the ActualReDeg and the RepDegDesired
+	 * If the return is less than 0 then the repetition degree is bellow the desired
+	 */
+	public synchronized int subRepOnChunk(String fileNo,int chunkNo,int peerNo){
+		if(myChunks.containsKey(fileNo)){
+			ArrayList<Chunk>chunks = myChunks.get(fileNo);
+			for(Chunk c : chunks){
+				if(c.getChunkNo() == chunkNo){
+					c.removePeerWithChunk(peerNo);
+					return (c.getAtualRepDeg() - c.getReplicationDeg());
+				}
+			}
+		}
+		return 0;
+	}
+	
+	public synchronized boolean hasChunk(String fileNo, int chunkNo){
+		if(myChunks.containsKey(fileNo))
+		{
+			for(Chunk c : myChunks.get(fileNo)){
+				if(c.getChunkNo() == chunkNo)
+					return true;
+			}
+		}
+		return false;
+	}
+	
+	public synchronized Chunk getMyChunk(String fileNo, int chunkNo){
+		if(myChunks.containsKey(fileNo)){
+			for(Chunk c : myChunks.get(fileNo))
+				if(c.getChunkNo() == chunkNo)
+					return c;
+		}
+		return null;
+	}
+	
+	/*
 	 * Gets e sets
 	 */
-	public synchronized HashMap<Integer,byte[] > getRestores(FileInfo info) 
+ 	public synchronized HashMap<Integer,byte[] > getRestores(FileInfo info) 
 	{
 		if(restoreConfirms.containsKey(info))
 		{

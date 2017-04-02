@@ -10,8 +10,8 @@ public class MessageRecord {
 	private HashMap<String, ArrayList<Integer>> putchunkMessages = null;
 	
 	public MessageRecord(){
-		storedMessages = new HashMap<String, HashMap<Integer, ArrayList<Integer>>>();
-		chunkMessages = new HashMap<String, ArrayList<Integer>>();
+		storedMessages = new HashMap<String, HashMap<Integer, ArrayList<Integer>>>();	//apriori before store
+		chunkMessages = new HashMap<String, ArrayList<Integer>>();						
 		putchunkMessages = new HashMap<String, ArrayList<Integer>>();
 	}
 	
@@ -118,17 +118,17 @@ public class MessageRecord {
 			}
 		}
 	}
-
+	
 	/*
-	 * COUNTS
+	 * GETS
 	 */
 	
-	public int getChunkReplication(String fileNo, int chunkNo){
-		int count = 0;
+	public synchronized ArrayList<Integer> getPeersWithChunk(String fileNo, int chunkNo){
+
 		if(receivedStoredMessage(fileNo, chunkNo)){
-			count = storedMessages.get(fileNo).get(chunkNo).size();
+			return storedMessages.get(fileNo).get(chunkNo);
 		}
 		
-		return count;
+		return null;
 	}
 }
