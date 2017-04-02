@@ -121,7 +121,7 @@ public class MessageHandler extends Thread
 				
 
 				//If the replication degree is lower thatn the desired
-				//if(rep < repDeg){							//--> Enhancement
+				if(rep < repDeg){							//--> Enhancement
 					//send STORED message
 					peer.getMc().send(msg);
 					Logs.sentMessageLog(msg);
@@ -135,9 +135,9 @@ public class MessageHandler extends Thread
 					System.out.println("CHUNK " + chunkNo + " REPLICATION: " + (int)(rep+1) + " DESIRED: " + repDeg);
 					
 					peer.fileManager.saveChunk(c);
-				//}
-			//	else
-				//	peer.getMessageRecord().removeStoredMessages(fileId, chunkNo);	//only keeps the ones refered to his backupChunks --> Enhancement
+				}
+				else
+					peer.getMessageRecord().removeStoredMessages(fileId, chunkNo);	//only keeps the ones refered to his backupChunks --> Enhancement
 			}
 				
 			
@@ -166,6 +166,11 @@ public class MessageHandler extends Thread
 	private synchronized void handleGetchunk(String fileId, int chunkNo){
 		//peers has stored this chunk
 			//if(peer.fileManager.chunkExists(fileId,chunkNo) && !peer.getMessageRecord().receivedChunkMessage(fileId, chunkNo))
+		
+		/*
+		 * ALTERAR PARA VER SE ESTA CONTIDO NO MYCHUNKS DO RECORD
+		 * 
+		 */
 		if(peer.fileManager.chunkExists(fileId,chunkNo))
 			{
 				//body
@@ -256,16 +261,19 @@ public class MessageHandler extends Thread
 				
 				Chunk c = chunks.get(chunkNo);
 				
+				peer.getMessageRecord().removePutChunkMessages(fileId, chunkNo);	//reset recording
+				peer.getMessageRecord().startRecordingPutchunks(fileId, chunkNo);	//start record
+				
 				randomDelay();
 				
-				//if(!record.checkPutchunk(fileId, chunkNo)){
+				if(!peer.getMessageRecord().receivedPutchunkMessage(fileId, chunkNo)){
 					Message msg = new Message(MessageType.PUTCHUNK,peer.getVersion(),peer.getID(),fileId,chunkNo,repDegree,c.getData());
 					Logs.sentMessageLog(msg);
 					//FileInfo fileinfo = new FileInfo(msg.getFileId(),filename,chunks.size(),repDegree);
 					//record.startRecordStores(fileinfo);
 					new ChunkBackupProtocol(peer.getMdb(), record, msg).start();
-				//}
-			}//
+				}
+			}
 			
 		}
 		

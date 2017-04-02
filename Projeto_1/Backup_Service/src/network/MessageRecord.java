@@ -50,17 +50,24 @@ public class MessageRecord {
 		chunkMessages.put(fileNo, chunks);
 	}
 	
+	public void startRecordingPutchunks(String fileNo, int chunkNo){
+		ArrayList<Integer> tmp = new ArrayList<Integer>();
+		tmp.add(chunkNo);
+		putchunkMessages.put(fileNo, tmp);
+	}
+	
 	public void addPutchunkMessage(String fileNo, int chunkNo){
-		ArrayList<Integer> putchunks = new ArrayList<Integer>();
 		
 		if(putchunkMessages.containsKey(fileNo)){
-			putchunks = putchunkMessages.get(fileNo);
+			ArrayList<Integer> putchunks = putchunkMessages.get(fileNo);
 			if(putchunks.contains(chunkNo))
 				return;
+			else
+			{
+				putchunks.add(chunkNo);
+				putchunkMessages.put(fileNo, putchunks);
+			}
 		}
-		
-		putchunks.add(chunkNo);
-		chunkMessages.put(fileNo, putchunks);
 	}
 	
 	/*
@@ -119,6 +126,17 @@ public class MessageRecord {
 		}
 	}
 	
+	public void removePutChunkMessages(String fileNo, int chunkNo){
+		if(putchunkMessages.containsKey(fileNo))
+		{
+			ArrayList<Integer> putchunks = putchunkMessages.get(fileNo);
+			if(putchunks.contains(chunkNo))
+			{
+				putchunks.remove(chunkNo);
+				putchunkMessages.put(fileNo, putchunks);
+			}
+		}
+	}
 	/*
 	 * GETS
 	 */
