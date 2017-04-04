@@ -32,7 +32,10 @@ public class ReclaimTrigger extends Thread{
 		
 		if(memoryToRelease > 0){
 			
-			//elimina os ficheiros conforme o espa�o necess�rio
+			//Remove chunks until it has enough free space
+			/*
+			 * FUNCTION DEPENDING ON THE REPLICATION DEGREE OF THE CHUNKS
+			 */
 			ArrayList<String> backupChunks = peer.fileManager.deleteNecessaryChunks(memoryToRelease);
 			
 			for(String chunk : backupChunks){
@@ -40,24 +43,20 @@ public class ReclaimTrigger extends Thread{
 				Integer chunkNo = Integer.parseInt(chunk.substring(0,1));
 				String fileId = chunk.substring(1,chunk.length());	
 				
-				//System.out.println(fileId + "." + chunkNo);
-				
-				//System.out.println(peer.getMulticastRecord().checkStored(fileId, chunkNo));
+				//Remove from record
+				peer.getMulticastRecord().removeFromMyChunks(fileId, chunkNo);
 				
 				Message msg = new Message(MessageType.REMOVED,peer.getVersion(),peer.getID(),fileId,chunkNo);
-				
 				peer.getMc().send(msg);
-				
+			
 			}
-		
 		}
 		
 		peer.fileManager.setTotalSpace(spaceToReclaim);
+		peer.setMessage("reclaim");
 		
 		System.out.println("TOTAL MEMORY: " + peer.fileManager.getTotalSpace());
 		System.out.println("REMAING MEMORY. " + peer.fileManager.getRemainingSpace());
-		
-		peer.setMessage("reclaim");
 	}
 
 }

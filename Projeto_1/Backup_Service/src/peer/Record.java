@@ -153,7 +153,7 @@ public class Record implements Serializable {
 		return false;
 	}
 
-	public synchronized String getFilename(String fileId){
+	public synchronized String getStoredFilename(String fileId){
 		
 		for (FileInfo fileinfo : storedConfirms.keySet()) 
 		{
@@ -166,7 +166,7 @@ public class Record implements Serializable {
 		return null;
 	}
 	
-	public synchronized int getReplicationDegree(String fileId){
+	public synchronized int getStoredReplicationDegree(String fileId){
 		
 		for (FileInfo fileinfo : storedConfirms.keySet()) 
 		{
@@ -285,7 +285,7 @@ public class Record implements Serializable {
 		myChunks.put(fileNo,chunks);
 	}
 	
-	public synchronized void setRepOnChunk(String fileNo, int chunkNo, ArrayList<Integer> peers){
+	public synchronized void setPeersOnMyChunk(String fileNo, int chunkNo, ArrayList<Integer> peers){
 		if(peers == null)
 			return;
 		
@@ -302,7 +302,7 @@ public class Record implements Serializable {
 		}
 	}
 	
-	public synchronized void addRepOnChunk(String fileNo, int chunkNo, int peerNo){
+	public synchronized void addPeerOnMyChunk(String fileNo, int chunkNo, int peerNo){
 		if(myChunks.containsKey(fileNo)){
 			ArrayList<Chunk>chunks = myChunks.get(fileNo);
 			for(Chunk c : chunks){
@@ -317,7 +317,7 @@ public class Record implements Serializable {
 	 * Returns the difference between the ActualReDeg and the RepDegDesired
 	 * If the return is less than 0 then the repetition degree is bellow the desired
 	 */
-	public synchronized int subRepOnChunk(String fileNo,int chunkNo,int peerNo){
+	public synchronized int remPeerWithMyChunk(String fileNo,int chunkNo,int peerNo){
 		if(myChunks.containsKey(fileNo)){
 			ArrayList<Chunk>chunks = myChunks.get(fileNo);
 			for(Chunk c : chunks){
@@ -330,7 +330,7 @@ public class Record implements Serializable {
 		return 0;
 	}
 	
-	public synchronized boolean hasChunk(String fileNo, int chunkNo){
+	public synchronized boolean hasOnMyChunk(String fileNo, int chunkNo){
 		if(myChunks.containsKey(fileNo))
 		{
 			for(Chunk c : myChunks.get(fileNo)){
@@ -339,6 +339,23 @@ public class Record implements Serializable {
 			}
 		}
 		return false;
+	}
+	
+	public synchronized boolean myChunksBelongsToFile(String fileNo){
+		return myChunks.containsKey(fileNo);
+	}
+	
+	public synchronized void removeFromMyChunks(String fileNo){
+		if(myChunks.containsKey(fileNo))
+			myChunks.remove(fileNo);
+	}
+	
+	public synchronized void removeFromMyChunks(String fileNo, int chunkNo){
+		if(hasOnMyChunk(fileNo, chunkNo)){
+			ArrayList<Chunk> chunks = myChunks.get(fileNo);
+			chunks.remove(chunkNo);
+			myChunks.put(fileNo, chunks);
+		}
 	}
 	
 	public synchronized Chunk getMyChunk(String fileNo, int chunkNo){

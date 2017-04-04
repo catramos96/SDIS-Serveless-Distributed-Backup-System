@@ -93,7 +93,7 @@ public class MessageHandler extends Thread
 
 		//verifies chunk existence in this peer
 		//boolean alreadyExists = peer.fileManager.chunkExists(c.getFileId(),c.getChunkNo());
-		boolean alreadyExists = peer.getMulticastRecord().hasChunk(fileId, chunkNo);
+		boolean alreadyExists = peer.getMulticastRecord().hasOnMyChunk(fileId, chunkNo);
 
 		//no space available and file does not exist -> can't store
 		if(!peer.fileManager.hasSpaceAvailable(c) && !alreadyExists)
@@ -125,8 +125,8 @@ public class MessageHandler extends Thread
 					//Save info on my Chunks 
 					peer.getMulticastRecord().addToMyChunks(fileId, chunkNo, repDeg);
 					//Update Actual Repetition Degree
-					peer.getMulticastRecord().setRepOnChunk(fileId, chunkNo, peersWithChunk);
-					peer.getMulticastRecord().addRepOnChunk(fileId, chunkNo, peer.getID());
+					peer.getMulticastRecord().setPeersOnMyChunk(fileId, chunkNo, peersWithChunk);
+					peer.getMulticastRecord().addPeerOnMyChunk(fileId, chunkNo, peer.getID());
 
 					//System.out.println("CHUNK " + chunkNo + " REPLICATION: " + (int)(rep+1) + " DESIRED: " + repDeg);
 					peer.fileManager.saveChunk(c);
@@ -145,7 +145,7 @@ public class MessageHandler extends Thread
 	 */
 	private synchronized void handleStore(String fileId, int chunkNo, int senderId){
 		//Updates the Repetition Degree if the peer has the chunk
-		peer.getMulticastRecord().addRepOnChunk(fileId,chunkNo,senderId);
+		peer.getMulticastRecord().addPeerOnMyChunk(fileId,chunkNo,senderId);
 
 		Chunk c = peer.getMulticastRecord().getMyChunk(fileId, chunkNo);
 
@@ -162,7 +162,7 @@ public class MessageHandler extends Thread
 	private synchronized void handleGetchunk(String fileId, int chunkNo){
 		
 		//peer has chunk stored
-		if(peer.record.hasChunk(fileId, chunkNo))
+		if(peer.record.hasOnMyChunk(fileId, chunkNo))
 		{
 			//body
 			byte[] body = peer.fileManager.getChunkContent(fileId, chunkNo);
@@ -202,7 +202,11 @@ public class MessageHandler extends Thread
 	 * Peer response to other peer DELETE message
 	 */
 	private synchronized void handleDelete(String fileId){
-		peer.fileManager.deleteChunks(fileId);
+		if(peer.getMulticastRecord().myChunksBelongsToFile(fileId))
+		{
+			peer.fileManager.deleteChunks(fileId);				//remove from disk
+			peer.getMulticastRecord().removeFromMyChunks(fileId);		//remove from record
+		}
 	}
 
 	/**
@@ -211,40 +215,29 @@ public class MessageHandler extends Thread
 	private synchronized void handleRemoved(String fileId, int chunkNo, int peerNo){
 
 		Record record = peer.getMulticastRecord();
-
-		String filename = record.getFilename(fileId);	//from stored
+		String filename = record.getStoredFilename(fileId);	//from stored
 
 		if(filename == null)
 			return;
 
-		int repChunks = 0;
-		ArrayList<Integer> tmp = record.checkStored(fileId, chunkNo);
-
-		if(tmp != null)
-			repChunks = tmp.size();
-		else
-			return;
-
-		//System.out.println("STORED: " + repChunks);
-
-		//if peer is owner of original file
-		if(record.deleteStored(fileId, chunkNo, peerNo)){
-
+		byte[] data = null;
+		int repDegree = 0;
+		int desiredRepDegree = 0;
+		
+		//Owner
+		if(record.checkStored(fileId, chunkNo) != null){			
 			System.out.println("OWNER");
 
-			//calculate replicationDegreeLeft
-			int repDegree = record.getReplicationDegree(fileId);
-			//System.out.println("REPDEGREE: " + repDegree);
+			//Update stored record
+			record.deleteStored(fileId, chunkNo, peerNo);
+			
+			desiredRepDegree = record.getStoredReplicationDegree(fileId);
+			
+			ArrayList<Integer> peersWithChunk = record.checkStored(fileId, chunkNo);	//Actual replication degree
+			if(peersWithChunk !=null)
+				repDegree = peersWithChunk.size();
 
-			//array de peers que fizeram backup
-			tmp = record.checkStored(fileId, chunkNo);
-
-			if(tmp !=null)
-				repChunks = tmp.size();
-
-			if(repDegree<repChunks){
-				//System.out.println("STORED: " + repChunks);
-				//System.out.println("Filename: " + filename);
+			if(repDegree<desiredRepDegree){
 
 				ArrayList<Chunk> chunks = peer.fileManager.splitFileInChunks(Util.PEERS_DIR + "Peer" + peer.getID() + Util.RESTORES_DIR + filename);
 				if(chunks.size() < chunkNo){
@@ -253,21 +246,33 @@ public class MessageHandler extends Thread
 				}
 
 				Chunk c = chunks.get(chunkNo);
-
-				peer.getMessageRecord().removePutChunkMessages(fileId, chunkNo);	//reset recording
-				peer.getMessageRecord().startRecordingPutchunks(fileId, chunkNo);	//start record
-
-				randomDelay();
-
-				if(!peer.getMessageRecord().receivedPutchunkMessage(fileId, chunkNo)){
-					Message msg = new Message(MessageType.PUTCHUNK,peer.getVersion(),peer.getID(),fileId,chunkNo,repDegree,c.getData());
-					Logs.sentMessageLog(msg);
-					//FileInfo fileinfo = new FileInfo(msg.getFileId(),filename,chunks.size(),repDegree);
-					//record.startRecordStores(fileinfo);
-					new ChunkBackupProtocol(peer.getMdb(), record, msg).start();
-				}
+				data = c.getData();
 			}
+		}
+		//Not Owner but it has ths chunk on his backup diretory
+		else if(peer.getMulticastRecord().hasOnMyChunk(fileId, chunkNo)){
+			System.out.println("NOT OWNER");
+			peer.getMulticastRecord().remPeerWithMyChunk(fileId, chunkNo, peerNo);
+			data = peer.fileManager.getChunkContent(fileId, chunkNo);
+			repDegree = peer.getMulticastRecord().getMyChunk(fileId, chunkNo).getAtualRepDeg();
+			desiredRepDegree = peer.getMulticastRecord().getMyChunk(fileId, chunkNo).getReplicationDeg();
+		}
+		
+		/*
+		 * If replicaiton degree is bellow desired it will start the chunkbackup protocol
+		 * only if after a random time it doesn't received any putchunk for the same fileId and chunkNo
+		 */
+		if(repDegree < desiredRepDegree){
+			peer.getMessageRecord().removePutChunkMessages(fileId, chunkNo);	//reset recording
+			peer.getMessageRecord().startRecordingPutchunks(fileId, chunkNo);	//start record
+			
+			randomDelay();
 
+			if(!peer.getMessageRecord().receivedPutchunkMessage(fileId, chunkNo)){
+				Message msg = new Message(MessageType.PUTCHUNK,peer.getVersion(),peer.getID(),fileId,chunkNo,repDegree,data);
+				Logs.sentMessageLog(msg);
+				new ChunkBackupProtocol(peer.getMdb(), record, msg).start();
+			}
 		}
 
 	}
