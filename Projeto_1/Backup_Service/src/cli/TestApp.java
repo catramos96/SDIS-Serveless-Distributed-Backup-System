@@ -1,135 +1,100 @@
 package cli;
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.Scanner;
 
+import network.MessageRMI;
 import resources.Logs;
 
 public class TestApp 
 {
-	private static DatagramSocket socket = null; 	//socket for comunication with server
-	private static InetAddress address = null;
-	private static int port = 0;
+	private static MessageRMI stub = null;
+	private static String response = null;
 
 	public static void main(String[] args) throws IOException
 	{
-		int argsLength = args.length;
-		boolean error = false;
-		
-		if(argsLength < 2)
+		if(args.length < 2)
 		{
 			Logs.argsClientInfo();
-			error = true;
-		}
-		
-		if(!addressVerification(args[0]))
-			error = true;
-		
-		if(!protocolVerification(args[1], argsLength))
-			error = true;
-		
-		if(error)
-		{
 			wait_to_close();
 			return;
 		}
-		
-		String message = args[1];
-		for (int i = 2; i < argsLength; i++) {
-			message += " " + args[i];
+
+		startRMI(args[0]);
+
+		if(!protocolVerAndSend(args))
+		{
+			Logs.argsProtocolInfo(args[1]);
+			wait_to_close();
+			return;
 		}
-		
-		//abrir o socket de ligacao com o peer
-		socket = new DatagramSocket();
-		
-		System.out.println("open socket");
-	
-		//trasmitir informacao
-		byte[] sbuf = (message+'\n').getBytes();	//oper + args
-		DatagramPacket packet = new DatagramPacket(sbuf, sbuf.length,address,port);
-		socket.send(packet);
-		
-		System.out.println("sent message : "+message);
-		
-		//receber informacao
-		byte[] rbuf = new byte[256];
-		packet = new DatagramPacket(rbuf, rbuf.length);
-		socket.receive(packet);
-		
-		System.out.println("received message : " + new String(packet.getData()));
-		
-		//fechar socket
-		socket.close();
+
+		System.out.println("response: " + response);
 
 		wait_to_close();
 	}
 
+	private static void startRMI(String remoteObjName) {
+		try 
+		{
+			Registry registry = LocateRegistry.getRegistry(null);
+			stub = (MessageRMI) registry.lookup(remoteObjName); 
+		} 
+		catch (Exception e) 
+		{
+			System.err.println("Client exception: " + e.toString());
+			e.printStackTrace();
+		}
+	}
+
+	private static boolean protocolVerAndSend(String args[]) 
+	{
+		try {
+
+			switch (args[1]) {
+			case "BACKUP":
+				if(args.length != 4) 
+					return false;
+				response = stub.backup(args[2],Integer.parseInt(args[3]));
+				break;
+			case "RESTORE":
+				if(args.length != 3)
+					return false;
+				response = stub.restore(args[2]);
+				break;
+			case "DELETE":
+				if(args.length != 3)
+					return false;
+				response = stub.delete(args[2]);
+				break;
+			case "RECLAIM":
+				if(args.length != 3)
+					return false;
+				response = stub.delete(args[2]);
+				break;
+			case "STATE":
+				if(args.length != 2)
+					return false;
+				response = stub.state();
+				break;
+			default:
+				System.out.println("Error sending message to peer");
+				return false;
+			}
+		} catch (NumberFormatException | RemoteException e) {
+			e.printStackTrace();
+		} 
+
+		return true;
+	}
+
 	private static void wait_to_close() {
 		System.out.println("Press ENTER to exit...");
-		
+
 		Scanner scanner = new Scanner(System.in);
 		scanner.nextLine();
 		scanner.close();
-	}
-
-	private static boolean protocolVerification(String arg, int length) {		
-		boolean fail = false;
-		
-		if(arg.equals("BACKUP")) 
-	    { 
-	      if(length != 4) fail = true;
-	    } 
-	    else if(arg.equals("RESTORE") || arg.equals("DELETE") || arg.equals("RECLAIM")) 
-	    { 
-	      if(length != 3) fail = true;
-	    } 
-	    else if(arg.equals("STATE")) 
-	    { 
-	      if(length != 2) fail = true;
-	    } 
-	    else	fail = true;
-
-		if(fail){
-			Logs.argsProtocolInfo(arg);
-			return false;
-		}
-		
-		return true;
-	}
-
-	private static boolean addressVerification(String arg) {
-		String[] parts_ap = arg.split(":");
-		//localhost
-		if(parts_ap.length == 1)
-		{
-			try
-			{
-				address = InetAddress.getLocalHost();
-			} 
-			catch (UnknownHostException e) 
-			{
-				e.printStackTrace();
-				return false;
-			}
-			port = Integer.parseInt(parts_ap[0]);
-		}
-		else
-		{
-			try 
-			{
-				address = InetAddress.getByName(parts_ap[0]);
-			} 
-			catch (UnknownHostException e) 
-			{
-				e.printStackTrace();
-				return false;
-			}
-			port = Integer.parseInt(parts_ap[1]);
-		}
-		
-		return true;
 	}
 }

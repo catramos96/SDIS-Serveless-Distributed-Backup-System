@@ -1,16 +1,16 @@
 package initiators;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import network.Message;
 import peer.Peer;
-import protocols.SpaceReclaimingProtocol;
 import resources.Util.MessageType;
 
 public class ReclaimTrigger extends Thread{
 	protected Peer peer = null;
 	protected int spaceToReclaim = 0;
+	protected String message;
+	
 	/**
 	 * Peer initiator response to client request for RECLAIM
 	 * @param action
@@ -20,6 +20,7 @@ public class ReclaimTrigger extends Thread{
 	public ReclaimTrigger(Peer peer, int spaceToReclaim){
 		this.peer = peer;
 		this.spaceToReclaim = spaceToReclaim;
+		this.message = null;
 	}
 	
 	public void run(){
@@ -54,10 +55,12 @@ public class ReclaimTrigger extends Thread{
 		
 		peer.fileManager.setTotalSpace(spaceToReclaim);
 		
-		System.out.println("TOTAL MEMORY: " + peer.fileManager.getTotalSpace());
-		System.out.println("REMAING MEMORY. " + peer.fileManager.getRemainingSpace());
-		
-		peer.setMessage("reclaim");
+		message = "TOTAL MEMORY: " + peer.fileManager.getTotalSpace() +
+				"\nREMAING MEMORY. " + peer.fileManager.getRemainingSpace();
+	}
+
+	public String response() {
+		return message;
 	}
 
 }

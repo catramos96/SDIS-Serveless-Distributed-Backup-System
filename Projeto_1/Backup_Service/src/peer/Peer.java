@@ -7,23 +7,26 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.server.UnicastRemoteObject;
 
-import network.DatagramListener;
+import initiators.BackupTrigger;
+import initiators.DeleteTrigger;
+import initiators.ReclaimTrigger;
+import initiators.RestoreTrigger;
+import initiators.StateTrigger;
+import network.MessageRMI;
 import network.MessageRecord;
 import network.MulticastListener;
 
-public class Peer {
-
-	//TEMPORARIO
-	//private ArrayList<String> mdrRestores;
-	String message;
+public class Peer implements MessageRMI {
 
 	/*informations*/
 	private int ID = 0;
 	private char[] version;
 
 	/*listeners*/
-	public DatagramListener socket = null; 	//socket for communication with client
+	//public DatagramListener socket = null; 	//socket for communication with client
 	public MulticastListener mc = null;
 	public MulticastListener mdb = null;
 	public MulticastListener mdr = null;
@@ -45,18 +48,23 @@ public class Peer {
 	 * @param mdb_ap
 	 * @param mdr_ap
 	 */
-	public Peer(char[] protocolVs, int id, String[] access_point, String[] mc_ap, String[] mdb_ap, String[] mdr_ap)
+	public Peer(char[] protocolVs, int id, String remoteObjName, String[] mc_ap, String[] mdb_ap, String[] mdr_ap)
 	{
 		this.ID = id;
+		this.version = protocolVs;
 		
 		loadRecord();
 		msgRecord = new MessageRecord();
 		fileManager = new FileManager(this.ID,record.totalMemory,record.remaingMemory);
 		
+		/*
 		System.out.println("TotalMemory: " + record.totalMemory);
 		System.out.println("RemaingMemory: " + record.remaingMemory);
+		*/		
+		initRMI(remoteObjName);
+		initMulticasts(mc_ap, mdb_ap, mdr_ap);
 		
-		//shutdown
+		//shutdown  --> colocar uma funcao que guarda de x em x tempo?
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {
 				try {
@@ -68,17 +76,14 @@ public class Peer {
 				}
 			}
 		});
-
-		//mdrRestores = new ArrayList<String>();
-		this.version = protocolVs;
-		
+	}
+	
+	private void initMulticasts(String[] mc_ap, String[] mdb_ap, String[] mdr_ap) {
 		try 
 		{
-			//socket de conexao com o cliente
-			InetAddress address = InetAddress.getByName(access_point[0]);
-			int port = Integer.parseInt(access_point[1]);
-			socket = new DatagramListener(address, port,this);	
-
+			InetAddress address;
+			int port;
+			
 			//sockets multicast
 			if(mc_ap[0] == "")
 				address = InetAddress.getLocalHost();
@@ -97,21 +102,29 @@ public class Peer {
 			mdr = new MulticastListener(address,port,this);		
 
 			//inicializacao dos channels
-			socket.start();
-
 			mc.start();
 			mdb.start();
 			mdr.start();
-
-			//Thread.sleep(Util.WAITING_TIME);		//delay para inicializar as variaveis do multicast
-		} catch (IOException e)
+		} 
+		catch (IOException e)
 		{
-			System.out.println("Peer error");
+			System.err.println("Peer error: "+ e.toString());
 			e.printStackTrace();
 		}
-		
 	}
-	
+
+	private void initRMI(String remoteObjectName) 
+	{
+		try {
+			MessageRMI stub = (MessageRMI) UnicastRemoteObject.exportObject(this, 0);
+			LocateRegistry.getRegistry().rebind(remoteObjectName, stub);
+			System.err.println("Server ready");
+		} catch (Exception e) {
+			System.err.println("Server exception: " + e.toString());
+			e.printStackTrace();
+		}
+	}
+
 	/*
 	 * Record Serialization 
 	 */
@@ -164,21 +177,6 @@ public class Peer {
 		}
 	}
 
-
-	/*
-	 * Peer getters and setters
-	 */
-/*
-	public synchronized boolean chunkRestored(String fileId, int chunkNo) {
-		String chunkName = chunkNo+fileId;
-		return mdrRestores.contains(chunkName);
-	}
-
-	public synchronized void addRestoredChunk(int chunkNo, String fileId){
-		mdrRestores.add(chunkNo+fileId);
-	}
-	*/
-
 	public char[] getVersion() {
 		return version;
 	}
@@ -210,20 +208,98 @@ public class Peer {
 	public Record getMulticastRecord(){
 		return record;
 	}
-
-	public String getMessage() {
-		return message;
-	}
-
-	public void setMessage(String message) {
-		this.message = message;
-	}
-
-	public void resetMessage() {
-		message = null;
-	}
 	
 	public MessageRecord getMessageRecord(){
 		return msgRecord;
+	}
+
+	@Override
+	public String backup(String filename, int repDeg) 
+	{
+		System.out.println("Backup Protocol initiated...");
+		
+		BackupTrigger bt = new BackupTrigger(this,filename,repDeg);
+		bt.start();
+		try {
+			bt.join();
+		} 
+		catch (InterruptedException e) 
+		{
+			System.out.println("cant join");
+			e.printStackTrace();
+		}
+		return bt.response();
+	}
+
+	@Override
+	public String restore(String filename)
+	{
+		System.out.println("Restore Protocol initiated...");
+		
+		RestoreTrigger rt = new RestoreTrigger(this,filename);	
+		rt.start();
+		try 
+		{
+			rt.join();
+		} 
+		catch (InterruptedException e) {
+			System.out.println("cant join");
+			e.printStackTrace();
+		}
+		return rt.response();
+	}
+
+	@Override
+	public String delete(String filename)
+	{
+		System.out.println("Delete Protocol initiated...");
+		
+		DeleteTrigger dt = new DeleteTrigger(this,filename);
+		dt.start();
+		try 
+		{
+			dt.join();
+		}
+		catch (InterruptedException e) {
+			System.out.println("cant join");
+			e.printStackTrace();
+		}
+		return dt.response();
+	}
+
+	@Override
+	public String reclaim(int spaceToReclaim) 
+	{
+		System.out.println("Reclaim Protocol initiated...");
+		
+		ReclaimTrigger rt = new ReclaimTrigger(this,spaceToReclaim);
+		rt.start();
+		try 
+		{
+			rt.join();
+		} 
+		catch (InterruptedException e) {
+			System.out.println("cant join");
+			e.printStackTrace();
+		}
+		return rt.response();
+	}
+
+	@Override
+	public String state()
+	{
+		System.out.println("State Protocol initiated...");
+		
+		StateTrigger st = new StateTrigger(this);
+		st.start();
+		try
+		{
+			st.join();
+		}
+		catch (InterruptedException e) {
+			System.out.println("cant join");
+			e.printStackTrace();
+		}
+		return st.response();
 	}
 }

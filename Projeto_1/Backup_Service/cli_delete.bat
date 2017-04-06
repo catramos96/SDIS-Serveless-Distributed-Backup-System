@@ -1,1 +1,1 @@
-start java cli.TestApp 8000 DELETE ../resources/hello.png
+start java cli.TestApp MessageRMI0 DELETE ../resources/hello.png

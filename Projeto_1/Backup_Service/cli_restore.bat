@@ -1,1 +1,1 @@
-start java cli.TestApp 8003 RESTORE ../resources/hello.png
+start java cli.TestApp MessageRMI0 RESTORE ../resources/hello.png

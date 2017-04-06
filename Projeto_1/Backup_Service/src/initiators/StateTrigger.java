@@ -11,6 +11,8 @@ import resources.Util;
 public class StateTrigger extends Thread
 {
 	private Peer peer;
+	private String message = null;
+	
 	/**
 	 * Peer initiator response to client request for STATE
 	 */
@@ -21,7 +23,7 @@ public class StateTrigger extends Thread
 	
 	public void run()
 	{
-		String message = "\n\nFiles whose backup was initiated : \n\n";
+		message = "\n\nFiles whose backup was initiated : \n\n";
 		
 		HashMap<FileInfo, HashMap<Integer, ArrayList<Integer>>> storedConfirms = peer.record.getStored();
 		
@@ -59,8 +61,10 @@ public class StateTrigger extends Thread
 		//peer storage capacity
 		message += "Peer stored capacity :\n\n";
 		message += " Maximum amount : "+peer.fileManager.getTotalSpace()+"\n";
-		message += " Storage amount : "+peer.fileManager.getRemainingSpace()+"\n";
-		
-		peer.setMessage(message);
+		message += " Storage amount : "+peer.fileManager.getRemainingSpace()+"\n";	
+	}
+
+	public String response() {
+		return message;
 	}
 }

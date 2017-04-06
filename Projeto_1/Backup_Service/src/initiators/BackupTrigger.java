@@ -16,6 +16,8 @@ public class BackupTrigger extends Thread{
 	String filename = null;
 	int replicationDegree = 0;
 	boolean deleteFirst = false;
+	private String message = null;
+	
 	/**
 	 * Peer initiator response to client request for backup
 	 * @param action
@@ -44,7 +46,6 @@ public class BackupTrigger extends Thread{
 			//no : it means that this new file is a modification
 			this.deleteFirst = true;
 		}
-		
 	}
 	
 	public void run()
@@ -82,6 +83,10 @@ public class BackupTrigger extends Thread{
 			
 		}
 		
-		peer.setMessage("backup file");	//feedback for client
+		message = "backup successful";
+	}
+
+	public String response() {
+		return message;
 	}
 }

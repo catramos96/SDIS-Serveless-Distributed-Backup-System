@@ -13,8 +13,9 @@ import resources.Util.MessageType;
 
 public class RestoreTrigger extends Thread{
 	
-	Peer peer = null;
-	String filename = null;
+	private Peer peer = null;
+	private String filename = null;
+	private String message = null;
 	
 	/**
 	 * Peer initiator response to client request for RESTORE
@@ -62,13 +63,13 @@ public class RestoreTrigger extends Thread{
 			}
 		} 
 		catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		peer.setMessage("restore");
-		if(!restored)
-			System.out.println("File Couldn't be restored");
 		
+		if(!restored)
+			message = "File Couldn't be restored";
+		else
+			message = "file restored with sucess";
 		
 		
 	/*	//verifica de 100 em 100 ms se ja foram restaurados todos os chunks
@@ -89,5 +90,9 @@ public class RestoreTrigger extends Thread{
 		}*/
 		
 		
+	}
+
+	public String response() {
+		return message;
 	}
 }

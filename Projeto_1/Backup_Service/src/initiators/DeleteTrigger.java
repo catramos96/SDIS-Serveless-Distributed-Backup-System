@@ -10,12 +10,15 @@ import resources.Util.MessageType;
 public class DeleteTrigger extends Thread{
 	private String filename;
 	private Peer peer;
+	private String message;
+	
 	/**
 	 * Peer initiator response to client request for DELETE
 	 */
 	public DeleteTrigger(Peer peer, String filename){
 		this.peer = peer;
 		this.filename = filename;
+		this.message = null;
 	}
 	
 	public void run()
@@ -47,10 +50,13 @@ public class DeleteTrigger extends Thread{
 			//delete own file 
 			peer.fileManager.deleteFile(filename);
 			
-			//client response
-			peer.setMessage("delete file");
+			message = "delete executed without problems";
 		}
 		else
-			peer.setMessage("delete file problem");
+			message = "delete file problem";
+	}
+
+	public String response() {
+		return message;
 	}
 }
