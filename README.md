@@ -6,8 +6,8 @@
 * ~~Guardar path da localização do ficheiro a fazer backup no fileinfo ? Assim ao fazer reclaim space, quando o owner recebesse a mensagem poderia executar o chunkBackupProtocol passando o path do ficheiro automaticamente (ia busca-lo ao fileinfo dos storeds).~~
 * ~~Ter um path default para os ficheiros locais. Exemplo: o meu input é image.png eu assumo que a pasta em que ele está é a pasta local dentro da pasta daquele Peer. O prof tem um exemplo assim nas especificações. Podemos facilmente identificar se o que ele nos dá é um path ou não basta verificar se existem '/'.~~
 * ~~Ficheiros com o mesmo nome e conteúdo diferente (versões diferentes) são tratados como ficheiros diferentes porque originam fileIds diferentes. Paragrafo 4, linha 4 da secção 2.1 diz que se se fizer backup a um ficheiro e já houver chunks que pertençam a um ficheiro com o mesmo nome então faz-se delete ao da versão mais antiga.~~
-* Parag 7 da secção 3.2. Um peer que fez stored de um chunk deve guardar a contagem de stores do chunk (em memória não volátil). Assim depois é mais fácil escolher no reclaim space, os chunks a eliminar confirme o replication degree vs o replication degree desejado.
-* Quando excede a memória deve eliminar os chunks que tiverem actualDegree > replicationDegree.
+* ~~Parag 7 da secção 3.2. Um peer que fez stored de um chunk deve guardar a contagem de stores do chunk (em memória não volátil). Assim depois é mais fácil escolher no reclaim space, os chunks a eliminar confirme o replication degree vs o replication degree desejado.
+* Quando excede a memória deve eliminar os chunks que tiverem actualDegree > replicationDegree.~~
 * ~~Enhancement : não guardar quando atual replicationDegree já é igual ou superior ao desejado~~
 
 ### Restore
@@ -21,15 +21,15 @@
 
 ### Space Reclaim
 * Método de selecção dos chunks tendo em conta os replication degrees vs os desejados.
-* Se entretanto for necessário executar o chunkBackupProtocol para um chunk eliminado, é necessario esperar x tempo para saber se um outro peer iniciou este mesmo protocolo.
-* Atualizar a contagem dos chunks quando um peer recebe o remove.
+* ~~Se entretanto for necessário executar o chunkBackupProtocol para um chunk eliminado, é necessario esperar x tempo para saber se um outro peer iniciou este mesmo protocolo.~~
+* ~~Atualizar a contagem dos chunks quando um peer recebe o remove.~~
 * Enhancement -> Ponto 1 da secção Geral (abaixo) + Se não houver stores nem mais putchunks durante x tempo (então o peer que iniciou o protocolo pode ter sofrido um erro etc) então um peer inicia o protocolo de backupChunkProtocolo.
 
 ### State
 * Tudo
 
 ## Geral
-* Todos os chunks guardarem a contagem do replication degree dos chunks. Ao atualizar esta informação no caso dos protocolos de reclaim ou delete, esperar x tempo e iniciar o chunkBackupProtocol se entretanto não receberem nenhum PUTCHUNK. Desta forma, restaura o replicationDegree.
+* ~~Todos os chunks guardarem a contagem do replication degree dos chunks. Ao atualizar esta informação no caso dos protocolos de reclaim ou delete, esperar x tempo e iniciar o chunkBackupProtocol se entretanto não receberem nenhum PUTCHUNK. Desta forma, restaura o replicationDegree.~~
 * Implementar métodos para escolha de acções dependendo das versões.
 * Demos para a apresentação.
 * Considerar a possibilidade de implementar novos tipos de mensagens, apenas para a versão 2 do programa ( com enhancements ) se o caso assim o justificar.

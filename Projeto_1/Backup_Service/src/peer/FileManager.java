@@ -34,7 +34,6 @@ public class FileManager{
 	/*
 	 * BACKUP
 	 */
-
 	public ArrayList<Chunk> splitFileInChunks(String filename) 
 	{
 		ArrayList<Chunk> chunkList = new ArrayList<>();	//list of chunks created for this file
@@ -219,7 +218,7 @@ public class FileManager{
 			
 			for(File file : files)
 			{
-				remainingSpace += file.length();	//Atualiza o espa�o dispon�vel
+				remainingSpace += file.length();	//Updates free space
 				spaceReleased += file.length();
 				
 				String filename = file.getName();
@@ -300,7 +299,6 @@ public class FileManager{
 		return this.remainingSpace;
 	}
 	
-	
 	public void setTotalSpace(int NewSpace){
 		
 		int spaceInUse = totalSpace - remainingSpace;
@@ -328,21 +326,22 @@ public class FileManager{
 	}
 	
 	//Receives a fileNo and chunkNo
-	public boolean chunkExists(String fileId, int chunkNo)
+	/*public boolean chunkExists(String fileId, int chunkNo)
 	{
 		String chunkName = createChunkName(fileId,chunkNo);
 		File file = new File(chunkName);
 
 		return (file.exists() && file.isFile());
-	}
+	}*/
 
-	public boolean hasSpaceAvailable(Chunk c){
-		return (c.getData().length <= remainingSpace);
-	}
+	
 
 	/*
 	 * OTHERS
 	 */
+	public boolean hasSpaceAvailable(Chunk c){
+		return (c.getData().length <= remainingSpace);
+	}
 
 	private String createChunkName(String fileNo, int chunkNo)
 	{
