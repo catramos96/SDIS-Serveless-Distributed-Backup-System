@@ -3,10 +3,17 @@ package protocols;
 import network.Message;
 import network.MulticastListener;
 import peer.Record;
+import resources.Logs;
 import resources.Util;
 
 public class ChunkRestoreProtocol extends Protocol{
 
+	/**
+	 * Order to restore 1 chunk
+	 * @param mc
+	 * @param record
+	 * @param msg
+	 */
 	public ChunkRestoreProtocol(MulticastListener mc, Record record, Message msg){
 		this.mc = mc;
 		this.record = record;
@@ -16,7 +23,6 @@ public class ChunkRestoreProtocol extends Protocol{
 	@Override
 	public void run()  
 	{
-		boolean end = false;
 		int rep = 0;
 		int waitingTime = Util.WAITING_TIME;
 		String fileNo = msg.getFileId();
@@ -24,10 +30,13 @@ public class ChunkRestoreProtocol extends Protocol{
 		
 		while(rep < Util.MAX_TRIES)	
 		{
-			System.out.println("Times :" + rep + " of " +  chunkNo);
+			Logs.tryNrReceiveChunk(rep,chunkNo);
 			
-			mc.send(msg);		//msg GETCHUNK
+			//send message
+			mc.send(msg);
+			Logs.sentMessageLog(msg);
 			
+			//wait
 			try {
 				Thread.sleep(waitingTime);
 			} 
@@ -35,80 +44,16 @@ public class ChunkRestoreProtocol extends Protocol{
 				e.printStackTrace();
 			}
 			
+			//verifies if some chunk was restored
 			if(record.checkChunkRestored(fileNo, chunkNo)){
-				end = true;
-				System.out.println("restored chunk n: " + chunkNo);
-				break;
+				System.out.println("Restored chunk n: " + chunkNo);
+				return;
 			}
 			
-			//waitingTime *= Util.TIME_REINFORCEMENT;	//doubles time for each rep
+			//inc repetitions
 			rep++;
 		}
-		if(!end){
-			System.out.println("chunk no: " + chunkNo + " not restored");
-		}
-		/*
-		String fileId;
-		boolean restored = false;
 		
-		try	{
-			filename = peer.fileManager.checkPath(filename);
-			fileId = peer.fileManager.getFileIdFromFilename(filename);
-			
-			int chunks = peer.fileManager.getFileNumChunks(filename);
-
-			//start recording chunk restores
-			FileInfo info = new FileInfo(fileId,filename,chunks,1);			//1 - TMP -> REPLICATION DEGREE
-			
-			peer.record.startRecordRestores(info);
-
-			//create and send message for each chunk
-			for(int i = 0; i < info.getNumChunks(); i++)
-			{
-				Message msg = new Message(MessageType.GETCHUNK,peer.getVersion(),peer.getID(),info.getFileId(),i);
-				Logs.sentMessageLog(msg);
-				new ChunkRestoreProtocol(peer.getMc(),peer.getMulticastRecord(),msg).start();
-			}
-			
-			long startTime = System.currentTimeMillis(); //fetch starting time
-			
-			while((System.currentTimeMillis()-startTime)<Util.MAX_AVG_DELAY_TIME)	
-			{
-			    if(peer.getMulticastRecord().allRestored(info)){
-			    	peer.fileManager.restoreFile(info.getFilename(), peer.record.getRestores(info));
-					Logs.fileRestored(info.getFilename());
-					restored = true;
-					break;
-			    }
-			}
-		} 
-		catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		peer.setMessage("restore");
-		if(!restored)
-			System.out.println("File Couldn't be restored");
-		
-		
-		
-	/*	//verifica de 100 em 100 ms se ja foram restaurados todos os chunks
-		try{
-			while(!peer.record.allRestored(info))
-			{
-				Thread.sleep(100);
-			}
-			//fileRestore
-			peer.fileManager.restoreFile(info.getFilename(), peer.record.getRestores(info));
-			Logs.fileRestored(info.getFilename());
-		} 
-		catch (InterruptedException e)
-		{
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}*/
-		
-		
+		System.out.println("Chunk no: " + chunkNo + " not restored.");
 	}
 }

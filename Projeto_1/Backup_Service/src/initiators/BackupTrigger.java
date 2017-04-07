@@ -30,7 +30,10 @@ public class BackupTrigger extends Thread{
 		this.peer = peer;
 		this.replicationDegree = replicationDegree;
 		this.filename = peer.fileManager.checkPath(filename);
-		
+	}
+
+	public void run()
+	{
 		//verifies original file existence
 		File f = new File(this.filename);
 		if(!f.exists())
@@ -54,17 +57,9 @@ public class BackupTrigger extends Thread{
 				return;
 			}
 
-			//no : it means that this new file is a modification
-			this.deleteFirst = true;
-		}
-	}
-
-	public void run()
-	{
-		if(deleteFirst)
-		{
-			//must delete the old chunks
+			//no : it means that this file is a modification
 			Logs.initProtocol("Delete");
+			//delete old chunks
 			DeleteTrigger dt = new DeleteTrigger(peer, filename);	
 			dt.start();
 			try 
@@ -88,7 +83,6 @@ public class BackupTrigger extends Thread{
 			//create message for each chunk
 			Chunk c = chunks.get(i);
 			Message msg = new Message(MessageType.PUTCHUNK,peer.getVersion(),peer.getID(),c.getFileId(),c.getChunkNo(),replicationDegree,c.getData());
-			Logs.sentMessageLog(msg);
 
 			//initiate file record
 			FileInfo fileinfo = new FileInfo(msg.getFileId(),filename,chunks.size(),replicationDegree);
@@ -101,10 +95,10 @@ public class BackupTrigger extends Thread{
 		}
 
 		//wait for all threads to finish
-		for (ChunkBackupProtocol f : subprotocols)
+		for (ChunkBackupProtocol cbp : subprotocols)
 		{
 			try {
-				f.join();
+				cbp.join();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}

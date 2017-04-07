@@ -25,71 +25,67 @@ public class RestoreTrigger extends Thread{
 	public RestoreTrigger(Peer peer, String filename)
 	{
 		this.peer = peer;
-		this.filename = filename;
+		this.filename = peer.fileManager.checkPath(filename);
 	}
 	
-	public void run(){
-		String fileId;
-		boolean restored = false;
-		
-		try	{
-			filename = peer.fileManager.checkPath(filename);
-			fileId = peer.fileManager.getFileIdFromFilename(filename);
+	@Override
+	public void run()
+	{
+		try	
+		{
+			//verifies if this file was already backed up
+			FileInfo info = peer.record.fileBackup(this.filename);
 			
-			int chunks = peer.fileManager.getFileNumChunks(filename);
-
-			//start recording chunk restores
-			FileInfo info = new FileInfo(fileId,filename,chunks,1);			//1 - TMP -> REPLICATION DEGREE
+			if(info == null)
+			{
+				message = filename + " was not backed up by this peer!";
+				return;
+			}
+			
+			//verifies if this file was already restored
+			if(peer.record.checkRestore(info.getFileId()))
+			{
+				message = info.getFilename() + " already restored!";
+				return;
+			}
+			
+			//prepares "record" for chunk messages
 			peer.record.startRecordRestores(info);
 
 			//create and send message for each chunk
 			for(int i = 0; i < info.getNumChunks(); i++)
 			{
+				//create message
 				Message msg = new Message(MessageType.GETCHUNK,peer.getVersion(),peer.getID(),info.getFileId(),i);
-				Logs.sentMessageLog(msg);
 				new ChunkRestoreProtocol(peer.getMc(),peer.getMulticastRecord(),msg).start();
 			}
 			
 			long startTime = System.currentTimeMillis(); //fetch starting time
 			
-			while((System.currentTimeMillis()-startTime)<Util.MAX_AVG_DELAY_TIME)	
+			//verifies during x time if the restore was successful
+			while((System.currentTimeMillis() - startTime) < Util.MAX_AVG_DELAY_TIME)	
 			{
-			    if(peer.getMulticastRecord().allRestored(info)){
+				//true when all 'chunk' messages received
+			    if(peer.getMulticastRecord().allRestored(info))
+			    {
+			    	//creates the file
 			    	peer.fileManager.restoreFile(info.getFilename(), peer.record.getRestores(info));
 					Logs.fileRestored(info.getFilename());
-					restored = true;
-					break;
+					
+					message = "Restore successful!";
+					return;
 			    }
 			}
+			
+			//if file was not restores, the entries of objects that mapped this file must be deleted
+			peer.record.deleteRestoreEntry(info.getFileId());
+			peer.msgRecord.resetChunkMessages(info.getFileId());
+			
+			message = info.getFilename() + " not restored...";
 		} 
 		catch (IOException e) {
 			e.printStackTrace();
 		}
-		
-		if(!restored)
-			message = "File Couldn't be restored";
-		else
-			message = "file restored with sucess";
-		
-		
-	/*	//verifica de 100 em 100 ms se ja foram restaurados todos os chunks
-		try{
-			while(!peer.record.allRestored(info))
-			{
-				Thread.sleep(100);
-			}
-			//fileRestore
-			peer.fileManager.restoreFile(info.getFilename(), peer.record.getRestores(info));
-			Logs.fileRestored(info.getFilename());
-		} 
-		catch (InterruptedException e)
-		{
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}*/
-		
-		
 	}
 
 	public String response() {

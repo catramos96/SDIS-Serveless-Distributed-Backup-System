@@ -92,6 +92,10 @@ public class Logs {
 		System.out.println("Try number "+ nr + " to stored chunk number "+chunkNo);
 	}
 	
+	public static void tryNrReceiveChunk(int nr,int chunkNo){
+		System.out.println("Try number "+ nr + " to receive chunk number "+chunkNo);
+	}
+	
 	public static void allChunksNrStored(int chunkNo){
 		System.out.println("All Chunks with number "+ chunkNo+ " Stored");	
 	}

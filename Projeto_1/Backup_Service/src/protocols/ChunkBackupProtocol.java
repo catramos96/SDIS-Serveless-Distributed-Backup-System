@@ -45,6 +45,7 @@ public class ChunkBackupProtocol extends Protocol{
 		
 			//send message
 			mdb.send(msg);
+			Logs.sentMessageLog(msg);
 			
 			//waits
 			try {

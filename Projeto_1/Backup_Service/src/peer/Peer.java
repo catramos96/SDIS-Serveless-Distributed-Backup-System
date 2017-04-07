@@ -46,7 +46,7 @@ public class Peer implements MessageRMI {
 
 	/*Schedule for metadata saving*/
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-	
+
 	/**
 	 * Create peer
 	 * @param protocolVs
@@ -80,13 +80,13 @@ public class Peer implements MessageRMI {
 		initMulticasts(mc_ap, mdb_ap, mdr_ap);
 
 		//save metadata in 30s intervals
-		final Runnable beeper = new Runnable() {
+		final Runnable saveMetadata = new Runnable() {
 			public void run() {
 				System.out.println("Saving Metadata..."); 
 				saveRecord();
 			}
 		};
-		scheduler.scheduleAtFixedRate(beeper, 30, 30, TimeUnit.SECONDS);
+		scheduler.scheduleAtFixedRate(saveMetadata, 30, 30, TimeUnit.SECONDS);
 
 		//save metadata when shouts down
 		Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -102,7 +102,7 @@ public class Peer implements MessageRMI {
 			}
 		});
 	}
-	
+
 	/*
 	 * Init rmi for client communication
 	 */
@@ -111,7 +111,7 @@ public class Peer implements MessageRMI {
 		try {
 			MessageRMI stub = (MessageRMI) UnicastRemoteObject.exportObject(this, 0);
 			LocateRegistry.getRegistry().rebind(remoteObjectName, stub);
-			
+
 			System.out.println("Server ready!");
 		} catch (Exception e) {
 			System.err.println("Server exception: " + e.toString());
@@ -159,7 +159,7 @@ public class Peer implements MessageRMI {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * Record Object Serialization
 	 */
@@ -175,7 +175,7 @@ public class Peer implements MessageRMI {
 			out.writeObject(record);
 			out.close();
 			fileOut.close();
-			System.out.printf("Serialized data saved in peersDisk/peer"+ID+"/record.ser");
+			System.out.println("Serialized data saved in peersDisk/peer"+ID+"/record.ser");
 		}
 		catch (FileNotFoundException e) {
 			System.err.println("Server exception: " + e.toString());
@@ -195,7 +195,7 @@ public class Peer implements MessageRMI {
 		record = new Record();
 
 		File recordFile = new File("../peersDisk/peer"+ID+"/record.ser");
-		
+
 		//file can be loaded
 		if(recordFile.exists())
 		{
@@ -206,7 +206,7 @@ public class Peer implements MessageRMI {
 				record = (Record) in.readObject();
 				in.close();
 				fileIn.close();
-				
+
 				System.out.println("Serialized data loaded from peersDisk/peer"+ID+"/record.ser");
 			} 
 			catch (FileNotFoundException e) {
@@ -223,7 +223,7 @@ public class Peer implements MessageRMI {
 			}
 		}
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see network.MessageRMI#backup(java.lang.String, int)
@@ -232,13 +232,8 @@ public class Peer implements MessageRMI {
 	public String backup(String filename, int repDeg) 
 	{
 		Logs.initProtocol("Backup");
-	
+
 		BackupTrigger bt = new BackupTrigger(this,filename,repDeg);
-		
-		//end if the backup protocol take any conclusion at the constructor
-		if(bt.response() != null)
-			return bt.response();
-		
 		bt.start();
 		try 
 		{
@@ -260,8 +255,9 @@ public class Peer implements MessageRMI {
 	public String restore(String filename)
 	{
 		Logs.initProtocol("Restore");
-		
+
 		RestoreTrigger rt = new RestoreTrigger(this,filename);	
+
 		rt.start();
 		try 
 		{
@@ -282,7 +278,7 @@ public class Peer implements MessageRMI {
 	public String delete(String filename)
 	{
 		Logs.initProtocol("Delete");
-		
+
 		DeleteTrigger dt = new DeleteTrigger(this,filename);
 		dt.start();
 		try 
@@ -293,10 +289,10 @@ public class Peer implements MessageRMI {
 			System.err.println("Server exception: " + e.toString());
 			e.printStackTrace();
 		}
-		
+
 		//delete own file 
 		fileManager.deleteFile(filename);
-		
+
 		return dt.response();
 	}
 
@@ -308,7 +304,7 @@ public class Peer implements MessageRMI {
 	public String reclaim(int spaceToReclaim) 
 	{
 		Logs.initProtocol("Reclaim");
-		
+
 		ReclaimTrigger rt = new ReclaimTrigger(this,spaceToReclaim);
 		rt.start();
 		try 
@@ -330,7 +326,7 @@ public class Peer implements MessageRMI {
 	public String state()
 	{
 		Logs.initProtocol("State");
-		
+
 		StateTrigger st = new StateTrigger(this);
 		st.start();
 		try
@@ -343,8 +339,8 @@ public class Peer implements MessageRMI {
 		}
 		return st.response();
 	}
-	
-	
+
+
 	/*
 	 * Gets & Sets
 	 */
