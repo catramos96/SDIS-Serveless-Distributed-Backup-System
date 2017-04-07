@@ -66,7 +66,6 @@ public class TestApp
 	private static boolean protocolVerAndSend(String args[]) 
 	{
 		try {
-
 			switch (args[1]) {
 			case "BACKUP":
 				if(args.length != 4) 
@@ -102,6 +101,7 @@ public class TestApp
 		{
 			System.err.println("Client exception: " + e.toString());
 			e.printStackTrace();
+			return false;
 		} 
 
 		return true;

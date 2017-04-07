@@ -47,9 +47,6 @@ public class DeleteTrigger extends Thread{
 			peer.getMulticastRecord().deleteStoreEntry(fileId);		
 			peer.getMulticastRecord().deleteRestoreEntry(fileId);
 			
-			//delete own file 
-			peer.fileManager.deleteFile(filename);
-			
 			message = "delete executed without problems";
 		}
 		else

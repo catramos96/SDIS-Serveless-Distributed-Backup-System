@@ -69,7 +69,7 @@ public class Logs {
 	}
 	
 	public static void errorFindingFile(String filename){
-		System.out.println("Error "+filename+" not founf.");
+		System.out.println("Error "+filename+" not found.");
 	}
 	
 	public static void fileRestored(String filename){

@@ -16,6 +16,12 @@ public class ChunkBackupProtocol extends Protocol{
 	 * 								  --> Peer		Random Delay
 	 */
 	
+	/**
+	 * Backup of 1 chunk
+	 * @param mdb
+	 * @param record
+	 * @param msg
+	 */
 	public ChunkBackupProtocol(MulticastListener mdb, Record record, Message msg){
 		this.mdb = mdb;
 		this.delay = new Random();
@@ -24,21 +30,23 @@ public class ChunkBackupProtocol extends Protocol{
 	}
 
 	@Override
-	public void run() {
-		
+	public void run() 
+	{	
 		int stored = 0;
 		int rep = 0;
 		int waitingTime = Util.WAITING_TIME;
 		String fileNo = msg.getFileId();
 		int chunkNo = msg.getChunkNo();
-		boolean end = false;
 		
+		//try 5 times 
 		while(rep < Util.MAX_TRIES)	
 		{
 			Logs.tryNrStoreChunk(rep, msg.getChunkNo());
 		
-			mdb.send(msg);		//msg PutChunk
+			//send message
+			mdb.send(msg);
 			
+			//waits
 			try {
 				Thread.sleep(waitingTime);
 			} 
@@ -46,6 +54,7 @@ public class ChunkBackupProtocol extends Protocol{
 				e.printStackTrace();
 			}
 			
+			//count peers with chunks stored
 			ArrayList<Integer> stored_peers = record.checkStored(fileNo, chunkNo);
 			if(stored_peers != null)
 				stored = stored_peers.size();
@@ -54,16 +63,13 @@ public class ChunkBackupProtocol extends Protocol{
 			if(stored >= msg.getReplicationDeg())
 			{
 				Logs.allChunksNrStored(msg.getChunkNo());
-				end = true;
-				break;
+				return;
 			}
 			
 			waitingTime *= Util.TIME_REINFORCEMENT;	//doubles time for each rep
 			rep++;
 		}
-		if(!end){
-			Logs.chunkRepDegNotAccepted(msg.getChunkNo(),stored);
-		}
 		
+		Logs.chunkRepDegNotAccepted(msg.getChunkNo(),stored);
 	}
 }

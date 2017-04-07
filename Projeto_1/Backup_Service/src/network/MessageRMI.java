@@ -39,7 +39,7 @@ public interface MessageRMI extends Remote {
 	 String reclaim(int spaceToReclaim) throws RemoteException;
 	 
 	 /**
-	  * Initiate state protocol. 
+	  * Initiate state protocol . 
 	  * @return Message for client
 	  * @throws RemoteException
 	  */

@@ -232,8 +232,13 @@ public class Peer implements MessageRMI {
 	public String backup(String filename, int repDeg) 
 	{
 		Logs.initProtocol("Backup");
-		
+	
 		BackupTrigger bt = new BackupTrigger(this,filename,repDeg);
+		
+		//end if the backup protocol take any conclusion at the constructor
+		if(bt.response() != null)
+			return bt.response();
+		
 		bt.start();
 		try 
 		{
@@ -288,6 +293,10 @@ public class Peer implements MessageRMI {
 			System.err.println("Server exception: " + e.toString());
 			e.printStackTrace();
 		}
+		
+		//delete own file 
+		fileManager.deleteFile(filename);
+		
 		return dt.response();
 	}
 
