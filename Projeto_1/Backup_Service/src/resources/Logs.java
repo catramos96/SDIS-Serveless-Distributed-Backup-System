@@ -4,7 +4,9 @@ import network.Message;
 
 public class Logs {
 	
-/*Arguments*/
+	/*
+	 * Arguments
+	 */
 	
 	public static void argsBackupSystemInfo(){
 		System.out.println("Usage: java BackupSystem <version> <peer_id> <peer_ap> <MC> <MDB> <MDR> ");
@@ -38,7 +40,9 @@ public class Logs {
 
 	}
 	
-	/*Messages*/
+	/*
+	 * Messages
+	 */
 	
 	public static void sentMessageLog(Message msg){
 		System.out.println("(Sent) Type : "+ msg.getType() + " from sender : "+ msg.getSenderId() + " with chunk "+ msg.getChunkNo());
@@ -48,7 +52,9 @@ public class Logs {
 		System.out.println("(Received) Type : "+ msg.getType() + " from sender : "+ msg.getSenderId() + " with chunk "+ msg.getChunkNo());
 	}
 	
-	/*Files*/
+	/*
+	 * Files
+	 */
 	
 	public static void errorFileId(String filename){
 		System.out.println("Error searching for fileId of "+filename);
@@ -74,7 +80,14 @@ public class Logs {
 		System.out.println("Chunk Number "+chunkNo+" restored");
 	}
 	
-	/*ChunkBackupProtocol*/
+	/*
+	 * Protocols
+	 */
+	
+	public static void initProtocol(String name){
+		System.out.println(name+" Protocol initiated...");
+	}
+	
 	public static void tryNrStoreChunk(int nr,int chunkNo){
 		System.out.println("Try number "+ nr + " to stored chunk number "+chunkNo);
 	}

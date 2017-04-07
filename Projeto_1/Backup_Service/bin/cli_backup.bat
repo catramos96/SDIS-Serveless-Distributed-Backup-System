@@ -1,3 +1,5 @@
 @echo off
-start java cli.TestApp 8000 BACKUP ../resources/hello.png 2
+start rmiregistry
+sleep 3
+start java cli.TestApp MessageRMI0 BACKUP ../resources/hello.png 2
 exit

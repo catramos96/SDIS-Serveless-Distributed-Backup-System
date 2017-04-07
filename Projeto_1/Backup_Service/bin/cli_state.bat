@@ -1,1 +1,1 @@
-start java cli.TestApp 8000 STATE
+start java cli.TestApp MessageRMI0 STATE

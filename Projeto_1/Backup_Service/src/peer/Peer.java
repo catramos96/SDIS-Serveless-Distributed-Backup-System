@@ -1,5 +1,6 @@
 package peer;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -9,6 +10,9 @@ import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import initiators.BackupTrigger;
 import initiators.DeleteTrigger;
@@ -18,6 +22,7 @@ import initiators.StateTrigger;
 import network.MessageRMI;
 import network.MessageRecord;
 import network.MulticastListener;
+import resources.Logs;
 
 public class Peer implements MessageRMI {
 
@@ -39,6 +44,9 @@ public class Peer implements MessageRMI {
 	/*Record*/
 	public Record record = null;
 
+	/*Schedule for metadata saving*/
+	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+	
 	/**
 	 * Create peer
 	 * @param protocolVs
@@ -52,19 +60,35 @@ public class Peer implements MessageRMI {
 	{
 		this.ID = id;
 		this.version = protocolVs;
-		
+
+		//load metadata
 		loadRecord();
-		msgRecord = new MessageRecord();
-		fileManager = new FileManager(this.ID,record.totalMemory,record.remaingMemory);
-		
+
 		/*
 		System.out.println("TotalMemory: " + record.totalMemory);
 		System.out.println("RemaingMemory: " + record.remaingMemory);
-		*/		
+		 */	
+
+		//init variables 
+		msgRecord = new MessageRecord();
+		fileManager = new FileManager(this.ID,record.totalMemory,record.remaingMemory);
+
+		//init rmi for client communication
 		initRMI(remoteObjName);
+
+		//init multicasts
 		initMulticasts(mc_ap, mdb_ap, mdr_ap);
-		
-		//shutdown  --> colocar uma funcao que guarda de x em x tempo?
+
+		//save metadata in 30s intervals
+		final Runnable beeper = new Runnable() {
+			public void run() {
+				System.out.println("Saving Metadata..."); 
+				saveRecord();
+			}
+		};
+		scheduler.scheduleAtFixedRate(beeper, 30, 30, TimeUnit.SECONDS);
+
+		//save metadata when shouts down
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {
 				try {
@@ -72,18 +96,41 @@ public class Peer implements MessageRMI {
 					Thread.sleep(200);
 					saveRecord();
 				} catch (InterruptedException e) {
+					System.err.println("Server exception: " + e.toString());
 					e.printStackTrace();
 				}
 			}
 		});
 	}
 	
+	/*
+	 * Init rmi for client communication
+	 */
+	private void initRMI(String remoteObjectName) 
+	{
+		try {
+			MessageRMI stub = (MessageRMI) UnicastRemoteObject.exportObject(this, 0);
+			LocateRegistry.getRegistry().rebind(remoteObjectName, stub);
+			
+			System.out.println("Server ready!");
+		} catch (Exception e) {
+			System.err.println("Server exception: " + e.toString());
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Initiate the 3 multicasts
+	 * @param mc_ap
+	 * @param mdb_ap
+	 * @param mdr_ap
+	 */
 	private void initMulticasts(String[] mc_ap, String[] mdb_ap, String[] mdr_ap) {
 		try 
 		{
 			InetAddress address;
 			int port;
-			
+
 			//sockets multicast
 			if(mc_ap[0] == "")
 				address = InetAddress.getLocalHost();
@@ -108,32 +155,19 @@ public class Peer implements MessageRMI {
 		} 
 		catch (IOException e)
 		{
-			System.err.println("Peer error: "+ e.toString());
-			e.printStackTrace();
-		}
-	}
-
-	private void initRMI(String remoteObjectName) 
-	{
-		try {
-			MessageRMI stub = (MessageRMI) UnicastRemoteObject.exportObject(this, 0);
-			LocateRegistry.getRegistry().rebind(remoteObjectName, stub);
-			System.err.println("Server ready");
-		} catch (Exception e) {
 			System.err.println("Server exception: " + e.toString());
 			e.printStackTrace();
 		}
 	}
-
-	/*
-	 * Record Serialization 
+	
+	/**
+	 * Record Object Serialization
 	 */
-
 	public synchronized void saveRecord() {
-		
+
 		record.totalMemory = fileManager.getTotalSpace();
 		record.remaingMemory = fileManager.getRemainingSpace();
-		
+
 		try 
 		{
 			FileOutputStream fileOut = new FileOutputStream("../peersDisk/peer"+ID+"/record.ser");
@@ -141,41 +175,170 @@ public class Peer implements MessageRMI {
 			out.writeObject(record);
 			out.close();
 			fileOut.close();
-			System.out.printf("Serialized data is saved in peersDisk/peer"+ID+"/record.ser");
+			System.out.printf("Serialized data saved in peersDisk/peer"+ID+"/record.ser");
 		}
 		catch (FileNotFoundException e) {
-			//e.printStackTrace();
-			System.out.println("Restore object created");
+			System.err.println("Server exception: " + e.toString());
+			e.printStackTrace();
 		}
 		catch (IOException e) {
+			System.err.println("Server exception: " + e.toString());
 			e.printStackTrace();
 		}
 	}
 
+	/**
+	 * Record Object deserialization
+	 */
 	public synchronized void loadRecord() {
-		
+
 		record = new Record();
+
+		File recordFile = new File("../peersDisk/peer"+ID+"/record.ser");
 		
-		try 
+		//file can be loaded
+		if(recordFile.exists())
 		{
-			FileInputStream fileIn = new FileInputStream("../peersDisk/peer"+ID+"/record.ser");
-			ObjectInputStream in  = new ObjectInputStream(fileIn);
-			record = (Record) in.readObject();
-			in.close();
-			fileIn.close();
-			System.out.printf("Serialized data loaded from peersDisk/peer"+ID+"/record.ser");
-		} 
-		catch (FileNotFoundException e) {
-			//e.printStackTrace();
-			System.out.println("FileNotFound");
-		}
-		catch (IOException e) {
-			e.printStackTrace();
-		}
-		catch (ClassNotFoundException e) {
-			e.printStackTrace();
+			try 
+			{
+				FileInputStream fileIn = new FileInputStream("../peersDisk/peer"+ID+"/record.ser");
+				ObjectInputStream in  = new ObjectInputStream(fileIn);
+				record = (Record) in.readObject();
+				in.close();
+				fileIn.close();
+				
+				System.out.println("Serialized data loaded from peersDisk/peer"+ID+"/record.ser");
+			} 
+			catch (FileNotFoundException e) {
+				System.err.println("Server exception: " + e.toString());
+				e.printStackTrace();
+			}
+			catch (IOException e) {
+				System.err.println("Server exception: " + e.toString());
+				e.printStackTrace();
+			}
+			catch (ClassNotFoundException e) {
+				System.err.println("Server exception: " + e.toString());
+				e.printStackTrace();
+			}
 		}
 	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see network.MessageRMI#backup(java.lang.String, int)
+	 */
+	@Override
+	public String backup(String filename, int repDeg) 
+	{
+		Logs.initProtocol("Backup");
+		
+		BackupTrigger bt = new BackupTrigger(this,filename,repDeg);
+		bt.start();
+		try 
+		{
+			bt.join();
+		} 
+		catch (InterruptedException e) 
+		{
+			System.err.println("Server exception: " + e.toString());
+			e.printStackTrace();
+		}
+		return bt.response();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see network.MessageRMI#restore(java.lang.String)
+	 */
+	@Override
+	public String restore(String filename)
+	{
+		Logs.initProtocol("Restore");
+		
+		RestoreTrigger rt = new RestoreTrigger(this,filename);	
+		rt.start();
+		try 
+		{
+			rt.join();
+		} 
+		catch (InterruptedException e) {
+			System.err.println("Server exception: " + e.toString());
+			e.printStackTrace();
+		}
+		return rt.response();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see network.MessageRMI#delete(java.lang.String)
+	 */
+	@Override
+	public String delete(String filename)
+	{
+		Logs.initProtocol("Delete");
+		
+		DeleteTrigger dt = new DeleteTrigger(this,filename);
+		dt.start();
+		try 
+		{
+			dt.join();
+		}
+		catch (InterruptedException e) {
+			System.err.println("Server exception: " + e.toString());
+			e.printStackTrace();
+		}
+		return dt.response();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see network.MessageRMI#reclaim(int)
+	 */
+	@Override
+	public String reclaim(int spaceToReclaim) 
+	{
+		Logs.initProtocol("Reclaim");
+		
+		ReclaimTrigger rt = new ReclaimTrigger(this,spaceToReclaim);
+		rt.start();
+		try 
+		{
+			rt.join();
+		} 
+		catch (InterruptedException e) {
+			System.err.println("Server exception: " + e.toString());
+			e.printStackTrace();
+		}
+		return rt.response();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see network.MessageRMI#state()
+	 */
+	@Override
+	public String state()
+	{
+		Logs.initProtocol("State");
+		
+		StateTrigger st = new StateTrigger(this);
+		st.start();
+		try
+		{
+			st.join();
+		}
+		catch (InterruptedException e) {
+			System.err.println("Server exception: " + e.toString());
+			e.printStackTrace();
+		}
+		return st.response();
+	}
+	
+	
+	/*
+	 * Gets & Sets
+	 */
 
 	public char[] getVersion() {
 		return version;
@@ -208,98 +371,8 @@ public class Peer implements MessageRMI {
 	public Record getMulticastRecord(){
 		return record;
 	}
-	
+
 	public MessageRecord getMessageRecord(){
 		return msgRecord;
-	}
-
-	@Override
-	public String backup(String filename, int repDeg) 
-	{
-		System.out.println("Backup Protocol initiated...");
-		
-		BackupTrigger bt = new BackupTrigger(this,filename,repDeg);
-		bt.start();
-		try {
-			bt.join();
-		} 
-		catch (InterruptedException e) 
-		{
-			System.out.println("cant join");
-			e.printStackTrace();
-		}
-		return bt.response();
-	}
-
-	@Override
-	public String restore(String filename)
-	{
-		System.out.println("Restore Protocol initiated...");
-		
-		RestoreTrigger rt = new RestoreTrigger(this,filename);	
-		rt.start();
-		try 
-		{
-			rt.join();
-		} 
-		catch (InterruptedException e) {
-			System.out.println("cant join");
-			e.printStackTrace();
-		}
-		return rt.response();
-	}
-
-	@Override
-	public String delete(String filename)
-	{
-		System.out.println("Delete Protocol initiated...");
-		
-		DeleteTrigger dt = new DeleteTrigger(this,filename);
-		dt.start();
-		try 
-		{
-			dt.join();
-		}
-		catch (InterruptedException e) {
-			System.out.println("cant join");
-			e.printStackTrace();
-		}
-		return dt.response();
-	}
-
-	@Override
-	public String reclaim(int spaceToReclaim) 
-	{
-		System.out.println("Reclaim Protocol initiated...");
-		
-		ReclaimTrigger rt = new ReclaimTrigger(this,spaceToReclaim);
-		rt.start();
-		try 
-		{
-			rt.join();
-		} 
-		catch (InterruptedException e) {
-			System.out.println("cant join");
-			e.printStackTrace();
-		}
-		return rt.response();
-	}
-
-	@Override
-	public String state()
-	{
-		System.out.println("State Protocol initiated...");
-		
-		StateTrigger st = new StateTrigger(this);
-		st.start();
-		try
-		{
-			st.join();
-		}
-		catch (InterruptedException e) {
-			System.out.println("cant join");
-			e.printStackTrace();
-		}
-		return st.response();
 	}
 }

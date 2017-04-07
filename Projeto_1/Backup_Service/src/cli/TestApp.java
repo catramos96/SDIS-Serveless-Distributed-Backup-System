@@ -15,6 +15,9 @@ public class TestApp
 
 	public static void main(String[] args) throws IOException
 	{
+		System.out.println("CLIENT");
+		
+		//args verification
 		if(args.length < 2)
 		{
 			Logs.argsClientInfo();
@@ -22,8 +25,10 @@ public class TestApp
 			return;
 		}
 
+		//start rmi for server communication
 		startRMI(args[0]);
 
+		//protocol verification and message delivery
 		if(!protocolVerAndSend(args))
 		{
 			Logs.argsProtocolInfo(args[1]);
@@ -31,11 +36,15 @@ public class TestApp
 			return;
 		}
 
-		System.out.println("response: " + response);
+		System.out.println("Server response : \n" + response);
 
 		wait_to_close();
 	}
 
+	/**
+	 * Connect to server with rmi service
+	 * @param remoteObjName
+	 */
 	private static void startRMI(String remoteObjName) {
 		try 
 		{
@@ -49,6 +58,11 @@ public class TestApp
 		}
 	}
 
+	/**
+	 * Verifies args from each protocol, and execute the correct message.
+	 * @param args
+	 * @return
+	 */
 	private static boolean protocolVerAndSend(String args[]) 
 	{
 		try {
@@ -83,13 +97,19 @@ public class TestApp
 				System.out.println("Error sending message to peer");
 				return false;
 			}
-		} catch (NumberFormatException | RemoteException e) {
+		} 
+		catch (NumberFormatException | RemoteException e) 
+		{
+			System.err.println("Client exception: " + e.toString());
 			e.printStackTrace();
 		} 
 
 		return true;
 	}
 
+	/**
+	 * Waits for ENTER
+	 */
 	private static void wait_to_close() {
 		System.out.println("Press ENTER to exit...");
 
