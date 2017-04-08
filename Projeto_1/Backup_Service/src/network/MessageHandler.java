@@ -16,9 +16,12 @@ import peer.Peer;
 import peer.Record;
 import protocols.ChunkBackupProtocol;
 
+/**
+ * This class handles messages received by the multicast channels.
+ */
 public class MessageHandler extends Thread
 {
-	private Peer peer = null; //peer associado ao listener
+	private Peer peer = null;
 	private Message msg = null;
 
 	/**
@@ -37,17 +40,19 @@ public class MessageHandler extends Thread
 	 */
 	public void run() 
 	{		
-		//Don't process messages that were sent by himself
+		//Don't process messages that were sent by himself!
 		if(peer.getID() != msg.getSenderId())
 		{	
 			Logs.receivedMessageLog(this.msg);
 
 			switch (msg.getType()) {
 			case PUTCHUNK:
+				//record this message (PUTCHUNK) at 'MessageRecord'
 				peer.getMessageRecord().addPutchunkMessage(msg.getFileId(), msg.getChunkNo());
 				handlePutchunk(msg.getFileId(),msg.getChunkNo(),msg.getReplicationDeg(),msg.getBody());
 				break;
 			case STORED:
+				//record this message (STORED) at 'MessageRecord'
 				peer.getMessageRecord().addStoredMessage(msg.getFileId(), msg.getChunkNo(), msg.getSenderId());
 				handleStore(msg.getFileId(), msg.getChunkNo(),msg.getSenderId());	
 				break;
@@ -55,7 +60,8 @@ public class MessageHandler extends Thread
 				handleGetchunk(msg.getFileId(),msg.getChunkNo());
 				break;
 			case CHUNK:
-				//peer.getMessageRecord().addChunkMessage(msg.getFileId(), msg.getChunkNo());
+				//record this message (CHUNK) at 'MessageRecord'
+				peer.getMessageRecord().addChunkMessage(msg.getFileId(), msg.getChunkNo());
 				handleChunk(msg.getFileId(), msg.getChunkNo(), msg.getBody());
 				break;
 			case DELETE:
@@ -86,22 +92,21 @@ public class MessageHandler extends Thread
 	 * Peer response to other peer PUTCHUNK message
 	 * @param c
 	 */
-	private synchronized void handlePutchunk(String fileId, int chunkNo,int repDeg,byte[] body){
+	private synchronized void handlePutchunk(String fileId, int chunkNo, int repDeg, byte[] body){
 		Chunk c = new Chunk(fileId, chunkNo, body);
 
-		//response message : STORED
+		//create response message : STORED
 		Message msg = new Message(Util.MessageType.STORED,peer.getVersion(),peer.getID(),c.getFileId(),c.getChunkNo());
 
 		//verifies chunk existence in this peer
-		//boolean alreadyExists = peer.fileManager.chunkExists(c.getFileId(),c.getChunkNo());
-		boolean alreadyExists = peer.getMulticastRecord().hasOnMyChunk(fileId, chunkNo);
+		boolean alreadyExists = peer.getMulticastRecord().checkMyChunk(fileId, chunkNo);
 
-		//no space available and file does not exist -> can't store
+		//no space available and chunk wasn't stored yet -> can't store
 		if(!peer.fileManager.hasSpaceAvailable(c) && !alreadyExists)
 			return;
 		else
 		{
-			if(alreadyExists)				//warns immediatly
+			if(alreadyExists)				//warns immediately
 			{
 				peer.getMc().send(msg);
 				Logs.sentMessageLog(msg);
@@ -117,27 +122,28 @@ public class MessageHandler extends Thread
 				if(peersWithChunk != null)
 					rep = peersWithChunk.size();
 
-				//If the replication degree is lower thatn the desired
+				//If the replication degree is lower that the desired
 				//if(rep < repDeg){							//--> Enhancement*/
 					//send STORED message
 					peer.getMc().send(msg);
 					Logs.sentMessageLog(msg);
 
-					//Save info on my Chunks 
+					//save chunk in memory
+					peer.fileManager.saveChunk(c);
+					
+					//Save info on 'Record' 
 					peer.getMulticastRecord().addToMyChunks(fileId, chunkNo, repDeg);
-					//Update Actual Repetition Degree
+					
+					//Update Actual Replication Degree
 					peer.getMulticastRecord().setPeersOnMyChunk(fileId, chunkNo, peersWithChunk);
 					peer.getMulticastRecord().addPeerOnMyChunk(fileId, chunkNo, peer.getID());
 
-					//System.out.println("CHUNK " + chunkNo + " REPLICATION: " + (int)(rep+1) + " DESIRED: " + repDeg);
-					peer.fileManager.saveChunk(c);
+					//System.out.println("CHUNK " + chunkNo + " REPLICATION: " + (int)(rep+1) + " DESIRED: " + repDeg);	
 				/*}
 				else
 					peer.getMessageRecord().removeStoredMessages(fileId, chunkNo);	//only keeps the ones refered to his backupChunks --> Enhancement
-			*/
+				 */
 			}
-
-
 		}
 	}
 
@@ -145,7 +151,7 @@ public class MessageHandler extends Thread
 	 * Peer response to other peer STORE message
 	 */
 	private synchronized void handleStore(String fileId, int chunkNo, int senderId){
-		//Updates the Repetition Degree if the peer has the chunk
+		//Updates the Replication Degree if the peer has the chunk
 		peer.getMulticastRecord().addPeerOnMyChunk(fileId,chunkNo,senderId);
 
 		Chunk c = peer.getMulticastRecord().getMyChunk(fileId, chunkNo);
@@ -153,7 +159,7 @@ public class MessageHandler extends Thread
 		if(c != null)
 			System.out.println("CHUNK " + chunkNo + " REPDEG: " + c.getAtualRepDeg());
 
-		//Record the storedChunks in case the peer is the owner of the backup file
+		//Record the storedChunks in case the peer is the OWNER of the backup file
 		peer.getMulticastRecord().recordStoredChunk(fileId, chunkNo, senderId);
 	}	
 
@@ -163,7 +169,7 @@ public class MessageHandler extends Thread
 	private synchronized void handleGetchunk(String fileId, int chunkNo){
 		
 		//peer has chunk stored
-		if(peer.record.hasOnMyChunk(fileId, chunkNo))
+		if(peer.record.checkMyChunk(fileId, chunkNo))
 		{
 			//body
 			byte[] body = peer.fileManager.getChunkContent(fileId, chunkNo);
@@ -187,28 +193,28 @@ public class MessageHandler extends Thread
 	 * Peer response to other peer CHUNK message
 	 */
 	private synchronized void handleChunk(String fileId, int chunkNo, byte[] body){
-		//chunk message received by intiator peer 
+		//chunk message received by initiator peer 
 		FileInfo info = peer.getMulticastRecord().getRestoredFileInfoById(fileId);
 		
-		if(info != null)
-		{
-			//chunk restored, yey
+		//this peer is able to restore the file
+		if(info != null){
+			//record chunk as restored
 			if(peer.getMulticastRecord().recordRestoredChunk(fileId,chunkNo,body))
 				Logs.chunkRestored(chunkNo);
 		}
-
-		//save history of chunks at mdr (chunkNo, fileId)
-		peer.msgRecord.addChunkMessage(fileId, chunkNo);
 	}
 
 	/**
 	 * Peer response to other peer DELETE message
 	 */
 	private synchronized void handleDelete(String fileId){
+		//verifies if the current peer has chunks stored from this file
 		if(peer.getMulticastRecord().myChunksBelongsToFile(fileId))
 		{
-			peer.fileManager.deleteChunks(fileId);				//remove from disk
-			peer.getMulticastRecord().removeFromMyChunks(fileId);		//remove from record
+			//deletes chunks from disk
+			peer.fileManager.deleteChunks(fileId);	
+			//remove from record
+			peer.getMulticastRecord().deleteMyChunksByFile(fileId);
 		}
 	}
 
@@ -253,7 +259,7 @@ public class MessageHandler extends Thread
 			}
 		}
 		//Not Owner but it has ths chunk on his backup diretory
-		else if(peer.getMulticastRecord().hasOnMyChunk(fileId, chunkNo)){
+		else if(peer.getMulticastRecord().checkMyChunk(fileId, chunkNo)){
 			System.out.println("NOT OWNER");
 			peer.getMulticastRecord().remPeerWithMyChunk(fileId, chunkNo, peerNo);
 			data = peer.fileManager.getChunkContent(fileId, chunkNo);

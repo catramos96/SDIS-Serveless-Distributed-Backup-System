@@ -308,6 +308,23 @@ public class Record implements Serializable {
 	 * MY CHUNKS
 	 */
 
+	/**
+	 * 
+	 * @param fileNo
+	 * @param chunkNo
+	 * @return
+	 */
+	public synchronized boolean checkMyChunk(String fileID, int chunkNo){
+		if(myChunks.containsKey(fileID))
+		{
+			for(Chunk c : myChunks.get(fileID)){
+				if(c.getChunkNo() == chunkNo)
+					return true;
+			}
+		}
+		return false;
+	}
+	
 	public synchronized void addToMyChunks(String fileNo, int chunkNo, int repDegree){
 
 		Chunk c = new Chunk(chunkNo,repDegree);
@@ -367,28 +384,17 @@ public class Record implements Serializable {
 		return 0;
 	}
 
-	public synchronized boolean hasOnMyChunk(String fileNo, int chunkNo){
-		if(myChunks.containsKey(fileNo))
-		{
-			for(Chunk c : myChunks.get(fileNo)){
-				if(c.getChunkNo() == chunkNo)
-					return true;
-			}
-		}
-		return false;
-	}
-
 	public synchronized boolean myChunksBelongsToFile(String fileNo){
 		return myChunks.containsKey(fileNo);
 	}
 
-	public synchronized void removeFromMyChunks(String fileNo){
-		if(myChunks.containsKey(fileNo))
-			myChunks.remove(fileNo);
+	public synchronized void deleteMyChunksByFile(String fileId){
+		if(myChunks.containsKey(fileId))
+			myChunks.remove(fileId);
 	}
 
 	public synchronized void removeFromMyChunks(String fileNo, int chunkNo){
-		if(hasOnMyChunk(fileNo, chunkNo)){
+		if(checkMyChunk(fileNo, chunkNo)){
 			ArrayList<Chunk> chunks = myChunks.get(fileNo);
 			chunks.remove(chunkNo);
 			myChunks.put(fileNo, chunks);
