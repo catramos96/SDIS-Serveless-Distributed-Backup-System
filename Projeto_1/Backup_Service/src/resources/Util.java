@@ -1,5 +1,7 @@
 package resources;
 
+import java.util.Random;
+
 public class Util {
 	
 	//protocols
@@ -28,4 +30,13 @@ public class Util {
 	public static final String RESTORES_DIR = new String("/restores/");
 	public static final String LOCAL_DIR = new String("/localFiles/");
 
+	public static void randomDelay(){
+		Random delay = new Random();
+		try {
+			Thread.sleep(delay.nextInt(Util.RND_DELAY));
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+	
 }

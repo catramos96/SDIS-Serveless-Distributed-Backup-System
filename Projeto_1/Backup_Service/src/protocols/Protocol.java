@@ -3,6 +3,7 @@ package protocols;
 import java.util.Random;
 
 import network.Message;
+import network.MessageRecord;
 import network.MulticastListener;
 import peer.Record;
 
@@ -16,6 +17,7 @@ public abstract class Protocol extends Thread{
 	MulticastListener mdb;
 	MulticastListener mdr;
 	Record record;
+	MessageRecord msgRecord;
 	
 	public abstract void run();
 }

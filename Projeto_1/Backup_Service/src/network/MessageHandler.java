@@ -77,18 +77,6 @@ public class MessageHandler extends Thread
 	}
 
 	/**
-	 * Random Delay
-	 */
-	public void randomDelay(){
-		Random delay = new Random();
-		try {
-			Thread.sleep(delay.nextInt(Util.RND_DELAY));
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
-
-	/**
 	 * Peer response to other peer PUTCHUNK message
 	 * @param c
 	 */
@@ -114,7 +102,7 @@ public class MessageHandler extends Thread
 			else
 			{
 				//waiting time
-				randomDelay();
+				Util.randomDelay();
 				int rep = 0;
 				//Get replication degree recorded before the peer processed the store
 				ArrayList<Integer> peersWithChunk = peer.getMessageRecord().getPeersWithChunk(fileId, chunkNo);
@@ -177,7 +165,7 @@ public class MessageHandler extends Thread
 			Message msg = new Message(Util.MessageType.CHUNK,peer.getVersion(),peer.getID(),fileId,chunkNo,body);
 			
 			//wait 0-400 ms
-			randomDelay();
+			Util.randomDelay();
 			
 			//chunk still needed by the initiator peer
 			if(!peer.getMessageRecord().receivedChunkMessage(fileId, chunkNo))
@@ -270,12 +258,12 @@ public class MessageHandler extends Thread
 			peer.getMessageRecord().removePutChunkMessages(fileId, chunkNo);	//reset recording
 			peer.getMessageRecord().startRecordingPutchunks(fileId, chunkNo);	//start record
 			
-			randomDelay();
+			Util.randomDelay();
 
 			if(!peer.getMessageRecord().receivedPutchunkMessage(fileId, chunkNo)){
 				Message msg = new Message(MessageType.PUTCHUNK,peer.getVersion(),peer.getID(),fileId,chunkNo,repDegree,data);
 				Logs.sentMessageLog(msg);
-				new ChunkBackupProtocol(peer.getMdb(), record, msg).start();
+				new ChunkBackupProtocol(peer.getMdb(), peer.getMessageRecord(), msg).start();
 			}
 		}
 
