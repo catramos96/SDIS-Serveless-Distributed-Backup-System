@@ -16,7 +16,6 @@
 ### State
 
 ## Geral
-* De x em x tempo thread (com runnable la dentro) -> executer, vai buscar todos os chunks com repDegree abaixo do desejado e inicia o chunkBackupProtocol para cada um deles após xDelay e caso, se durante esse tempo de espera, não receber nenhum putchunk para o chunk em específico. Isto é util quando o chunkBackup protocol falha a meio ou então não consegue garantir a replication degree dentro das tentativas possíveis.
 * Implementar métodos para escolha de acções dependendo das versões.
 * Demos para a apresentação.
 
