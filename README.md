@@ -21,3 +21,6 @@
 
 ### Outros
 * Considerar a possibilidade de implementar novos tipos de mensagens, apenas para a versão 2 do programa ( com enhancements ) se o caso assim o justificar.
+* Por todos os prints para os logs
+* Documentação
+* Relatório
