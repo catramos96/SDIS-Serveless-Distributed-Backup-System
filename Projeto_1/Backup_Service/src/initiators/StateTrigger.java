@@ -1,12 +1,11 @@
 package initiators;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import peer.Chunk;
 import peer.FileInfo;
 import peer.Peer;
-import resources.Util;
 
 public class StateTrigger extends Thread
 {
@@ -30,7 +29,7 @@ public class StateTrigger extends Thread
 		//For each file whose backup it has initiated:
 		for (FileInfo fileinfo : storedConfirms.keySet()) 
 		{
-			message += " pathname : "+fileinfo.getFilename() + "\n";
+			message += " pathname : "+fileinfo.getPath() + "\n";
 			message += " file id : "+fileinfo.getFileId()+"\n";
 			message += " replication degree : "+fileinfo.getReplicationDeg()+"\n";
 		
@@ -48,14 +47,19 @@ public class StateTrigger extends Thread
 		message += "Chunks stored :\n\n";
 		
 		//For each chunk it stores
-		String diskDIR = Util.PEERS_DIR +"Peer"+ peer.getID()+Util.CHUNKS_DIR;
-		File[] files = peer.fileManager.getFilesFromDirectory(diskDIR);
-		for(int i = 0; i < files.length; i++)
+		HashMap<String, ArrayList<Chunk>> files = peer.record.getMyChunks();
+		for(String s : files.keySet())
 		{
-			//print do nome + tamanho + replication degree?
-			message += " name : "+files[i].getName() + "\n";
-			message += " size : "+files[i].length() + "\n";
-			message += "\n";
+			ArrayList<Chunk> chunks = files.get(s);
+			for(int i = 0; i < chunks.size(); i++)
+			{
+				//print do nome + tamanho + replication degree
+				int size = chunks.get(i).getData().length / 1000;
+				message += " name : "+chunks.get(i).getChunkNo()+chunks.get(i).getFileId() + " \n";
+				message += " size : "+size + " KB\n";
+				message += " perceived replication degree : "+chunks.get(i).getAtualRepDeg()+"\n";
+				message += "\n";
+			}
 		}
 		
 		//peer storage capacity

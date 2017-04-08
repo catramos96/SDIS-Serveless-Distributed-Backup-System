@@ -42,6 +42,7 @@ public class Record implements Serializable {
 	 */
 	public synchronized void startRecordStores(FileInfo file)
 	{
+		System.out.println("aqui");
 		storedConfirms.put(file, new HashMap<Integer, ArrayList<Integer>>());
 	}
 
@@ -419,4 +420,8 @@ public class Record implements Serializable {
 		return storedConfirms;
 	}
 
+	public HashMap<String, ArrayList<Chunk>> getMyChunks() {
+		return myChunks;
+	}
+	
 }

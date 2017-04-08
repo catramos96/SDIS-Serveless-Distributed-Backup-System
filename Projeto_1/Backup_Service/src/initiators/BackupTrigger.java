@@ -34,6 +34,9 @@ public class BackupTrigger extends Thread{
 
 	public void run()
 	{
+		System.out.println("execute");
+
+
 		//verifies original file existence
 		File f = new File(this.filename);
 		if(!f.exists())
@@ -73,7 +76,12 @@ public class BackupTrigger extends Thread{
 		}
 
 		//split file in chunks
-		chunks = peer.fileManager.splitFileInChunks(filename);	
+		chunks = peer.fileManager.splitFileInChunks(filename);
+		
+		//initiate file record
+		String fileID = peer.fileManager.getFileIdFromFilename(filename);
+		FileInfo fileinfo = new FileInfo(fileID,filename,chunks.size(),replicationDegree);
+		peer.getMulticastRecord().startRecordStores(fileinfo);
 
 		//list of service that my thread need to wait for
 		ArrayList<ChunkBackupProtocol> subprotocols = new ArrayList<>();
@@ -83,10 +91,6 @@ public class BackupTrigger extends Thread{
 			//create message for each chunk
 			Chunk c = chunks.get(i);
 			Message msg = new Message(MessageType.PUTCHUNK,peer.getVersion(),peer.getID(),c.getFileId(),c.getChunkNo(),replicationDegree,c.getData());
-
-			//initiate file record
-			FileInfo fileinfo = new FileInfo(msg.getFileId(),filename,chunks.size(),replicationDegree);
-			peer.getMulticastRecord().startRecordStores(fileinfo);
 
 			//warn other peers
 			ChunkBackupProtocol cbp = new ChunkBackupProtocol(peer.getMdb(),peer.getMulticastRecord(),msg); 
