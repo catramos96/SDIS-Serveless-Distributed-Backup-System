@@ -90,7 +90,7 @@ public class BackupTrigger extends Thread{
 			Message msg = new Message(MessageType.PUTCHUNK,peer.getVersion(),peer.getID(),c.getFileId(),c.getChunkNo(),replicationDegree,c.getData());
 
 			//warn other peers
-			ChunkBackupProtocol cbp = new ChunkBackupProtocol(peer.getMdb(),peer.getMulticastRecord(),msg); 
+			ChunkBackupProtocol cbp = new ChunkBackupProtocol(peer.getMdb(),peer.getMessageRecord(),msg); 
 			subprotocols.add(cbp);
 			cbp.start();
 		}

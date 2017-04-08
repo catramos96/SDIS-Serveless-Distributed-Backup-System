@@ -10,6 +10,7 @@ import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -19,10 +20,14 @@ import initiators.DeleteTrigger;
 import initiators.ReclaimTrigger;
 import initiators.RestoreTrigger;
 import initiators.StateTrigger;
+import network.Message;
 import network.MessageRMI;
 import network.MessageRecord;
 import network.MulticastListener;
+import protocols.ChunkBackupProtocol;
 import resources.Logs;
+import resources.Util;
+import resources.Util.MessageType;
 
 public class Peer implements MessageRMI {
 
@@ -44,8 +49,8 @@ public class Peer implements MessageRMI {
 	/*Record*/
 	public Record record = null;
 
-	/*Schedule for metadata saving*/
-	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+	/*Schedule*/
+	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
 
 	/**
 	 * Create peer
@@ -82,6 +87,34 @@ public class Peer implements MessageRMI {
 			}
 		};
 		scheduler.scheduleAtFixedRate(saveMetadata, 30, 30, TimeUnit.SECONDS);
+		
+		final Runnable checkChunks = new Runnable() {
+			public void run() {
+				System.out.println("Check Chunks Replication..."); 
+				ArrayList<Chunk> chunks = record.getChunksWithRepBellowDes();
+				
+				for(Chunk c : chunks){
+					
+					msgRecord.removePutChunkMessages(c.getFileId(), c.getChunkNo());
+					msgRecord.startRecordingPutchunks(c.getFileId(), c.getChunkNo());
+					
+					Util.randomDelay();
+					
+					if(msgRecord.receivedPutchunkMessage(c.getFileId(), c.getChunkNo())){
+						
+						byte[] data = fileManager.getChunkContent(c.getFileId(), c.getChunkNo());
+						Message msg = new Message(MessageType.PUTCHUNK,version,ID,c.getFileId(),c.getChunkNo(),c.getReplicationDeg(),data);
+						new ChunkBackupProtocol(mdb, msgRecord, msg).start();
+						
+						//Warns the peers that it also has the chunk
+						msg = new Message(MessageType.STORED,version,ID,c.getFileId(),c.getChunkNo());
+						mc.send(msg);
+					}
+				}
+			}
+		};
+		scheduler.scheduleAtFixedRate(checkChunks, 60, 60, TimeUnit.SECONDS);
+		
 
 		//save metadata when shouts down
 		Runtime.getRuntime().addShutdownHook(new Thread() {

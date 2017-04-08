@@ -437,7 +437,20 @@ public class Record implements Serializable {
 
 		return chunks;
 	}
-
+	
+	public synchronized ArrayList<Chunk> getChunksWithRepBellowDes(){
+		ArrayList<Chunk> chunks = new ArrayList<Chunk>();
+		
+		for(Entry<String, ArrayList<Chunk>> array : myChunks.entrySet()){
+			for(Chunk c : array.getValue()){
+				if(c.getAtualRepDeg() < c.getReplicationDeg())
+					chunks.add(c);
+			}
+		}
+		
+		return chunks;
+	}
+	
 	/*
 	 * Gets
 	 */

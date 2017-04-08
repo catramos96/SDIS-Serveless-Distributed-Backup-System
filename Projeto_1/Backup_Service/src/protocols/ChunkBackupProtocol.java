@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import network.Message;
+import network.MessageRecord;
 import network.MulticastListener;
 import peer.Record;
 import resources.Logs;
@@ -22,10 +23,10 @@ public class ChunkBackupProtocol extends Protocol{
 	 * @param record
 	 * @param msg
 	 */
-	public ChunkBackupProtocol(MulticastListener mdb, Record record, Message msg){
+	public ChunkBackupProtocol(MulticastListener mdb, MessageRecord record, Message msg){
 		this.mdb = mdb;
 		this.delay = new Random();
-		this.record = record;
+		this.msgRecord = record;
 		this.msg = msg;
 	}
 
@@ -37,6 +38,8 @@ public class ChunkBackupProtocol extends Protocol{
 		int waitingTime = Util.WAITING_TIME;
 		String fileNo = msg.getFileId();
 		int chunkNo = msg.getChunkNo();
+		
+		msgRecord.removeStoredMessages(fileNo, chunkNo);
 		
 		//try 5 times 
 		while(rep < Util.MAX_TRIES)	
@@ -56,7 +59,11 @@ public class ChunkBackupProtocol extends Protocol{
 			}
 			
 			//count peers with chunks stored
-			ArrayList<Integer> stored_peers = record.checkStoredChunk(fileNo, chunkNo);
+			/*ArrayList<Integer> stored_peers = record.checkStoredChunk(fileNo, chunkNo);
+			if(stored_peers != null)
+				stored = stored_peers.size();*/
+			
+			ArrayList<Integer> stored_peers = msgRecord.getPeersWithChunk(fileNo, chunkNo);
 			if(stored_peers != null)
 				stored = stored_peers.size();
 			
@@ -72,5 +79,6 @@ public class ChunkBackupProtocol extends Protocol{
 		}
 		
 		Logs.chunkRepDegNotAccepted(msg.getChunkNo(),stored);
+		msgRecord.removeStoredMessages(fileNo, chunkNo);
 	}
 }
