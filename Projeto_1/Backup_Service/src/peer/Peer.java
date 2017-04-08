@@ -39,7 +39,7 @@ public class Peer implements MessageRMI {
 	public MulticastListener mc = null;
 	public MulticastListener mdb = null;
 	public MulticastListener mdr = null;
-	
+
 	/*MessageRecord*/
 	public MessageRecord msgRecord = null;
 
@@ -257,8 +257,12 @@ public class Peer implements MessageRMI {
 	 * @see network.MessageRMI#backup(java.lang.String, int)
 	 */
 	@Override
-	public String backup(String filename, int repDeg) 
+	public String backup(String filename, int repDeg, boolean enhancement) 
 	{
+		if(enhancement)
+			if(version[2] == '0')
+				return "Peer protocol not compatible.";
+
 		Logs.initProtocol("Backup");
 
 		BackupTrigger bt = new BackupTrigger(this,filename,repDeg);
@@ -280,8 +284,12 @@ public class Peer implements MessageRMI {
 	 * @see network.MessageRMI#restore(java.lang.String)
 	 */
 	@Override
-	public String restore(String filename)
+	public String restore(String filename, boolean enhancement)
 	{
+		if(enhancement)
+			if(version[2] == '0')
+				return "Peer protocol not compatible.";
+		
 		Logs.initProtocol("Restore");
 
 		RestoreTrigger rt = new RestoreTrigger(this,filename);	
@@ -303,8 +311,12 @@ public class Peer implements MessageRMI {
 	 * @see network.MessageRMI#delete(java.lang.String)
 	 */
 	@Override
-	public String delete(String filename)
+	public String delete(String filename, boolean enhancement)
 	{
+		if(enhancement)
+			if(version[2] == '0')
+				return "Peer protocol not compatible.";
+		
 		Logs.initProtocol("Delete");
 
 		DeleteTrigger dt = new DeleteTrigger(this,filename);
@@ -329,8 +341,12 @@ public class Peer implements MessageRMI {
 	 * @see network.MessageRMI#reclaim(int)
 	 */
 	@Override
-	public String reclaim(int spaceToReclaim) 
+	public String reclaim(int spaceToReclaim, boolean enhancement) 
 	{
+		if(enhancement)
+			if(version[2] == '0')
+				return "Peer protocol not compatible.";
+		
 		Logs.initProtocol("Reclaim");
 
 		ReclaimTrigger rt = new ReclaimTrigger(this,spaceToReclaim);

@@ -65,27 +65,36 @@ public class TestApp
 	 */
 	private static boolean protocolVerAndSend(String args[]) 
 	{
+		boolean enhancement = false;
+		if(args[1].contains("ENH"))
+			enhancement = true;
+		
 		try {
 			switch (args[1]) {
 			case "BACKUP":
+			case "BACKUPENH":
 				if(args.length != 4) 
 					return false;
-				response = stub.backup(args[2],Integer.parseInt(args[3]));
+				System.out.println(enhancement);
+				response = stub.backup(args[2],Integer.parseInt(args[3]),enhancement);
 				break;
 			case "RESTORE":
+			case "RESTOREENH":
 				if(args.length != 3)
 					return false;
-				response = stub.restore(args[2]);
+				response = stub.restore(args[2],enhancement);
 				break;
 			case "DELETE":
+			case "DELETEENH":
 				if(args.length != 3)
 					return false;
-				response = stub.delete(args[2]);
+				response = stub.delete(args[2],enhancement);
 				break;
 			case "RECLAIM":
+			case "RECLAIMENH":
 				if(args.length != 3)
 					return false;
-				response = stub.reclaim(Integer.parseInt(args[2]));
+				response = stub.reclaim(Integer.parseInt(args[2]),enhancement);
 				break;
 			case "STATE":
 				if(args.length != 2)

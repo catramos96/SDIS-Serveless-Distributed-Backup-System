@@ -12,7 +12,7 @@ public interface MessageRMI extends Remote {
 	 * @return Message for client
 	 * @throws RemoteException
 	 */
-	 String backup(String filename, int repDeg) throws RemoteException;
+	 String backup(String filename, int repDeg, boolean enhancement) throws RemoteException;
 	 
 	 /**
 	  * Initiate restore protocol with the filename received from client.
@@ -20,7 +20,7 @@ public interface MessageRMI extends Remote {
 	  * @return Message for client
 	  * @throws RemoteException
 	  */
-	 String restore(String filename) throws RemoteException;
+	 String restore(String filename, boolean enhancement) throws RemoteException;
 	 
 	 /**
 	  * Initiate delete protocol with the filename received from client.
@@ -28,7 +28,7 @@ public interface MessageRMI extends Remote {
 	  * @return message for client
 	  * @throws RemoteException
 	  */
-	 String delete(String filename) throws RemoteException;
+	 String delete(String filename, boolean enhancement) throws RemoteException;
 	 
 	 /**
 	  * Initiate delete protocol with the filename received from client.
@@ -36,7 +36,7 @@ public interface MessageRMI extends Remote {
 	  * @return Message for client.
 	  * @throws RemoteException
 	  */
-	 String reclaim(int spaceToReclaim) throws RemoteException;
+	 String reclaim(int spaceToReclaim, boolean enhancement) throws RemoteException;
 	 
 	 /**
 	  * Initiate state protocol . 

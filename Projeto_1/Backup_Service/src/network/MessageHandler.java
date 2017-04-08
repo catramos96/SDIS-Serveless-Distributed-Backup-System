@@ -5,8 +5,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map.Entry;
 import java.util.Random;
 
 import resources.Logs;
@@ -42,8 +40,14 @@ public class MessageHandler extends Thread
 	 */
 	public void run() 
 	{		
+		//protocols have the same version
+		if(!protocolsCompatible())
+		{
+			System.out.println("Peers protocols not compatible.");
+			return;
+		}
 		//Don't process messages that were sent by himself!
-		if(peer.getID() != msg.getSenderId())
+		if((peer.getID() != msg.getSenderId()) )
 		{	
 			Logs.receivedMessageLog(this.msg);
 
@@ -76,6 +80,16 @@ public class MessageHandler extends Thread
 				break;
 			}
 		}
+	}
+
+	private boolean protocolsCompatible() {
+		char[] receptor = peer.getVersion();
+		char[] sender = msg.getVersion();
+		
+		for(int i = 0; i < receptor.length; i++)
+			if(receptor[i] != sender[i])
+				return false;
+		return true;
 	}
 
 	/**
@@ -363,7 +377,7 @@ public class MessageHandler extends Thread
 	{
 		char[] vs = string.toCharArray();
 		char[] peerVersion = peer.getVersion();
-		if(vs[0] == peerVersion[0] && vs[1] == peerVersion[1])
+		if(vs[0] == peerVersion[0] && vs[1] == peerVersion[1] && vs[2] == peerVersion[2])
 			return vs;
 
 		return null;	//deve retornar um erro
