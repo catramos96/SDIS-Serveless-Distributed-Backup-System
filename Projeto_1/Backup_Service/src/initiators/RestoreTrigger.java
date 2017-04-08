@@ -25,7 +25,8 @@ public class RestoreTrigger extends Thread{
 	public RestoreTrigger(Peer peer, String filename)
 	{
 		this.peer = peer;
-		this.filename = peer.fileManager.checkPath(filename);
+		this.filename = filename;
+		//this.filename = peer.fileManager.checkPath(filename);
 	}
 	
 	@Override
@@ -34,22 +35,23 @@ public class RestoreTrigger extends Thread{
 		try	
 		{
 			//verifies if this file was already backed up
-			FileInfo info = peer.record.getBackupFileInfoByPath(this.filename);
+			//FileInfo info = peer.record.getBackupFileInfoByPath(this.filename);
+			FileInfo info = peer.record.getBackupFileInfoByName(filename);
 			
 			if(info == null)
 			{
-				message = filename + " was not backed up by this peer!";
+				message = filename + " is not a path or was not backed up by this peer!";
 				return;
 			}
 			
 			//verifies if this file was already restored
-			FileInfo restoredInfo = peer.record.getBackupFileInfoById(info.getFileId());
-			if(restoredInfo == null)
+			FileInfo restoredInfo = peer.record.getRestoredFileInfoById(info.getFileId());
+			if(restoredInfo != null)
 			{
 				message = info.getFilename() + " already restored!";
 				return;
 			}
-			
+						
 			//prepares "record" for chunk messages
 			peer.record.startRecordRestores(info);
 
@@ -58,7 +60,7 @@ public class RestoreTrigger extends Thread{
 			{
 				//create message
 				Message msg = new Message(MessageType.GETCHUNK,peer.getVersion(),peer.getID(),info.getFileId(),i);
-				new ChunkRestoreProtocol(peer.getMc(),peer.getMulticastRecord(),msg).start();
+				new ChunkRestoreProtocol(peer.getMc(),peer.getMessageRecord(),msg).start();
 			}
 			
 			long startTime = System.currentTimeMillis(); //fetch starting time

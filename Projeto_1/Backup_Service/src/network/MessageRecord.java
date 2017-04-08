@@ -16,6 +16,19 @@ public class MessageRecord {
 	}
 
 	/*
+	 * Start Recording
+	 */
+	
+	public void startRecordingChunks(String fileNo){
+		chunkMessages.put(fileNo, new ArrayList<Integer>());
+	}
+	
+	public void startRecordingPutchunks(String fileNo, int chunkNo){
+		ArrayList<Integer> tmp = new ArrayList<Integer>();
+		tmp.add(chunkNo);
+		putchunkMessages.put(fileNo, tmp);
+	}
+	/*
 	 * ADDS
 	 */
 
@@ -48,12 +61,6 @@ public class MessageRecord {
 
 		chunks.add(chunkNo);
 		chunkMessages.put(fileNo, chunks);
-	}
-
-	public void startRecordingPutchunks(String fileNo, int chunkNo){
-		ArrayList<Integer> tmp = new ArrayList<Integer>();
-		tmp.add(chunkNo);
-		putchunkMessages.put(fileNo, tmp);
 	}
 
 	public void addPutchunkMessage(String fileNo, int chunkNo){
@@ -113,16 +120,9 @@ public class MessageRecord {
 		}
 	}
 
-	public void removeChunkMessages(String fileNo, int chunkNo){
-		if(receivedChunkMessage(fileNo, chunkNo)){
-			ArrayList<Integer> chunks = chunkMessages.get(fileNo);
-			if(chunks.size() == 1)
-				chunkMessages.remove(fileNo);
-			else
-			{
-				chunks.remove(chunkNo);
-				chunkMessages.put(fileNo, chunks);
-			}
+	public void removeChunkMessages(String fileNo){
+		if(chunkMessages.containsKey(fileNo)){
+			chunkMessages.remove(fileNo);
 		}
 	}
 

@@ -16,7 +16,6 @@ public abstract class Protocol extends Thread{
 	MulticastListener mc;	
 	MulticastListener mdb;
 	MulticastListener mdr;
-	Record record;
 	MessageRecord msgRecord;
 	
 	public abstract void run();

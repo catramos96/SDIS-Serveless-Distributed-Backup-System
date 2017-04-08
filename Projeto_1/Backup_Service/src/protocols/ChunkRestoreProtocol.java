@@ -1,6 +1,7 @@
 package protocols;
 
 import network.Message;
+import network.MessageRecord;
 import network.MulticastListener;
 import peer.Record;
 import resources.Logs;
@@ -14,9 +15,9 @@ public class ChunkRestoreProtocol extends Protocol{
 	 * @param record
 	 * @param msg
 	 */
-	public ChunkRestoreProtocol(MulticastListener mc, Record record, Message msg){
+	public ChunkRestoreProtocol(MulticastListener mc, MessageRecord record, Message msg){
 		this.mc = mc;
-		this.record = record;
+		this.msgRecord = record;
 		this.msg = msg;
 	}
 
@@ -27,6 +28,8 @@ public class ChunkRestoreProtocol extends Protocol{
 		int waitingTime = Util.WAITING_TIME;
 		String fileNo = msg.getFileId();
 		int chunkNo = msg.getChunkNo();
+		
+		
 		
 		while(rep < Util.MAX_TRIES)	
 		{
@@ -45,7 +48,7 @@ public class ChunkRestoreProtocol extends Protocol{
 			}
 			
 			//verifies if some chunk was restored
-			if(record.checkRestoredChunk(fileNo, chunkNo)){
+			if(msgRecord.receivedChunkMessage(fileNo, chunkNo)){
 				System.out.println("Restored chunk n: " + chunkNo);
 				return;
 			}
