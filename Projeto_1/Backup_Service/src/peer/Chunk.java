@@ -2,6 +2,7 @@ package peer;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Comparator;
 
 public class Chunk implements Serializable{
 
@@ -12,7 +13,8 @@ public class Chunk implements Serializable{
 	private int replicationDeg = 0;	//Desired
 	private ArrayList<Integer> peers = new ArrayList<Integer>();
 	
-	public Chunk(int chunkNo, int replicationDeg){
+	public Chunk(String fileNo, int chunkNo, int replicationDeg){
+		this.fileId = fileNo;
 		this.chunkNo = chunkNo;
 		this.replicationDeg = replicationDeg;
 	}
@@ -70,7 +72,5 @@ public class Chunk implements Serializable{
 	public void setData(byte[] data) {
 		this.data = data;
 	}
-	
-	
 
 }
