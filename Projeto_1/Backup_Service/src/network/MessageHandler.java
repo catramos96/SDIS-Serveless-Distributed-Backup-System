@@ -245,22 +245,21 @@ public class MessageHandler extends Thread
 			if(peersWithChunk != null)
 				repDegree = peersWithChunk.size();
 
-			if(repDegree<desiredRepDegree){
-
+			//get data to start backup protocol
+			if(repDegree < desiredRepDegree)
+			{
 				ArrayList<Chunk> chunks = peer.fileManager.splitFileInChunks(Util.PEERS_DIR + "Peer" + peer.getID() + Util.RESTORES_DIR + info.getFilename());
-				if(chunks.size() < chunkNo){
-					System.out.println("Ficheiro não foi recuperado totalmente");
-					return;
-				}
-
 				Chunk c = chunks.get(chunkNo);
 				data = c.getData();
 			}
 		}
-		//Not Owner but it has ths chunk on his backup diretory
-		else if(peer.getMulticastRecord().checkMyChunk(fileId, chunkNo)){
-			System.out.println("NOT OWNER");
+		//Not Owner but has the chunk stored
+		else if(peer.getMulticastRecord().checkMyChunk(fileId, chunkNo))
+		{
+			//remove peer from 'Record'
 			peer.getMulticastRecord().remPeerWithMyChunk(fileId, chunkNo, peerNo);
+			
+			//get data to start backup protocol
 			data = peer.fileManager.getChunkContent(fileId, chunkNo);
 			repDegree = peer.getMulticastRecord().getMyChunk(fileId, chunkNo).getAtualRepDeg();
 			desiredRepDegree = peer.getMulticastRecord().getMyChunk(fileId, chunkNo).getReplicationDeg();
@@ -285,8 +284,10 @@ public class MessageHandler extends Thread
 
 	}
 
-	/*
-	 * Preenche os atributos da classe com os respetivos valores 
+	/**
+	 * Fill the object 'Message'
+	 * @param message
+	 * @return
 	 */
 	private Message parseMessage(byte[] message)
 	{
@@ -349,6 +350,10 @@ public class MessageHandler extends Thread
 		return parsed;
 	}
 
+	/*
+	 * Validates
+	 */
+	
 	private char[] validateVersion(String string) 
 	{
 		char[] vs = string.toCharArray();
@@ -365,6 +370,9 @@ public class MessageHandler extends Thread
 		return Util.MessageType.valueOf(string);
 	}
 
+	/*
+	 * gets e sets
+	 */
 	public Peer getPeer() {
 		return peer;
 	}

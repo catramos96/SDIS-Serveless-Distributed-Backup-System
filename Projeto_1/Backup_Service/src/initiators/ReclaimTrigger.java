@@ -24,26 +24,20 @@ public class ReclaimTrigger extends Thread{
 		this.message = null;
 	}
 	
+	@Override
 	public void run(){
 		
 		//Calcula a memoria necessaria a libertar
 		int memoryToRelease = peer.fileManager.memoryToRelease(spaceToReclaim);
 		
-		//System.out.println("SPACE: " + spaceToReclaim);
-		//System.out.println("RELEASE MEMORY: " + memoryToRelease);
-		
-		if(memoryToRelease > 0){
-			
+		if(memoryToRelease > 0)
+		{	
 			//Remove chunks until it has enough free space
-			/*
-			 * FUNCTION DEPENDING ON THE REPLICATION DEGREE OF THE CHUNKS
-			 */
-			
 			ArrayList<Chunk> priorityChunks = peer.getMulticastRecord().getChunksWithRepAboveDes();
 			ArrayList<String> backupChunks = peer.fileManager.deleteNecessaryChunks(priorityChunks,memoryToRelease);
 			
-			for(String chunk : backupChunks){
-				
+			for(String chunk : backupChunks)
+			{
 				Integer chunkNo = Integer.parseInt(chunk.substring(0,1));
 				String fileId = chunk.substring(1,chunk.length());	
 				
@@ -59,7 +53,7 @@ public class ReclaimTrigger extends Thread{
 		peer.fileManager.setTotalSpace(spaceToReclaim);
 
 		message = "TOTAL MEMORY: " + peer.fileManager.getTotalSpace()
-					+"REMAING MEMORY. " + peer.fileManager.getRemainingSpace();
+					+"\nREMAING MEMORY. " + peer.fileManager.getRemainingSpace();
 	}
 
 	public String response() {

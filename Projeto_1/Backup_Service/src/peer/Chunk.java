@@ -2,7 +2,6 @@ package peer;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Comparator;
 
 public class Chunk implements Serializable{
 
