@@ -291,7 +291,7 @@ public class Peer implements MessageRMI {
 		}
 
 		//delete own file 
-		fileManager.deleteFile(filename);
+		fileManager.deleteFile(fileManager.checkPath(filename));
 
 		return dt.response();
 	}

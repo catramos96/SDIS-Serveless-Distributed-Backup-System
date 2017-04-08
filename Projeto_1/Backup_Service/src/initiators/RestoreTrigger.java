@@ -34,7 +34,7 @@ public class RestoreTrigger extends Thread{
 		try	
 		{
 			//verifies if this file was already backed up
-			FileInfo info = peer.record.fileBackup(this.filename);
+			FileInfo info = peer.record.getBackupFileInfoByPath(this.filename);
 			
 			if(info == null)
 			{
@@ -43,7 +43,8 @@ public class RestoreTrigger extends Thread{
 			}
 			
 			//verifies if this file was already restored
-			if(peer.record.checkRestore(info.getFileId()))
+			FileInfo restoredInfo = peer.record.getBackupFileInfoById(info.getFileId());
+			if(restoredInfo == null)
 			{
 				message = info.getFilename() + " already restored!";
 				return;
@@ -66,7 +67,7 @@ public class RestoreTrigger extends Thread{
 			while((System.currentTimeMillis() - startTime) < Util.MAX_AVG_DELAY_TIME)	
 			{
 				//true when all 'chunk' messages received
-			    if(peer.getMulticastRecord().allRestored(info))
+			    if(peer.getMulticastRecord().checkAllChunksRestored(info))
 			    {
 			    	//creates the file
 			    	peer.fileManager.restoreFile(info.getFilename(), peer.record.getRestores(info));
@@ -78,7 +79,7 @@ public class RestoreTrigger extends Thread{
 			}
 			
 			//if file was not restores, the entries of objects that mapped this file must be deleted
-			peer.record.deleteRestoreEntry(info.getFileId());
+			peer.record.deleteRestoredFile(info.getFileId());
 			peer.msgRecord.resetChunkMessages(info.getFileId());
 			
 			message = info.getFilename() + " not restored...";

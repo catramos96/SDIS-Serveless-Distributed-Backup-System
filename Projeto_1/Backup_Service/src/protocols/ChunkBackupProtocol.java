@@ -56,7 +56,7 @@ public class ChunkBackupProtocol extends Protocol{
 			}
 			
 			//count peers with chunks stored
-			ArrayList<Integer> stored_peers = record.checkStored(fileNo, chunkNo);
+			ArrayList<Integer> stored_peers = record.checkStoredChunk(fileNo, chunkNo);
 			if(stored_peers != null)
 				stored = stored_peers.size();
 			

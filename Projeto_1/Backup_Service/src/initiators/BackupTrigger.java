@@ -43,7 +43,7 @@ public class BackupTrigger extends Thread{
 		}
 
 		//verifies if this file was already backed up 
-		FileInfo info = peer.record.fileBackup(this.filename);
+		FileInfo info = peer.record.getBackupFileInfoByPath(this.filename);
 
 		if(info != null)
 		{

@@ -3,6 +3,8 @@ package peer;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 import resources.Util;
 
@@ -18,7 +20,7 @@ public class Record implements Serializable {
 	private HashMap<FileInfo, HashMap<Integer, ArrayList<Integer>>> storedConfirms = null;				//from my backup files
 	private HashMap<FileInfo, HashMap<Integer, byte[] >> restoreConfirms = null;						//for my restored files
 	private HashMap<String, ArrayList<Chunk>> myChunks = null;
-	
+
 	public int totalMemory = Util.DISK_SPACE_DEFAULT;	//Just for loads and saves
 	public int remaingMemory = Util.DISK_SPACE_DEFAULT;
 
@@ -30,7 +32,7 @@ public class Record implements Serializable {
 	};
 
 	/*
-	 * STORE
+	 * BACKUP STORES
 	 */
 
 	/**
@@ -44,34 +46,33 @@ public class Record implements Serializable {
 	}
 
 	/**
-	 * Save chunks from 'fileNo' if 'fileNo' was previously initiated
+	 * Save chunks from 'fileId' if 'fileId' was previously initiated
 	 * @param fileNo
 	 * @param chunkNo
 	 * @param peerNo
 	 */
-	public synchronized void recordStoreChunks(String fileID, int chunkNo, int peerNo)
+	public synchronized void recordStoredChunk(String fileID, int chunkNo, int peerNo)
 	{
-		ArrayList<Integer> peers = new ArrayList<Integer>();
-
-		//chunk from 'fileNo' match some file from the hashMap
+		//chunk from 'fileID' match some file from the hashMap
 		for (FileInfo fileinfo : storedConfirms.keySet()) 
 		{
 			if(fileinfo.getFileId().equals(fileID))
 			{
-				HashMap<Integer,ArrayList<Integer>> tmp = storedConfirms.get(fileinfo);
+				HashMap<Integer,ArrayList<Integer>> chunks = storedConfirms.get(fileinfo);
+				ArrayList<Integer> peers = new ArrayList<Integer>();
 
-				//other peers already stored this chunkNo
-				if(tmp.containsKey(chunkNo))
+				//other peers already stored this chunk
+				if(chunks.containsKey(chunkNo))
 				{	
-					peers = tmp.get(chunkNo);
+					peers = chunks.get(chunkNo);
 				}
 
 				//peerNo doesn't belong to the list of peers with chunkNo stored
 				if(!peers.contains(peerNo))
 				{	
 					peers.add(peerNo);
-					tmp.put(chunkNo, peers);
-					storedConfirms.put(fileinfo, tmp);	
+					chunks.put(chunkNo, peers);
+					storedConfirms.put(fileinfo, chunks);	
 				}
 				return;
 			}
@@ -79,40 +80,49 @@ public class Record implements Serializable {
 	}
 
 	/**
-	 * Verifies if chunkNo from fileNo is stored
+	 * Verifies if chunkNo from fileId is stored
 	 * @param fileNo
 	 * @param chunkNo
 	 * @return List of peers who stored chunkNo of fileNo
 	 */
-	public synchronized ArrayList<Integer> checkStored(String fileId, int chunkNo)
+	public synchronized ArrayList<Integer> checkStoredChunk(String fileId, int chunkNo)
 	{
 		for (FileInfo fileinfo : storedConfirms.keySet()) 
 		{
 			if(fileinfo.getFileId().equals(fileId))
 			{
-				HashMap<Integer,ArrayList<Integer>> tmp = storedConfirms.get(fileinfo);
+				HashMap<Integer,ArrayList<Integer>> chunks = storedConfirms.get(fileinfo);
 
-				if(tmp.containsKey(chunkNo))
+				if(chunks != null && chunks.containsKey(chunkNo))
 				{
-					return tmp.get(chunkNo);
+					return chunks.get(chunkNo);
 				}
 			}
 		}
 		return null;
 	}
-	
-	public synchronized void deleteStoreEntry(String fileId) { 
-		
-		for (FileInfo fileinfo : storedConfirms.keySet()) 
-		{
-			if(fileinfo.getFileId().equals(fileId))
-			{
-				storedConfirms.remove(fileinfo);
-				return;
+
+	/**
+	 * Delete some file from backup history
+	 * @param fileId
+	 */
+	public synchronized void deleteStoredFile(String fileId) { 
+
+		for(Iterator< Map.Entry< FileInfo, HashMap< Integer, ArrayList<Integer> >>> it = storedConfirms.entrySet().iterator(); it.hasNext(); ) {
+			Map.Entry< FileInfo, HashMap< Integer, ArrayList<Integer> >> entry = it.next();
+			if(entry.getKey().getFileId().equals(fileId)) {
+				it.remove();
 			}
 		}
 	}
-	
+
+	/**
+	 * ?
+	 * @param fileId
+	 * @param chunkNo
+	 * @param peerNo
+	 * @return
+	 */
 	public synchronized boolean deleteStored(String fileId, int chunkNo,Integer peerNo){
 		for (FileInfo fileinfo : storedConfirms.keySet()) 
 		{
@@ -120,29 +130,28 @@ public class Record implements Serializable {
 			{
 				//chunks of file
 				HashMap<Integer, ArrayList<Integer>> chunkPeersStored = storedConfirms.get(fileinfo);
-				
+
 				if(chunkPeersStored.containsKey(chunkNo)){
 					//peers of file
 					ArrayList<Integer> peersList = chunkPeersStored.get(chunkNo);
-					
+
 					//remove peer from list of stored
 					if(peersList.contains(peerNo)){
-						
+
 						//No more peers for chunk ?
 						if(peersList.size() == 1){		
-							
+
 							//Remove chunk
 							if(chunkPeersStored.containsKey(chunkNo))
 								chunkPeersStored.remove(chunkNo);
 						}
 						else
 							peersList.remove(peerNo);
-							
-					}	
-					
+
+					}		
 					//update chunkNo peersList
 					chunkPeersStored.put(chunkNo, peersList);
-	
+
 					//update on hashmap
 					storedConfirms.put(fileinfo,chunkPeersStored);
 					return true;
@@ -153,37 +162,45 @@ public class Record implements Serializable {
 		return false;
 	}
 
-	public synchronized String getStoredFilename(String fileId){
-		
+	/** 
+	 * Verifies if some file with this fileId started its backup from this peer. 
+	 * @param filename 
+	 * @return 
+	 */ 
+	public synchronized FileInfo getBackupFileInfoById(String fileId){
 		for (FileInfo fileinfo : storedConfirms.keySet()) 
 		{
 			if(fileinfo.getFileId().equals(fileId))
 			{
-				return fileinfo.getFilename();
+				return fileinfo;
 			}
 		}
-		
 		return null;
 	}
-	
-	public synchronized int getStoredReplicationDegree(String fileId){
-		
+
+	/** 
+	 * Verifies if some file with this filename started its backup from this peer. 
+	 * @param filename 
+	 * @return 
+	 */ 
+	public synchronized FileInfo getBackupFileInfoByPath(String filename){
 		for (FileInfo fileinfo : storedConfirms.keySet()) 
 		{
-			if(fileinfo.getFileId().equals(fileId))
+			if(fileinfo.getPath().equals(filename))
 			{
-				return fileinfo.getRepDegree();
+				return fileinfo;
 			}
 		}
-		return 0;
+		return null;
 	}
-	
+
 	/*
 	 * RESTORE
 	 */
 
 	/**
-	 * 
+	 * Put the fileinfo at the information structure.
+	 * This means that our multicastRecord it's waiting for chunks from this specific file.
 	 * @param file
 	 */
 	public synchronized void startRecordRestores(FileInfo file)
@@ -197,7 +214,7 @@ public class Record implements Serializable {
 	 * @param chunkBody
 	 * @return
 	 */
-	public synchronized boolean recordRestoreChunks(String fileID, int chunkNo, byte[] chunkBody)
+	public synchronized boolean recordRestoredChunk(String fileID, int chunkNo, byte[] chunkBody)
 	{
 		//finds file at restored file of this initiator peer
 		for (FileInfo fileinfo : restoreConfirms.keySet()) 
@@ -220,18 +237,29 @@ public class Record implements Serializable {
 		return false;	
 	}
 
-	public synchronized boolean checkRestore(String fileId) {
+	/**
+	 * 
+	 * @param fileId
+	 * @return
+	 */
+	public synchronized FileInfo getRestoredFileInfoById(String fileId) {
 
 		//finds file at restored file of this initiator peer
 		for (FileInfo fileinfo : restoreConfirms.keySet()) 
 		{
 			if(fileinfo.getFileId().equals(fileId))
-				return true;
+				return fileinfo;
 		}
-		return false;
+		return null;
 	}
-	
-	public synchronized boolean checkChunkRestored(String fileId,int chunkNo)
+
+	/**
+	 * 
+	 * @param fileId
+	 * @param chunkNo
+	 * @return
+	 */
+	public synchronized boolean checkRestoredChunk(String fileId,int chunkNo)
 	{
 		for (FileInfo fileinfo : restoreConfirms.keySet()) 
 		{
@@ -244,7 +272,12 @@ public class Record implements Serializable {
 		return false;
 	}
 
-	public synchronized boolean allRestored(FileInfo info)
+	/**
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public synchronized boolean checkAllChunksRestored(FileInfo info)
 	{
 		if(restoreConfirms.containsKey(info))
 		{
@@ -256,26 +289,29 @@ public class Record implements Serializable {
 		return false;
 	}
 
-	public void deleteRestoreEntry(String fileId) { 
-	    for (FileInfo fileinfo : restoreConfirms.keySet())  
-	    { 
-	      if(fileinfo.getFileId().equals(fileId)) 
-	      { 
-	        restoreConfirms.remove(fileinfo); 
-	        return; 
-	      } 
-	    } 
-	  } 
-	
+	/**
+	 * 
+	 * @param fileId
+	 */
+	public void deleteRestoredFile(String fileId) { 
+		
+		for(Iterator< Map.Entry<FileInfo, HashMap<Integer, byte[]>> > it = restoreConfirms.entrySet().iterator(); it.hasNext(); ) {
+			Map.Entry< FileInfo, HashMap<Integer, byte[]> > entry = it.next();
+			if(entry.getKey().getFileId().equals(fileId)) {
+				it.remove();
+			}
+		}
+	} 
+
 	/*
 	 * MY CHUNKS
 	 */
-	
+
 	public synchronized void addToMyChunks(String fileNo, int chunkNo, int repDegree){
-		
+
 		Chunk c = new Chunk(chunkNo,repDegree);
 		ArrayList<Chunk> chunks = new ArrayList<Chunk>();
-		
+
 		if(myChunks.containsKey(fileNo)){
 			chunks = myChunks.get(fileNo);
 			if(chunks.contains(c))
@@ -284,11 +320,11 @@ public class Record implements Serializable {
 		chunks.add(c);
 		myChunks.put(fileNo,chunks);
 	}
-	
+
 	public synchronized void setPeersOnMyChunk(String fileNo, int chunkNo, ArrayList<Integer> peers){
 		if(peers == null)
 			return;
-		
+
 		if(myChunks.containsKey(fileNo)){
 			ArrayList<Chunk>chunks = myChunks.get(fileNo);
 			for(Chunk c : chunks){
@@ -301,7 +337,7 @@ public class Record implements Serializable {
 			}
 		}
 	}
-	
+
 	public synchronized void addPeerOnMyChunk(String fileNo, int chunkNo, int peerNo){
 		if(myChunks.containsKey(fileNo)){
 			ArrayList<Chunk>chunks = myChunks.get(fileNo);
@@ -312,7 +348,7 @@ public class Record implements Serializable {
 			}
 		}
 	}
-	
+
 	/*
 	 * Returns the difference between the ActualReDeg and the RepDegDesired
 	 * If the return is less than 0 then the repetition degree is bellow the desired
@@ -329,7 +365,7 @@ public class Record implements Serializable {
 		}
 		return 0;
 	}
-	
+
 	public synchronized boolean hasOnMyChunk(String fileNo, int chunkNo){
 		if(myChunks.containsKey(fileNo))
 		{
@@ -340,16 +376,16 @@ public class Record implements Serializable {
 		}
 		return false;
 	}
-	
+
 	public synchronized boolean myChunksBelongsToFile(String fileNo){
 		return myChunks.containsKey(fileNo);
 	}
-	
+
 	public synchronized void removeFromMyChunks(String fileNo){
 		if(myChunks.containsKey(fileNo))
 			myChunks.remove(fileNo);
 	}
-	
+
 	public synchronized void removeFromMyChunks(String fileNo, int chunkNo){
 		if(hasOnMyChunk(fileNo, chunkNo)){
 			ArrayList<Chunk> chunks = myChunks.get(fileNo);
@@ -357,7 +393,7 @@ public class Record implements Serializable {
 			myChunks.put(fileNo, chunks);
 		}
 	}
-	
+
 	public synchronized Chunk getMyChunk(String fileNo, int chunkNo){
 		if(myChunks.containsKey(fileNo)){
 			for(Chunk c : myChunks.get(fileNo))
@@ -366,11 +402,11 @@ public class Record implements Serializable {
 		}
 		return null;
 	}
-	
+
 	/*
-	 * Gets e sets
+	 * Gets
 	 */
- 	public synchronized HashMap<Integer,byte[] > getRestores(FileInfo info) 
+	public synchronized HashMap<Integer,byte[] > getRestores(FileInfo info) 
 	{
 		if(restoreConfirms.containsKey(info))
 		{
@@ -378,25 +414,9 @@ public class Record implements Serializable {
 		}
 		return null;
 	}
-	
+
 	public HashMap<FileInfo, HashMap<Integer, ArrayList<Integer>>> getStored() {
 		return storedConfirms;
 	}
-	
-	 /** 
-	   * Verifies if some file with this filename started its backup from this peer. 
-	   * @param filename 
-	   * @return 
-	   */ 
-	  public FileInfo fileBackup(String filename)  
-	  { 
-	    for (FileInfo fileinfo : storedConfirms.keySet())  
-	    { 
-	      if(fileinfo.getPath().equals(filename)) 
-	      { 
-	        return fileinfo; 
-	      } 
-	    } 
-	    return null; 
-	  } 
+
 }

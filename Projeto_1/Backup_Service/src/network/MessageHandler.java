@@ -11,6 +11,7 @@ import resources.Logs;
 import resources.Util;
 import resources.Util.MessageType;
 import peer.Chunk;
+import peer.FileInfo;
 import peer.Peer;
 import peer.Record;
 import protocols.ChunkBackupProtocol;
@@ -153,7 +154,7 @@ public class MessageHandler extends Thread
 			System.out.println("CHUNK " + chunkNo + " REPDEG: " + c.getAtualRepDeg());
 
 		//Record the storedChunks in case the peer is the owner of the backup file
-		peer.getMulticastRecord().recordStoreChunks(fileId, chunkNo, senderId);
+		peer.getMulticastRecord().recordStoredChunk(fileId, chunkNo, senderId);
 	}	
 
 	/**
@@ -187,10 +188,12 @@ public class MessageHandler extends Thread
 	 */
 	private synchronized void handleChunk(String fileId, int chunkNo, byte[] body){
 		//chunk message received by intiator peer 
-		if(peer.getMulticastRecord().checkRestore(fileId))
+		FileInfo info = peer.getMulticastRecord().getRestoredFileInfoById(fileId);
+		
+		if(info != null)
 		{
 			//chunk restored, yey
-			if(peer.getMulticastRecord().recordRestoreChunks(fileId,chunkNo,body))
+			if(peer.getMulticastRecord().recordRestoredChunk(fileId,chunkNo,body))
 				Logs.chunkRestored(chunkNo);
 		}
 
@@ -215,9 +218,9 @@ public class MessageHandler extends Thread
 	private synchronized void handleRemoved(String fileId, int chunkNo, int peerNo){
 
 		Record record = peer.getMulticastRecord();
-		String filename = record.getStoredFilename(fileId);	//from stored
+		FileInfo info = record.getBackupFileInfoById(fileId);	//from stored
 
-		if(filename == null)
+		if(info.getFilename() == null)
 			return;
 
 		byte[] data = null;
@@ -225,21 +228,21 @@ public class MessageHandler extends Thread
 		int desiredRepDegree = 0;
 		
 		//Owner
-		if(record.checkStored(fileId, chunkNo) != null){			
+		if(record.checkStoredChunk(fileId, chunkNo) != null){			
 			System.out.println("OWNER");
 
 			//Update stored record
 			record.deleteStored(fileId, chunkNo, peerNo);
 			
-			desiredRepDegree = record.getStoredReplicationDegree(fileId);
+			desiredRepDegree = info.getNumChunks();
 			
-			ArrayList<Integer> peersWithChunk = record.checkStored(fileId, chunkNo);	//Actual replication degree
+			ArrayList<Integer> peersWithChunk = record.checkStoredChunk(fileId, chunkNo);	//Actual replication degree
 			if(peersWithChunk !=null)
 				repDegree = peersWithChunk.size();
 
 			if(repDegree<desiredRepDegree){
 
-				ArrayList<Chunk> chunks = peer.fileManager.splitFileInChunks(Util.PEERS_DIR + "Peer" + peer.getID() + Util.RESTORES_DIR + filename);
+				ArrayList<Chunk> chunks = peer.fileManager.splitFileInChunks(Util.PEERS_DIR + "Peer" + peer.getID() + Util.RESTORES_DIR + info.getFilename());
 				if(chunks.size() < chunkNo){
 					System.out.println("Ficheiro não foi recuperado totalmente");
 					return;

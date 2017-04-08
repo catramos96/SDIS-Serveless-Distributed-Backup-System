@@ -45,7 +45,7 @@ public class ChunkRestoreProtocol extends Protocol{
 			}
 			
 			//verifies if some chunk was restored
-			if(record.checkChunkRestored(fileNo, chunkNo)){
+			if(record.checkRestoredChunk(fileNo, chunkNo)){
 				System.out.println("Restored chunk n: " + chunkNo);
 				return;
 			}
