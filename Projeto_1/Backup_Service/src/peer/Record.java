@@ -181,6 +181,17 @@ public class Record implements Serializable {
 		}
 		return null;
 	}
+	
+	public synchronized FileInfo getBackupFileInfoByName(String filename){
+		for (FileInfo fileinfo : storedConfirms.keySet()) 
+		{
+			if(fileinfo.getFilename().equals(filename))
+			{
+				return fileinfo;
+			}
+		}
+		return null;
+	}
 
 	/** 
 	 * Verifies if some file with this filename started its backup from this peer. 
@@ -247,7 +258,6 @@ public class Record implements Serializable {
 	 * @return
 	 */
 	public synchronized FileInfo getRestoredFileInfoById(String fileId) {
-
 		//finds file at restored file of this initiator peer
 		for (FileInfo fileinfo : restoreConfirms.keySet()) 
 		{

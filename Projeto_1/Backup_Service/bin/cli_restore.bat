@@ -1,1 +1,1 @@
-start java cli.TestApp MessageRMI0 RESTORE test.doc
+start java cli.TestApp MessageRMI0 RESTORE natural.png
