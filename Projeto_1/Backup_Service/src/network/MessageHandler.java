@@ -264,10 +264,8 @@ public class MessageHandler extends Thread
 			if(peersWithChunk != null)
 				repDegree = peersWithChunk.size();
 
-			//get data to start backup protocol
-			if(repDegree < desiredRepDegree)
-			{
-				ArrayList<Chunk> chunks = peer.fileManager.splitFileInChunks(Util.PEERS_DIR + "Peer" + peer.getID() + Util.RESTORES_DIR + info.getFilename());
+			if(repDegree < desiredRepDegree){
+				ArrayList<Chunk> chunks = peer.fileManager.splitFileInChunks(info.getPath());
 				Chunk c = chunks.get(chunkNo);
 				data = c.getData();
 			}

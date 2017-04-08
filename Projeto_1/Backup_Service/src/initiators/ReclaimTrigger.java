@@ -30,9 +30,8 @@ public class ReclaimTrigger extends Thread{
 		//Calcula a memoria necessaria a libertar
 		int memoryToRelease = peer.fileManager.memoryToRelease(spaceToReclaim);
 		
-		if(memoryToRelease > 0)
-		{	
-			//Remove chunks until it has enough free space
+		if(memoryToRelease > 0){
+
 			ArrayList<Chunk> priorityChunks = peer.getMulticastRecord().getChunksWithRepAboveDes();
 			ArrayList<String> backupChunks = peer.fileManager.deleteNecessaryChunks(priorityChunks,memoryToRelease);
 			

@@ -399,7 +399,12 @@ public class Record implements Serializable {
 	public synchronized void removeFromMyChunks(String fileNo, int chunkNo){
 		if(checkMyChunk(fileNo, chunkNo)){
 			ArrayList<Chunk> chunks = myChunks.get(fileNo);
-			chunks.remove(chunkNo);
+			for(Chunk c : chunks){
+				if(c.getChunkNo() == chunkNo){
+					chunks.remove(c);
+					break;
+				}
+			}
 			myChunks.put(fileNo, chunks);
 		}
 	}
