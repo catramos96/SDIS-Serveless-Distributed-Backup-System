@@ -8,6 +8,9 @@ import resources.Util;
 
 import peer.Peer;
 
+/*
+ * Class that create the multicast socket and send/receive the messages
+ */
 public class MulticastListener extends Thread
 {
 	public MulticastSocket socket = null;
@@ -16,6 +19,12 @@ public class MulticastListener extends Thread
 	protected boolean running = false;
 	protected Peer peer = null;
 
+	/**
+	 * 
+	 * @param address
+	 * @param port
+	 * @param peer
+	 */
 	public MulticastListener(InetAddress address, int port, Peer peer)
 	{
 		this.address = address;

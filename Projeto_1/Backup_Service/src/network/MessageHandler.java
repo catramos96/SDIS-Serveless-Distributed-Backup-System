@@ -5,6 +5,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Random;
 
 import resources.Logs;
@@ -91,7 +93,9 @@ public class MessageHandler extends Thread
 
 		//no space available and chunk wasn't stored yet -> can't store
 		if(!peer.fileManager.hasSpaceAvailable(c) && !alreadyExists)
-			return;
+		{
+			evictChunks();
+		}
 		else
 		{
 			if(alreadyExists)				//warns immediately
@@ -112,26 +116,41 @@ public class MessageHandler extends Thread
 
 				//If the replication degree is lower that the desired
 				//if(rep < repDeg){							//--> Enhancement*/
-					//send STORED message
-					peer.getMc().send(msg);
-					Logs.sentMessageLog(msg);
+				//send STORED message
+				peer.getMc().send(msg);
+				Logs.sentMessageLog(msg);
 
-					//save chunk in memory
-					peer.fileManager.saveChunk(c);
-					
-					//Save info on 'Record' 
-					peer.getMulticastRecord().addToMyChunks(fileId, chunkNo, repDeg);
-					
-					//Update Actual Replication Degree
-					peer.getMulticastRecord().setPeersOnMyChunk(fileId, chunkNo, peersWithChunk);
-					peer.getMulticastRecord().addPeerOnMyChunk(fileId, chunkNo, peer.getID());
+				//save chunk in memory
+				peer.fileManager.saveChunk(c);
 
-					//System.out.println("CHUNK " + chunkNo + " REPLICATION: " + (int)(rep+1) + " DESIRED: " + repDeg);	
+				//Save info on 'Record' 
+				peer.getMulticastRecord().addToMyChunks(fileId, chunkNo, repDeg);
+
+				//Update Actual Replication Degree
+				peer.getMulticastRecord().setPeersOnMyChunk(fileId, chunkNo, peersWithChunk);
+				peer.getMulticastRecord().addPeerOnMyChunk(fileId, chunkNo, peer.getID());
+
+				//System.out.println("CHUNK " + chunkNo + " REPLICATION: " + (int)(rep+1) + " DESIRED: " + repDeg);	
 				/*}
 				else
 					peer.getMessageRecord().removeStoredMessages(fileId, chunkNo);	//only keeps the ones refered to his backupChunks --> Enhancement
 				 */
 			}
+		}
+	}
+
+	/**
+	 * The peer will try to free some space by evicting chunks whose actual replication degree is higher 
+	 * than the desired replication degree
+	 */
+	private void evictChunks() 
+	{
+		//find chunks whose actual replication degree is higher than the desired replication
+		ArrayList<Chunk> chunks = peer.record.getChunksWithRepAboveDes();
+
+		for (int i = 0; i < chunks.size(); i++) {
+			String filename = chunks.get(i).getChunkNo() + chunks.get(i).getFileId();
+			peer.fileManager.deleteFile(filename);
 		}
 	}
 
@@ -155,7 +174,7 @@ public class MessageHandler extends Thread
 	 * Peer response to other peer GETCHUNK message
 	 */
 	private synchronized void handleGetchunk(String fileId, int chunkNo){
-		
+
 		//peer has chunk stored
 		if(peer.record.checkMyChunk(fileId, chunkNo))
 		{
@@ -163,7 +182,7 @@ public class MessageHandler extends Thread
 			byte[] body = peer.fileManager.getChunkContent(fileId, chunkNo);
 			//create CHUNK message
 			Message msg = new Message(Util.MessageType.CHUNK,peer.getVersion(),peer.getID(),fileId,chunkNo,body);
-			
+
 			//wait 0-400 ms
 			Util.randomDelay();
 			
@@ -183,7 +202,7 @@ public class MessageHandler extends Thread
 	private synchronized void handleChunk(String fileId, int chunkNo, byte[] body){
 		//chunk message received by initiator peer 
 		FileInfo info = peer.getMulticastRecord().getRestoredFileInfoById(fileId);
-		
+
 		//this peer is able to restore the file
 		if(info != null){
 			//record chunk as restored
@@ -220,36 +239,37 @@ public class MessageHandler extends Thread
 		byte[] data = null;
 		int repDegree = 0;
 		int desiredRepDegree = 0;
-		
+
 		//This peer initiated the backup of this file (with fileId received)
 		if(record.checkStoredChunk(fileId, chunkNo) != null)
 		{			
 			//Update stored record
 			record.deleteStored(fileId, chunkNo, peerNo);
 			desiredRepDegree = info.getNumChunks();
-			
+
 			//Actual replication degree
 			ArrayList<Integer> peersWithChunk = record.checkStoredChunk(fileId, chunkNo);
 			if(peersWithChunk != null)
 				repDegree = peersWithChunk.size();
 
-			if(repDegree<desiredRepDegree){
-
+			if(repDegree < desiredRepDegree){
 				ArrayList<Chunk> chunks = peer.fileManager.splitFileInChunks(info.getPath());
-
 				Chunk c = chunks.get(chunkNo);
 				data = c.getData();
 			}
 		}
-		//Not Owner but it has ths chunk on his backup diretory
-		else if(peer.getMulticastRecord().checkMyChunk(fileId, chunkNo)){
-			System.out.println("NOT OWNER");
+		//Not Owner but has the chunk stored
+		else if(peer.getMulticastRecord().checkMyChunk(fileId, chunkNo))
+		{
+			//remove peer from 'Record'
 			peer.getMulticastRecord().remPeerWithMyChunk(fileId, chunkNo, peerNo);
+
+			//get data to start backup protocol
 			data = peer.fileManager.getChunkContent(fileId, chunkNo);
 			repDegree = peer.getMulticastRecord().getMyChunk(fileId, chunkNo).getAtualRepDeg();
 			desiredRepDegree = peer.getMulticastRecord().getMyChunk(fileId, chunkNo).getReplicationDeg();
 		}
-		
+
 		/*
 		 * If replicaiton degree is bellow desired it will start the chunkbackup protocol
 		 * only if after a random time it doesn't received any putchunk for the same fileId and chunkNo
@@ -269,8 +289,10 @@ public class MessageHandler extends Thread
 
 	}
 
-	/*
-	 * Preenche os atributos da classe com os respetivos valores 
+	/**
+	 * Fill the object 'Message'
+	 * @param message
+	 * @return
 	 */
 	private Message parseMessage(byte[] message)
 	{
@@ -283,7 +305,7 @@ public class MessageHandler extends Thread
 		{
 			String header = reader.readLine();	//a primeira linha corresponde a header
 
-			//interpretação da header
+			//interpretaï¿½ï¿½o da header
 			String[] parts = header.split("\\s");
 
 			Util.MessageType type_rcv = validateMessageType(parts[0]);
@@ -333,6 +355,10 @@ public class MessageHandler extends Thread
 		return parsed;
 	}
 
+	/*
+	 * Validates
+	 */
+
 	private char[] validateVersion(String string) 
 	{
 		char[] vs = string.toCharArray();
@@ -349,6 +375,9 @@ public class MessageHandler extends Thread
 		return Util.MessageType.valueOf(string);
 	}
 
+	/*
+	 * gets e sets
+	 */
 	public Peer getPeer() {
 		return peer;
 	}

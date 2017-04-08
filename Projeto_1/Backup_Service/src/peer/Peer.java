@@ -36,10 +36,10 @@ public class Peer implements MessageRMI {
 	private char[] version;
 
 	/*listeners*/
-	//public DatagramListener socket = null; 	//socket for communication with client
 	public MulticastListener mc = null;
 	public MulticastListener mdb = null;
 	public MulticastListener mdr = null;
+	
 	/*MessageRecord*/
 	public MessageRecord msgRecord = null;
 
@@ -68,11 +68,6 @@ public class Peer implements MessageRMI {
 
 		//load metadata
 		loadRecord();
-
-		/*
-		System.out.println("TotalMemory: " + record.totalMemory);
-		System.out.println("RemaingMemory: " + record.remaingMemory);
-		 */	
 
 		//init variables 
 		msgRecord = new MessageRecord();

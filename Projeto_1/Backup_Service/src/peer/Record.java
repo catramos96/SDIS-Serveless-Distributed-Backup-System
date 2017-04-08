@@ -298,7 +298,7 @@ public class Record implements Serializable {
 	 * @param fileId
 	 */
 	public void deleteRestoredFile(String fileId) { 
-		
+
 		for(Iterator< Map.Entry<FileInfo, HashMap<Integer, byte[]>> > it = restoreConfirms.entrySet().iterator(); it.hasNext(); ) {
 			Map.Entry< FileInfo, HashMap<Integer, byte[]> > entry = it.next();
 			if(entry.getKey().getFileId().equals(fileId)) {
@@ -327,7 +327,7 @@ public class Record implements Serializable {
 		}
 		return false;
 	}
-	
+
 	public synchronized void addToMyChunks(String fileNo, int chunkNo, int repDegree){
 
 		Chunk c = new Chunk(fileNo,chunkNo,repDegree);
@@ -420,21 +420,21 @@ public class Record implements Serializable {
 
 	public synchronized ArrayList<Chunk> getChunksWithRepAboveDes(){
 		ArrayList<Chunk> chunks = new ArrayList<Chunk>();
-		
+
 		for(Entry<String, ArrayList<Chunk>> array : myChunks.entrySet()){
 			for(Chunk c : array.getValue()){
 				if(c.getAtualRepDeg() > c.getReplicationDeg())
 					chunks.add(c);
 			}
 		}
-		
+
 		//Order by RepDegree Desc
 		Collections.sort(chunks, new Comparator<Chunk>() {
-		    public int compare(Chunk c1, Chunk c2) {
-		        return c2.getAtualRepDeg() - c1.getAtualRepDeg();
-		    }
+			public int compare(Chunk c1, Chunk c2) {
+				return c2.getAtualRepDeg() - c1.getAtualRepDeg();
+			}
 		});
-		
+
 		return chunks;
 	}
 	
@@ -454,7 +454,7 @@ public class Record implements Serializable {
 	/*
 	 * Gets
 	 */
- 	public synchronized HashMap<Integer,byte[] > getRestores(FileInfo info) 
+	public synchronized HashMap<Integer,byte[] > getRestores(FileInfo info) 
 	{
 		if(restoreConfirms.containsKey(info))
 		{
@@ -470,5 +470,5 @@ public class Record implements Serializable {
 	public HashMap<String, ArrayList<Chunk>> getMyChunks() {
 		return myChunks;
 	}
-	
+
 }
