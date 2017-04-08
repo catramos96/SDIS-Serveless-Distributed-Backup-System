@@ -85,7 +85,7 @@ public class TestApp
 			case "RECLAIM":
 				if(args.length != 3)
 					return false;
-				response = stub.delete(args[2]);
+				response = stub.reclaim(Integer.parseInt(args[2]));
 				break;
 			case "STATE":
 				if(args.length != 2)

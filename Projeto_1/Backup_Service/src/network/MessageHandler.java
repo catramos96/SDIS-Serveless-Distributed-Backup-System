@@ -226,24 +226,23 @@ public class MessageHandler extends Thread
 		Record record = peer.getMulticastRecord();
 		FileInfo info = record.getBackupFileInfoById(fileId);	//from stored
 
-		if(info.getFilename() == null)
+		if(info == null)
 			return;
 
 		byte[] data = null;
 		int repDegree = 0;
 		int desiredRepDegree = 0;
 		
-		//Owner
-		if(record.checkStoredChunk(fileId, chunkNo) != null){			
-			System.out.println("OWNER");
-
+		//This peer initiated the backup of this file (with fileId received)
+		if(record.checkStoredChunk(fileId, chunkNo) != null)
+		{			
 			//Update stored record
 			record.deleteStored(fileId, chunkNo, peerNo);
-			
 			desiredRepDegree = info.getNumChunks();
 			
-			ArrayList<Integer> peersWithChunk = record.checkStoredChunk(fileId, chunkNo);	//Actual replication degree
-			if(peersWithChunk !=null)
+			//Actual replication degree
+			ArrayList<Integer> peersWithChunk = record.checkStoredChunk(fileId, chunkNo);
+			if(peersWithChunk != null)
 				repDegree = peersWithChunk.size();
 
 			if(repDegree<desiredRepDegree){
