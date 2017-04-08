@@ -219,13 +219,12 @@ public class FileManager{
 		//Priority Chunks
 		for(Chunk c : chunks){
 			String filename = createChunkName(c.getFileId(), c.getChunkNo());
-			File file = new File(diskDIR + Util.CHUNKS_DIR + "/" + filename);		//verificar se nao precisa de extencao
-			
-			if(file.exists() && file.isFile()){
+			File file = new File(filename);		//verificar se nao precisa de extencao
+			if(file.exists()){
 				remainingSpace += file.length();	//Updates free space
 				spaceReleased += file.length();
 				
-				chunksDeleted.add(filename); //chunkNo + fileId
+				chunksDeleted.add(c.getChunkNo() + c.getFileId()); //chunkNo + fileId
 				file.delete();
 			}
 			if(spaceReleased >=  spaceToFree)

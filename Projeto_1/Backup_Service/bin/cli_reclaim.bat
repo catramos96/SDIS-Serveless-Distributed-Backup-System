@@ -1,1 +1,1 @@
-start java cli.TestApp MessageRMI1 RECLAIM 100000
+start java cli.TestApp MessageRMI3 RECLAIM 10000

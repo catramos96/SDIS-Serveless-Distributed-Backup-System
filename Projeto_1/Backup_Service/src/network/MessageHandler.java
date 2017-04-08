@@ -247,11 +247,7 @@ public class MessageHandler extends Thread
 
 			if(repDegree<desiredRepDegree){
 
-				ArrayList<Chunk> chunks = peer.fileManager.splitFileInChunks(Util.PEERS_DIR + "Peer" + peer.getID() + Util.RESTORES_DIR + info.getFilename());
-				if(chunks.size() < chunkNo){
-					System.out.println("Ficheiro não foi recuperado totalmente");
-					return;
-				}
+				ArrayList<Chunk> chunks = peer.fileManager.splitFileInChunks(info.getPath());
 
 				Chunk c = chunks.get(chunkNo);
 				data = c.getData();
