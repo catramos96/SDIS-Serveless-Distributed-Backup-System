@@ -3,6 +3,7 @@
 ## Protocolos
 
 ### Backup
+* A peer should also count the number of confirmation messages for each of the chunks it has stored and keep that count in non-volatile memory. This information is used if the peer runs out of disk space: in that event, the peer will try to free some space by evicting chunks whose actual replication degree is higher than the desired replication degree.
 * descomentar o enhancement
 
 ### Restore

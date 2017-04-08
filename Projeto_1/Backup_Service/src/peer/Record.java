@@ -2,9 +2,12 @@ package peer;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import resources.Util;
 
@@ -327,7 +330,7 @@ public class Record implements Serializable {
 	
 	public synchronized void addToMyChunks(String fileNo, int chunkNo, int repDegree){
 
-		Chunk c = new Chunk(chunkNo,repDegree);
+		Chunk c = new Chunk(fileNo,chunkNo,repDegree);
 		ArrayList<Chunk> chunks = new ArrayList<Chunk>();
 
 		if(myChunks.containsKey(fileNo)){
@@ -410,10 +413,30 @@ public class Record implements Serializable {
 		return null;
 	}
 
+	public synchronized ArrayList<Chunk> getChunksWithRepAboveDes(){
+		ArrayList<Chunk> chunks = new ArrayList<Chunk>();
+		
+		for(Entry<String, ArrayList<Chunk>> array : myChunks.entrySet()){
+			for(Chunk c : array.getValue()){
+				if(c.getAtualRepDeg() > c.getReplicationDeg())
+					chunks.add(c);
+			}
+		}
+		
+		//Order by RepDegree Desc
+		Collections.sort(chunks, new Comparator<Chunk>() {
+		    public int compare(Chunk c1, Chunk c2) {
+		        return c2.getAtualRepDeg() - c1.getAtualRepDeg();
+		    }
+		});
+		
+		return chunks;
+	}
+	
 	/*
 	 * Gets
 	 */
-	public synchronized HashMap<Integer,byte[] > getRestores(FileInfo info) 
+ 	public synchronized HashMap<Integer,byte[] > getRestores(FileInfo info) 
 	{
 		if(restoreConfirms.containsKey(info))
 		{

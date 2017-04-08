@@ -3,6 +3,7 @@ package initiators;
 import java.util.ArrayList;
 
 import network.Message;
+import peer.Chunk;
 import peer.Peer;
 import resources.Util.MessageType;
 
@@ -37,7 +38,9 @@ public class ReclaimTrigger extends Thread{
 			/*
 			 * FUNCTION DEPENDING ON THE REPLICATION DEGREE OF THE CHUNKS
 			 */
-			ArrayList<String> backupChunks = peer.fileManager.deleteNecessaryChunks(memoryToRelease);
+			
+			ArrayList<Chunk> priorityChunks = peer.getMulticastRecord().getChunksWithRepAboveDes();
+			ArrayList<String> backupChunks = peer.fileManager.deleteNecessaryChunks(priorityChunks,memoryToRelease);
 			
 			for(String chunk : backupChunks){
 				

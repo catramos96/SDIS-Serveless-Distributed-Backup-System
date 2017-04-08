@@ -205,15 +205,40 @@ public class FileManager{
 			return 0;	
 	}
 	
-	public ArrayList<String> deleteNecessaryChunks(int spaceToFree){
+	/*
+	 * Deletes chunks until it released enough memory
+	 * It starts by deleting the chunks with the atual replication degree above
+	 * the desired and next the normal chunks
+	 */
+	public ArrayList<String> deleteNecessaryChunks(ArrayList<Chunk> chunks, int spaceToFree){
 		
 		ArrayList<String> chunksDeleted = new ArrayList<String>();
 		
 		int spaceReleased = 0;
+			
+		//Priority Chunks
+		for(Chunk c : chunks){
+			String filename = createChunkName(c.getFileId(), c.getChunkNo());
+			File file = new File(diskDIR + Util.CHUNKS_DIR + "/" + filename);		//verificar se nao precisa de extencao
+			
+			if(file.exists() && file.isFile()){
+				remainingSpace += file.length();	//Updates free space
+				spaceReleased += file.length();
+				
+				chunksDeleted.add(filename); //chunkNo + fileId
+				file.delete();
+			}
+			if(spaceReleased >=  spaceToFree)
+				break;
+		}
 		
-		File dir = new File(diskDIR + Util.CHUNKS_DIR);
-		if(dir.exists() && dir.isDirectory())
-		{
+		//Remove the rest of Chunks
+		if(spaceReleased <  spaceToFree){
+			File dir = new File(diskDIR + Util.CHUNKS_DIR);
+			if(!(dir.isDirectory() && dir.exists())){
+				return chunksDeleted;
+			}
+			
 			File[] files = dir.listFiles();
 			
 			for(File file : files)
@@ -222,27 +247,28 @@ public class FileManager{
 				spaceReleased += file.length();
 				
 				String filename = file.getName();
-				String fileId = filename.substring(1,filename.length());	//TMP - JUST 4 PRINT
+				String fileId = filename.substring(1,filename.length());
 				Integer chunkNo = Integer.parseInt(filename.substring(0,1));
 
-				System.out.println("FILEID: " + fileId);
+				/*System.out.println("FILEID: " + fileId);
 				System.out.println("CHUNKNO: " + chunkNo);
 				System.out.println("SPACE RELEASED: " + spaceReleased);
-				System.out.println("SPACE TO FREE: " + spaceToFree);
+				System.out.println("SPACE TO FREE: " + spaceToFree);*/
 				
 			
-					chunksDeleted.add(filename); //chunkNo + fileId
-					file.delete();
-				
-				
+				chunksDeleted.add(filename); //chunkNo + fileId
+				file.delete();
+					
 				if(spaceReleased >=  spaceToFree)
 					break;
-			}			
-		}
+			}	
 
 		return chunksDeleted;
 	}
 
+	return chunksDeleted;
+	}
+	
 	/*
 	 * Gets e Sets
 	 */
