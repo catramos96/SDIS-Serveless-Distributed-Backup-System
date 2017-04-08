@@ -34,9 +34,6 @@ public class BackupTrigger extends Thread{
 
 	public void run()
 	{
-		System.out.println("execute");
-
-
 		//verifies original file existence
 		File f = new File(this.filename);
 		if(!f.exists())

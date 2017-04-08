@@ -171,5 +171,13 @@ public class Message
 	public void setSenderId(int senderId) {
 		this.senderId = senderId;
 	}
+
+	public char[] getVersion() {
+		return version;
+	}
+
+	public void setVersion(char[] version) {
+		this.version = version;
+	}
 	
 }
