@@ -5,7 +5,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Random;
 
 import resources.Logs;
 import resources.Util;
@@ -85,7 +84,7 @@ public class MessageHandler extends Thread
 	private boolean protocolsCompatible() {
 		char[] receptor = peer.getVersion();
 		char[] sender = msg.getVersion();
-		
+
 		for(int i = 0; i < receptor.length; i++)
 			if(receptor[i] != sender[i])
 				return false;
@@ -96,7 +95,13 @@ public class MessageHandler extends Thread
 	 * Peer response to other peer PUTCHUNK message
 	 * @param c
 	 */
-	private synchronized void handlePutchunk(String fileId, int chunkNo, int repDeg, byte[] body){
+	private synchronized void handlePutchunk(String fileId, int chunkNo, int repDeg, byte[] body)
+	{
+		char[] version = peer.getVersion();
+		boolean enhancement = false;
+		if(version[2] != '0')
+			enhancement = true;
+		
 		Chunk c = new Chunk(fileId, chunkNo, body);
 
 		//create response message : STORED
@@ -128,27 +133,29 @@ public class MessageHandler extends Thread
 				if(peersWithChunk != null)
 					rep = peersWithChunk.size();
 
-				//If the replication degree is lower that the desired
-				//if(rep < repDeg){							//--> Enhancement*/
-				//send STORED message
-				peer.getMc().send(msg);
-				Logs.sentMessageLog(msg);
+				//ENHANCEMENT : If the replication degree is lower that the desired
+				if(((rep < repDeg) && enhancement)|| !enhancement)
+				{							
+					//send STORED message
+					peer.getMc().send(msg);
+					Logs.sentMessageLog(msg);
 
-				//save chunk in memory
-				peer.fileManager.saveChunk(c);
+					//save chunk in memory
+					peer.fileManager.saveChunk(c);
 
-				//Save info on 'Record' 
-				peer.getMulticastRecord().addToMyChunks(fileId, chunkNo, repDeg);
+					//Save info on 'Record' 
+					peer.getMulticastRecord().addToMyChunks(fileId, chunkNo, repDeg);
 
-				//Update Actual Replication Degree
-				peer.getMulticastRecord().setPeersOnMyChunk(fileId, chunkNo, peersWithChunk);
-				peer.getMulticastRecord().addPeerOnMyChunk(fileId, chunkNo, peer.getID());
+					//Update Actual Replication Degree
+					peer.getMulticastRecord().setPeersOnMyChunk(fileId, chunkNo, peersWithChunk);
+					peer.getMulticastRecord().addPeerOnMyChunk(fileId, chunkNo, peer.getID());
 
-				//System.out.println("CHUNK " + chunkNo + " REPLICATION: " + (int)(rep+1) + " DESIRED: " + repDeg);	
-				/*}
-				else
-					peer.getMessageRecord().removeStoredMessages(fileId, chunkNo);	//only keeps the ones refered to his backupChunks --> Enhancement
-				 */
+					//System.out.println("CHUNK " + chunkNo + " REPLICATION: " + (int)(rep+1) + " DESIRED: " + repDeg);	
+				}
+				else if((rep >= repDeg) && enhancement){
+					//only keeps the ones refered
+					peer.getMessageRecord().removeStoredMessages(fileId, chunkNo);
+				}
 			}
 		}
 	}
@@ -199,7 +206,7 @@ public class MessageHandler extends Thread
 
 			//wait 0-400 ms
 			Util.randomDelay();
-			
+
 			//chunk still needed by the initiator peer
 			if(!peer.getMessageRecord().receivedChunkMessage(fileId, chunkNo))
 			{
@@ -291,7 +298,7 @@ public class MessageHandler extends Thread
 		if(repDegree < desiredRepDegree){
 			peer.getMessageRecord().removePutChunkMessages(fileId, chunkNo);	//reset recording
 			peer.getMessageRecord().startRecordingPutchunks(fileId, chunkNo);	//start record
-			
+
 			Util.randomDelay();
 
 			if(!peer.getMessageRecord().receivedPutchunkMessage(fileId, chunkNo)){
