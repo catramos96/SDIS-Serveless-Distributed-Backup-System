@@ -25,9 +25,8 @@ public class MessageRecord {
 		chunkMessages.put(fileNo, new ArrayList<Integer>());
 	}
 	
-	public void startRecordingPutchunks(String fileNo, int chunkNo){
+	public void startRecordingPutchunks(String fileNo){
 		ArrayList<Integer> tmp = new ArrayList<Integer>();
-		tmp.add(chunkNo);
 		putchunkMessages.put(fileNo, tmp);
 	}
 	
@@ -150,7 +149,7 @@ public class MessageRecord {
 			ArrayList<Integer> putchunks = putchunkMessages.get(fileNo);
 			if(putchunks.contains(chunkNo))
 			{
-				putchunks.remove(chunkNo);
+				putchunks.remove((Integer)chunkNo);
 				putchunkMessages.put(fileNo, putchunks);
 			}
 		}

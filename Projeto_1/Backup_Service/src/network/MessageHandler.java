@@ -134,6 +134,10 @@ public class MessageHandler extends Thread
 	{
 		boolean enhancement = peer.isEnhancement();
 
+		//Owner of the file with file id
+		if(peer.getRecord().checkStoredChunk(fileId, chunkNo) != null)
+			return;
+		
 		Chunk c = new Chunk(fileId, chunkNo, body);
 
 		//create response message : STORED
@@ -239,7 +243,9 @@ public class MessageHandler extends Thread
 		//Updates the Replication Degree if the peer has the chunk
 		peer.getRecord().addPeerOnMyChunk(fileId,chunkNo,senderId);
 
-		//Chunk c = peer.getRecord().getMyChunk(fileId, chunkNo);
+		Chunk c = peer.getRecord().getMyChunk(fileId, chunkNo);
+		if(c != null)
+			System.out.println("STORE CHUNK " + c.getChunkNo() + " REP " + c.getAtualRepDeg() + " DES " + c.getReplicationDeg());
 
 		//Record the storedChunks in case the peer is the OWNER of the backup file
 		peer.getRecord().recordStoredChunk(fileId, chunkNo, senderId);
@@ -376,17 +382,14 @@ public class MessageHandler extends Thread
 	private synchronized void handleRemoved(String fileId, int chunkNo, int peerNo){
 
 		Record record = peer.getRecord();
-		FileInfo info = record.getBackupFileInfoById(fileId);	//from stored
-
-		if(info == null)
-			return;
+		FileInfo info = record.getBackupFileInfoById(fileId);
 
 		byte[] data = null;
 		int repDegree = 0;
 		int desiredRepDegree = 0;
 
 		//This peer initiated the backup of this file (with fileId received)
-		if(record.checkStoredChunk(fileId, chunkNo) != null)
+		if(record.checkStoredChunk(fileId, chunkNo) != null && info != null)
 		{			
 			//Update stored record
 			record.deleteStored(fileId, chunkNo, peerNo);
@@ -404,7 +407,7 @@ public class MessageHandler extends Thread
 				data = c.getData();
 			}
 		}
-		//Not Owner but has the chunk stored
+		//Not Owner but has the chunk stored		
 		else if(peer.getRecord().checkMyChunk(fileId, chunkNo))
 		{
 			//remove peer from 'Record'
@@ -413,7 +416,7 @@ public class MessageHandler extends Thread
 			//get data of the chunk
 			data = peer.fileManager.getChunkContent(fileId, chunkNo);
 			repDegree = peer.getRecord().getMyChunk(fileId, chunkNo).getAtualRepDeg();
-			desiredRepDegree = peer.getRecord().getMyChunk(fileId, chunkNo).getReplicationDeg();
+			desiredRepDegree = peer.getRecord().getMyChunk(fileId, chunkNo).getReplicationDeg(); 
 		}
 
 		/*
@@ -422,7 +425,7 @@ public class MessageHandler extends Thread
 		 */
 		if(repDegree < desiredRepDegree){
 			peer.getMessageRecord().removePutChunkMessages(fileId, chunkNo);	//reset recording
-			peer.getMessageRecord().startRecordingPutchunks(fileId, chunkNo);	//start record
+			peer.getMessageRecord().startRecordingPutchunks(fileId);	//start record
 
 			Util.randomDelay();
 

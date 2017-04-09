@@ -85,15 +85,17 @@ public class Peer implements MessageRMI {
 		initMulticasts(mc_ap, mdb_ap, mdr_ap);
 
 		//save metadata in 30s intervals
+
 		saveMetadata();
 
 		if(enhancement)
 		{
 			//Enhancement of Delete Protocol
 			verifyDeletions();
-			//Enhancement of Reclaim Protocol
-			verifyChunks();
 		}
+		
+		//Enhancement of Reclaim Protocol
+		verifyChunks();
 
 		//save metadata when shouts down
 		Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -146,20 +148,20 @@ public class Peer implements MessageRMI {
 			public void run() {
 				System.out.println("Check Chunks Replication..."); 
 				ArrayList<Chunk> chunks = record.getChunksWithRepBellowDes();
-
+				
 				for(Chunk c : chunks){
-
+					
 					msgRecord.removePutChunkMessages(c.getFileId(), c.getChunkNo());
-					msgRecord.startRecordingPutchunks(c.getFileId(), c.getChunkNo());
-
+					msgRecord.startRecordingPutchunks(c.getFileId());
+					
 					Util.randomDelay();
-
-					if(msgRecord.receivedPutchunkMessage(c.getFileId(), c.getChunkNo())){
-
+					
+					if(!msgRecord.receivedPutchunkMessage(c.getFileId(), c.getChunkNo())){
+						
 						byte[] data = fileManager.getChunkContent(c.getFileId(), c.getChunkNo());
 						Message msg = new Message(MessageType.PUTCHUNK,version,ID,c.getFileId(),c.getChunkNo(),c.getReplicationDeg(),data);
 						new ChunkBackupProtocol(mdb, msgRecord, msg).start();
-
+						
 						//Warns the peers that it also has the chunk
 						msg = new Message(MessageType.STORED,version,ID,c.getFileId(),c.getChunkNo());
 						mc.send(msg);
@@ -167,7 +169,9 @@ public class Peer implements MessageRMI {
 				}
 			}
 		};
-		scheduler.scheduleAtFixedRate(checkChunks, 60, 60, TimeUnit.SECONDS);
+		
+		if(enhancement)
+			scheduler.scheduleAtFixedRate(checkChunks, 30, 30, TimeUnit.SECONDS);
 	}
 
 	private void verifyEnhancement() {

@@ -150,7 +150,7 @@ public class Record implements Serializable {
 								chunkPeersStored.remove(chunkNo);
 						}
 						else
-							peersList.remove(peerNo);
+							peersList.remove((Integer)peerNo);
 
 					}		
 					//update chunkNo peersList
@@ -390,6 +390,7 @@ public class Record implements Serializable {
 			for(Chunk c : chunks){
 				if(c.getChunkNo() == chunkNo){
 					c.removePeerWithChunk(peerNo);
+					myChunks.put(fileNo, chunks);
 					return (c.getAtualRepDeg() - c.getReplicationDeg());
 				}
 			}
@@ -412,6 +413,7 @@ public class Record implements Serializable {
 			for(Chunk c : chunks){
 				if(c.getChunkNo() == chunkNo){
 					chunks.remove(c);
+					myChunks.put(fileNo, chunks);
 					break;
 				}
 			}
