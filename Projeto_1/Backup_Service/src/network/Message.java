@@ -1,7 +1,10 @@
 package network;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
 
 import resources.Util;
@@ -223,6 +226,100 @@ public class Message
 	
 	public void setPort(int port){
 		this.port = port;
+	}
+	
+	/* Fill the object 'Message'
+	 * @param message
+	 * @return
+	 */
+	public static Message parseMessage(byte[] message, char[] peerVersion)
+	{
+		Message parsed = null;
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(message);
+		BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+
+		try
+		{
+			String header = reader.readLine();	//a primeira linha corresponde a header
+
+			//interpretacao da header
+			String[] parts = header.split("\\s");
+
+			Util.MessageType type_rcv = validateMessageType(parts[0]);
+
+			//common
+			char[] version_rcv = validateVersion(parts[1],peerVersion);
+			int senderId_rcv = Integer.parseInt(parts[2]);
+			String fileId_rcv = parts[3];
+
+			//all except delete
+			int chunkNo_rcv = -1;
+			if(type_rcv.compareTo(Util.MessageType.DELETE) != 0)
+				chunkNo_rcv = Integer.parseInt(parts[4]);
+
+			//just putchunk
+			int replicationDeg_rcv = -1;
+			if(type_rcv.compareTo(Util.MessageType.PUTCHUNK) == 0){
+				replicationDeg_rcv = Integer.parseInt(parts[5]);
+			}
+			
+			//getchunkenh
+			String address_rcv = null;
+			Integer port_rcv = null;
+			if(type_rcv.compareTo(Util.MessageType.GETCHUNKENH) == 0){
+				address_rcv = parts[5];
+				port_rcv = Integer.parseInt(parts[6]);
+			}
+
+			//Removes the last sequences of white spaces (\s) and null characters (\0)
+			//String msg_received = (new String(packet.getData()).replaceAll("[\0 \\s]*$", ""));
+			//temporario?
+			int offset = header.length() + Message.LINE_SEPARATOR.length()*2;
+			byte[] body = new byte[64000];
+			System.arraycopy(message, offset, body, 0, 64000);
+
+			//create messages
+			if(type_rcv.compareTo(Util.MessageType.DELETE) == 0)
+				parsed = new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv);	
+			else if(type_rcv.compareTo(Util.MessageType.GETCHUNK) == 0 || type_rcv.compareTo(Util.MessageType.STORED) == 0 || type_rcv.compareTo(Util.MessageType.REMOVED) == 0 || type_rcv.compareTo(Util.MessageType.GOTCHUNKENH) == 0)
+				parsed = new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv,chunkNo_rcv) ;	
+			else if(type_rcv.compareTo(Util.MessageType.PUTCHUNK) == 0)
+				parsed = new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv,chunkNo_rcv,replicationDeg_rcv,body);
+			else if(type_rcv.compareTo(Util.MessageType.CHUNK) == 0)
+				parsed = new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv,chunkNo_rcv,body);
+			else if(type_rcv.compareTo(Util.MessageType.GETCHUNKENH) == 0)
+				parsed = new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv,chunkNo_rcv,address_rcv,port_rcv);
+
+			reader.close();
+			stream.close();
+		} 
+		catch (IOException e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return parsed;
+	}
+	
+	/*
+	 * Validates
+	 */
+
+	private static char[] validateVersion(String string, char[] peerVersion) 
+	{
+		char[] vs = string.toCharArray();
+		if(vs[0] == peerVersion[0] && vs[1] == peerVersion[1] && vs[2] == peerVersion[2])
+			return vs;
+
+		return null;	//deve retornar um erro
+	}
+	
+	private static Util.MessageType validateMessageType(String string) 
+	{
+		//nao sei se ha restricoes aqui
+		return Util.MessageType.valueOf(string);
 	}
 	
 }

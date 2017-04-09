@@ -427,7 +427,7 @@ public class Peer implements MessageRMI {
 		return mdr;
 	}
 
-	public Record getMulticastRecord(){
+	public Record getRecord(){
 		return record;
 	}
 

@@ -84,7 +84,7 @@ public class RestoreTrigger extends Thread{
 			while((System.currentTimeMillis() - startTime) < Util.MAX_AVG_DELAY_TIME)	
 			{
 				//true when all 'chunk' messages received
-			    if(peer.getMulticastRecord().checkAllChunksRestored(info))
+			    if(peer.getRecord().checkAllChunksRestored(info))
 			    {
 			    	//creates the file
 			    	peer.fileManager.restoreFile(info.getFilename(), peer.record.getRestores(info));

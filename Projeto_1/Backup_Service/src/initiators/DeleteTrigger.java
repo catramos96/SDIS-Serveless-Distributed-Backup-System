@@ -60,8 +60,8 @@ public class DeleteTrigger extends Thread{
 		peer.msgRecord.resetChunkMessages(fileId);
 		
 		//delete entries from record (backups and restores)
-		peer.getMulticastRecord().deleteStoredFile(fileId);		
-		peer.getMulticastRecord().deleteRestoredFile(fileId);
+		peer.getRecord().deleteStoredFile(fileId);		
+		peer.getRecord().deleteRestoredFile(fileId);
 
 		message = "Delete successful!";
 	}
