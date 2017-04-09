@@ -3,11 +3,10 @@ package protocols;
 import network.Message;
 import network.MessageRecord;
 import network.MulticastListener;
-import peer.Record;
 import resources.Logs;
 import resources.Util;
 
-public class ChunkRestoreProtocol extends Protocol{
+public class ChunkRestoreProtocol extends Protocol {
 
 	/**
 	 * Order to restore 1 chunk
@@ -27,9 +26,7 @@ public class ChunkRestoreProtocol extends Protocol{
 		int rep = 0;
 		int waitingTime = Util.WAITING_TIME;
 		String fileNo = msg.getFileId();
-		int chunkNo = msg.getChunkNo();
-		
-		
+		int chunkNo = msg.getChunkNo();	
 		
 		while(rep < Util.MAX_TRIES)	
 		{

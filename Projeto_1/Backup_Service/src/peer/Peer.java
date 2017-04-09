@@ -11,6 +11,8 @@ import java.net.InetAddress;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +27,7 @@ import network.MessageRMI;
 import network.MessageRecord;
 import network.MulticastListener;
 import protocols.ChunkBackupProtocol;
+import protocols.DeleteEnhancementProtocol;
 import resources.Logs;
 import resources.Util;
 import resources.Util.MessageType;
@@ -34,6 +37,7 @@ public class Peer implements MessageRMI {
 	/*informations*/
 	private int ID = 0;
 	private char[] version;
+	private boolean enhancement; 
 
 	/*listeners*/
 	public MulticastListener mc = null;
@@ -65,6 +69,7 @@ public class Peer implements MessageRMI {
 	{
 		this.ID = id;
 		this.version = protocolVs;
+		verifyEnhancement();
 
 		//load metadata
 		loadRecord();
@@ -80,51 +85,15 @@ public class Peer implements MessageRMI {
 		initMulticasts(mc_ap, mdb_ap, mdr_ap);
 
 		//save metadata in 30s intervals
-		final Runnable saveMetadata = new Runnable() {
-			public void run() {
-				System.out.println("Saving Metadata..."); 
-				saveRecord();
-			}
-		};
-		scheduler.scheduleAtFixedRate(saveMetadata, 30, 30, TimeUnit.SECONDS);
-		
-		/*
-		 * Enhancement of Delete Protocol Here
-		 * Só depois de atualizar os seus chunks e os que ainda estão no sistema
-		 * é que pode iniciar o enhancement do reclaim protocol
-		 */
-		
-		
-		//Enhancement of Reclaim Protocol
-		if(version[2] != '0'){
-			final Runnable checkChunks = new Runnable() {
-				public void run() {
-					System.out.println("Check Chunks Replication..."); 
-					ArrayList<Chunk> chunks = record.getChunksWithRepBellowDes();
-					
-					for(Chunk c : chunks){
-						
-						msgRecord.removePutChunkMessages(c.getFileId(), c.getChunkNo());
-						msgRecord.startRecordingPutchunks(c.getFileId(), c.getChunkNo());
-						
-						Util.randomDelay();
-						
-						if(msgRecord.receivedPutchunkMessage(c.getFileId(), c.getChunkNo())){
-							
-							byte[] data = fileManager.getChunkContent(c.getFileId(), c.getChunkNo());
-							Message msg = new Message(MessageType.PUTCHUNK,version,ID,c.getFileId(),c.getChunkNo(),c.getReplicationDeg(),data);
-							new ChunkBackupProtocol(mdb, msgRecord, msg).start();
-							
-							//Warns the peers that it also has the chunk
-							msg = new Message(MessageType.STORED,version,ID,c.getFileId(),c.getChunkNo());
-							mc.send(msg);
-						}
-					}
-				}
-			};
-			scheduler.scheduleAtFixedRate(checkChunks, 60, 60, TimeUnit.SECONDS);
+		saveMetadata();
+
+		if(enhancement)
+		{
+			//Enhancement of Delete Protocol
+			verifyDeletions();
+			//Enhancement of Reclaim Protocol
+			verifyChunks();
 		}
-		
 
 		//save metadata when shouts down
 		Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -139,6 +108,83 @@ public class Peer implements MessageRMI {
 				}
 			}
 		});
+	}
+
+	/**
+	 * 
+	 */
+	private void verifyDeletions() 
+	{
+		HashMap<String, ArrayList<Chunk>> myChunks = record.getMyChunks();
+		
+		//list of service that my thread need to wait for
+		ArrayList<DeleteEnhancementProtocol> subprotocols = new ArrayList<>();
+		
+		for(Entry<String, ArrayList<Chunk>> s : myChunks.entrySet())
+		{
+			Message msg = new Message(MessageType.GETINITIATOR,version,ID,s.getKey());
+			DeleteEnhancementProtocol dep = new DeleteEnhancementProtocol(this, msg);
+			dep.start();
+			
+			subprotocols.add(dep);
+		}	
+		//wait for all threads to finish
+		for (DeleteEnhancementProtocol dep : subprotocols)
+		{
+			try {
+				dep.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		System.out.println("Chunks updated");
+	}
+
+	private void verifyChunks() {
+		final Runnable checkChunks = new Runnable() {
+			public void run() {
+				System.out.println("Check Chunks Replication..."); 
+				ArrayList<Chunk> chunks = record.getChunksWithRepBellowDes();
+
+				for(Chunk c : chunks){
+
+					msgRecord.removePutChunkMessages(c.getFileId(), c.getChunkNo());
+					msgRecord.startRecordingPutchunks(c.getFileId(), c.getChunkNo());
+
+					Util.randomDelay();
+
+					if(msgRecord.receivedPutchunkMessage(c.getFileId(), c.getChunkNo())){
+
+						byte[] data = fileManager.getChunkContent(c.getFileId(), c.getChunkNo());
+						Message msg = new Message(MessageType.PUTCHUNK,version,ID,c.getFileId(),c.getChunkNo(),c.getReplicationDeg(),data);
+						new ChunkBackupProtocol(mdb, msgRecord, msg).start();
+
+						//Warns the peers that it also has the chunk
+						msg = new Message(MessageType.STORED,version,ID,c.getFileId(),c.getChunkNo());
+						mc.send(msg);
+					}
+				}
+			}
+		};
+		scheduler.scheduleAtFixedRate(checkChunks, 60, 60, TimeUnit.SECONDS);
+	}
+
+	private void verifyEnhancement() {
+		if((version[0] != '1') && (version[1] != '.') && (version[2] != '0'))
+			enhancement = false;
+		else
+			enhancement = true;
+	}
+
+	private void saveMetadata() {
+		final Runnable saveMetadata = new Runnable() {
+			public void run() {
+				System.out.println("Saving Metadata..."); 
+				saveRecord();
+			}
+		};
+		scheduler.scheduleAtFixedRate(saveMetadata, 30, 30, TimeUnit.SECONDS);
 	}
 
 	/*
@@ -299,7 +345,7 @@ public class Peer implements MessageRMI {
 		if(enhancement)
 			if(version[2] == '0')
 				return "Peer protocol not compatible.";
-		
+
 		Logs.initProtocol("Restore");
 
 		RestoreTrigger rt = new RestoreTrigger(this,filename);	
@@ -326,7 +372,7 @@ public class Peer implements MessageRMI {
 		if(enhancement)
 			if(version[2] == '0')
 				return "Peer protocol not compatible.";
-		
+
 		Logs.initProtocol("Delete");
 
 		DeleteTrigger dt = new DeleteTrigger(this,filename);
@@ -356,7 +402,7 @@ public class Peer implements MessageRMI {
 		if(enhancement)
 			if(version[2] == '0')
 				return "Peer protocol not compatible.";
-		
+
 		Logs.initProtocol("Reclaim");
 
 		ReclaimTrigger rt = new ReclaimTrigger(this,spaceToReclaim);
@@ -433,5 +479,13 @@ public class Peer implements MessageRMI {
 
 	public MessageRecord getMessageRecord(){
 		return msgRecord;
+	}
+
+	public boolean isEnhancement() {
+		return enhancement;
+	}
+
+	public void setEnhancement(boolean enhancement) {
+		this.enhancement = enhancement;
 	}
 }

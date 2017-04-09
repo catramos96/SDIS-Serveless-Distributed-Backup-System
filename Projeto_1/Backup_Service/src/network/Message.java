@@ -22,12 +22,16 @@ public class Message
 	/**
 	 * <MessageType> <Version> <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF>
 	 * 
-	 * PUTCHUNK	<Version> <SenderId> <FileId> <ChunkNo> <ReplicationDeg> 	<CRLF><CRLF>	<Body>
-	 * STORED 	<Version> <SenderId> <FileId> <ChunkNo> 					<CRLF><CRLF>
-	 * GETCHUNK <Version> <SenderId> <FileId> <ChunkNo> 					<CRLF><CRLF>
-	 * CHUNK 	<Version> <SenderId> <FileId> <ChunkNo> 					<CRLF><CRLF>	<Body>
-	 * DELETE 	<Version> <SenderId> <FileId> 								<CRLF><CRLF>
-	 * REMOVED 	<Version> <SenderId> <FileId> <ChunkNo> 					<CRLF><CRLF>
+	 * PUTCHUNK		<Version> <SenderId> <FileId> <ChunkNo> <ReplicationDeg> 	<CRLF><CRLF>	<Body>
+	 * STORED 		<Version> <SenderId> <FileId> <ChunkNo> 					<CRLF><CRLF>
+	 * GETCHUNK 	<Version> <SenderId> <FileId> <ChunkNo> 					<CRLF><CRLF>
+	 * CHUNK 		<Version> <SenderId> <FileId> <ChunkNo> 					<CRLF><CRLF>	<Body>
+	 * DELETE 		<Version> <SenderId> <FileId> 								<CRLF><CRLF>
+	 * REMOVED 		<Version> <SenderId> <FileId> <ChunkNo> 					<CRLF><CRLF>
+	 * 
+	 * new : 
+	 * GETINITIATOR <Version> <SenderId> <FileId>								<CRLF><CRLF>
+	 * INITIATOR	<Version> <SenderId> <FileId>								<CRLF><CRLF>
 	 */
 	
 	public Message(Util.MessageType type, char[] version, int senderId, String fileId, int chunkNo, int ReplicationDeg, byte[] body)
@@ -70,8 +74,8 @@ public class Message
 	}
 
 	public Message(Util.MessageType type, char[] version, int senderId, String fileId) {
-		if(!type.name().equals("DELETE"))
-			System.out.println("Wrong Constructor delete");
+		if(!(type.name().equals("DELETE") || type.name().equals("GETINITIATOR") || type.name().equals("INITIATOR")))
+			System.out.println("Wrong Constructor delete/getinitiator/initiator");
 		else
 		{
 			this.type = type;
@@ -90,7 +94,7 @@ public class Message
 		
 		String content = type.name() + " " + version[0]+version[1]+version[2] + " " + senderId + " " + fileId + " ";
 		
-		if(type.compareTo(Util.MessageType.DELETE) != 0)
+		if(type.compareTo(Util.MessageType.DELETE) != 0 || type.compareTo(Util.MessageType.GETINITIATOR) != 0 || type.compareTo(Util.MessageType.INITIATOR) != 0 )
 			content += chunkNo + " ";
 		
 		if(type.compareTo(Util.MessageType.PUTCHUNK) == 0)

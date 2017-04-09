@@ -1,1 +1,1 @@
-start java cli.TestApp MessageRMI0 DELETE test.doc
+start java cli.TestApp MessageRMI0 DELETEENH ../resources/natural.png

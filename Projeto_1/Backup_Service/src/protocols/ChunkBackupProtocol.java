@@ -6,7 +6,6 @@ import java.util.Random;
 import network.Message;
 import network.MessageRecord;
 import network.MulticastListener;
-import peer.Record;
 import resources.Logs;
 import resources.Util;
 

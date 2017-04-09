@@ -8,11 +8,13 @@ public class MessageRecord {
 	private HashMap<String, HashMap<Integer, ArrayList<Integer>>> storedMessages = null;
 	private HashMap<String, ArrayList<Integer>> chunkMessages = null;			
 	private HashMap<String, ArrayList<Integer>> putchunkMessages = null;
+	private HashMap<String, Integer> initiatorMessages = null;
 
 	public MessageRecord(){
 		storedMessages = new HashMap<String, HashMap<Integer, ArrayList<Integer>>>();	//apriori before store
 		chunkMessages = new HashMap<String, ArrayList<Integer>>();						
 		putchunkMessages = new HashMap<String, ArrayList<Integer>>();
+		initiatorMessages = new HashMap<String, Integer>();
 	}
 
 	/*
@@ -28,6 +30,11 @@ public class MessageRecord {
 		tmp.add(chunkNo);
 		putchunkMessages.put(fileNo, tmp);
 	}
+	
+	public void startRecordingInitiators(String fileId){
+		initiatorMessages.put(fileId, null);
+	}
+	
 	/*
 	 * ADDS
 	 */
@@ -76,6 +83,11 @@ public class MessageRecord {
 			}
 		}
 	}
+	
+	public void addInitiatorMessage(String fileId, int senderId){
+		if(initiatorMessages.containsKey(fileId))
+			initiatorMessages.put(fileId, senderId);
+	}
 
 	/*
 	 * CONTAINS
@@ -99,6 +111,12 @@ public class MessageRecord {
 		if(putchunkMessages.containsKey(fileNo))
 			if(putchunkMessages.get(fileNo).contains(chunkNo))
 				return true;
+		return false;
+	}
+	
+	public boolean receivedInitiatorMessage(String fileNo){
+		if(initiatorMessages.get(fileNo) != null)
+			return true;
 		return false;
 	}
 
@@ -141,6 +159,11 @@ public class MessageRecord {
 	public void resetChunkMessages(String fileId) 
 	{
 		chunkMessages.remove(fileId);
+	}
+	
+	public void resetInitiatorMessages(String fileId) 
+	{
+		initiatorMessages.remove(fileId);
 	}
 
 	/*

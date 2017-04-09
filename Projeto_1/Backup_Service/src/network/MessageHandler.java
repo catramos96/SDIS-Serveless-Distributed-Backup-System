@@ -75,6 +75,13 @@ public class MessageHandler extends Thread
 			case REMOVED:
 				handleRemoved(msg.getFileId(),msg.getChunkNo(),msg.getSenderId());
 				break;
+			case GETINITIATOR:
+				handleGetInitiator(msg.getFileId());
+				break;
+			case INITIATOR:
+				//record this message (INITIATOR) at 'MessageRecord'
+				peer.getMessageRecord().addInitiatorMessage(msg.getFileId(), msg.getSenderId());
+				break;
 			default:
 				break;
 			}
@@ -97,10 +104,7 @@ public class MessageHandler extends Thread
 	 */
 	private synchronized void handlePutchunk(String fileId, int chunkNo, int repDeg, byte[] body)
 	{
-		char[] version = peer.getVersion();
-		boolean enhancement = false;
-		if(version[2] != '0')
-			enhancement = true;
+		boolean enhancement = peer.isEnhancement();
 		
 		Chunk c = new Chunk(fileId, chunkNo, body);
 
@@ -115,7 +119,9 @@ public class MessageHandler extends Thread
 		{
 			evictChunks();
 		}
-		else
+		
+		//verifies again (after evicting chunks) if has space available
+		if(peer.fileManager.hasSpaceAvailable(c))
 		{
 			if(alreadyExists)				//warns immediately
 			{
@@ -134,7 +140,7 @@ public class MessageHandler extends Thread
 					rep = peersWithChunk.size();
 
 				//ENHANCEMENT : If the replication degree is lower that the desired
-				if(((rep < repDeg) && enhancement)|| !enhancement)
+				if(!(rep >= repDeg && enhancement))
 				{							
 					//send STORED message
 					peer.getMc().send(msg);
@@ -152,8 +158,8 @@ public class MessageHandler extends Thread
 
 					//System.out.println("CHUNK " + chunkNo + " REPLICATION: " + (int)(rep+1) + " DESIRED: " + repDeg);	
 				}
-				else if((rep >= repDeg) && enhancement){
-					//only keeps the ones refered
+				else {
+					//only keeps the ones referred
 					peer.getMessageRecord().removeStoredMessages(fileId, chunkNo);
 				}
 			}
@@ -303,13 +309,24 @@ public class MessageHandler extends Thread
 
 			if(!peer.getMessageRecord().receivedPutchunkMessage(fileId, chunkNo)){
 				Message msg = new Message(MessageType.PUTCHUNK,peer.getVersion(),peer.getID(),fileId,chunkNo,repDegree,data);
-				Logs.sentMessageLog(msg);
+				//Logs.sentMessageLog(msg);
 				new ChunkBackupProtocol(peer.getMdb(), peer.getMessageRecord(), msg).start();
 			}
 		}
-
 	}
 
+	private void handleGetInitiator(String fileId) 
+	{
+		//if myChunks contains this fileId, must send INITIATOR message
+		if(peer.record.getBackupFileInfoById(fileId) != null)
+		{
+			Message msg = new Message(MessageType.INITIATOR,peer.getVersion(),peer.getID(),fileId);
+			Util.randomDelay();
+			peer.mc.send(msg);
+			Logs.sentMessageLog(msg);
+		}
+	}
+	
 	/**
 	 * Fill the object 'Message'
 	 * @param message
@@ -338,7 +355,7 @@ public class MessageHandler extends Thread
 
 			//all except delete
 			int chunkNo_rcv = -1;
-			if(type_rcv.compareTo(Util.MessageType.DELETE) != 0)
+			if(type_rcv.compareTo(Util.MessageType.DELETE) != 0 && type_rcv.compareTo(Util.MessageType.GETINITIATOR) != 0 && type_rcv.compareTo(Util.MessageType.INITIATOR) != 0 )
 				chunkNo_rcv = Integer.parseInt(parts[4]);
 
 			//just putchunk
@@ -355,7 +372,7 @@ public class MessageHandler extends Thread
 			System.arraycopy(message, offset, body, 0, 64000);
 
 			//create messages
-			if(type_rcv.compareTo(Util.MessageType.DELETE) == 0)
+			if(type_rcv.compareTo(Util.MessageType.DELETE) == 0 || type_rcv.compareTo(Util.MessageType.GETINITIATOR) == 0 || type_rcv.compareTo(Util.MessageType.INITIATOR) == 0)
 				parsed = new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv);	
 			else if(type_rcv.compareTo(Util.MessageType.GETCHUNK) == 0 || type_rcv.compareTo(Util.MessageType.STORED) == 0 || type_rcv.compareTo(Util.MessageType.REMOVED) == 0)
 				parsed = new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv,chunkNo_rcv) ;	
@@ -382,10 +399,10 @@ public class MessageHandler extends Thread
 
 	private char[] validateVersion(String string) 
 	{
-		char[] vs = string.toCharArray();
-		char[] peerVersion = peer.getVersion();
-		if(vs[0] == peerVersion[0] && vs[1] == peerVersion[1] && vs[2] == peerVersion[2])
-			return vs;
+		char[] senderVs = string.toCharArray();
+		char[] peerVs = peer.getVersion();
+		if(senderVs[0] == peerVs[0] && senderVs[1] == peerVs[1] && senderVs[2] == peerVs[2])
+			return senderVs;
 
 		return null;	//deve retornar um erro
 	}

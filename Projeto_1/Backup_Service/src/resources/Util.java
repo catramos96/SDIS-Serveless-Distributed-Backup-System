@@ -17,7 +17,7 @@ public class Util {
 	//message
 	public static enum MessageType
 	{
-		PUTCHUNK, STORED, GETCHUNK, CHUNK, DELETE, REMOVED
+		PUTCHUNK, STORED, GETCHUNK, CHUNK, DELETE, REMOVED, GETINITIATOR, INITIATOR
 	}
 	public static int PACKET_MAX_SIZE = 65000;
 	
