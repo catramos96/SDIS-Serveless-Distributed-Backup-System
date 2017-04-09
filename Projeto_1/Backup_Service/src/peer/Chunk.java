@@ -33,7 +33,7 @@ public class Chunk implements Serializable{
 	
 	public synchronized void removePeerWithChunk(int peerNo){
 		if(peers.contains(peerNo))
-			peers.remove(peerNo);
+			peers.remove((Integer)peerNo);
 	}
 	
 	public synchronized int getAtualRepDeg(){

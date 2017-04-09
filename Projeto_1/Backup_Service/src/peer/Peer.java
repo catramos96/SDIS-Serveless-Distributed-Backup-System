@@ -96,34 +96,36 @@ public class Peer implements MessageRMI {
 		
 		
 		//Enhancement of Reclaim Protocol
-		if(version[2] != '0'){
-			final Runnable checkChunks = new Runnable() {
-				public void run() {
-					System.out.println("Check Chunks Replication..."); 
-					ArrayList<Chunk> chunks = record.getChunksWithRepBellowDes();
+		
+		final Runnable checkChunks = new Runnable() {
+			public void run() {
+				System.out.println("Check Chunks Replication..."); 
+				ArrayList<Chunk> chunks = record.getChunksWithRepBellowDes();
+				
+				for(Chunk c : chunks){
 					
-					for(Chunk c : chunks){
+					msgRecord.removePutChunkMessages(c.getFileId(), c.getChunkNo());
+					msgRecord.startRecordingPutchunks(c.getFileId());
+					
+					Util.randomDelay();
+					
+					if(!msgRecord.receivedPutchunkMessage(c.getFileId(), c.getChunkNo())){
 						
-						msgRecord.removePutChunkMessages(c.getFileId(), c.getChunkNo());
-						msgRecord.startRecordingPutchunks(c.getFileId(), c.getChunkNo());
+						byte[] data = fileManager.getChunkContent(c.getFileId(), c.getChunkNo());
+						Message msg = new Message(MessageType.PUTCHUNK,version,ID,c.getFileId(),c.getChunkNo(),c.getReplicationDeg(),data);
+						new ChunkBackupProtocol(mdb, msgRecord, msg).start();
 						
-						Util.randomDelay();
-						
-						if(msgRecord.receivedPutchunkMessage(c.getFileId(), c.getChunkNo())){
-							
-							byte[] data = fileManager.getChunkContent(c.getFileId(), c.getChunkNo());
-							Message msg = new Message(MessageType.PUTCHUNK,version,ID,c.getFileId(),c.getChunkNo(),c.getReplicationDeg(),data);
-							new ChunkBackupProtocol(mdb, msgRecord, msg).start();
-							
-							//Warns the peers that it also has the chunk
-							msg = new Message(MessageType.STORED,version,ID,c.getFileId(),c.getChunkNo());
-							mc.send(msg);
-						}
+						//Warns the peers that it also has the chunk
+						msg = new Message(MessageType.STORED,version,ID,c.getFileId(),c.getChunkNo());
+						mc.send(msg);
 					}
 				}
-			};
-			scheduler.scheduleAtFixedRate(checkChunks, 60, 60, TimeUnit.SECONDS);
-		}
+			}
+		};
+		
+		if(enhancementVersion())
+			scheduler.scheduleAtFixedRate(checkChunks, 30, 30, TimeUnit.SECONDS);
+		
 		
 
 		//save metadata when shouts down
