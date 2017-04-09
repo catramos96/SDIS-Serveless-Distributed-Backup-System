@@ -1,11 +1,8 @@
 package network;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
-
 import resources.Logs;
 import resources.Util;
 import resources.Util.MessageType;
@@ -16,12 +13,12 @@ import peer.Record;
 import protocols.ChunkBackupProtocol;
 
 /**
- * This class handles messages received by the multicast channels.
+ * This class handles messages received by the MulticastChannels and DatagramChannels.
  */
 public class MessageHandler extends Thread
 {
-	private Peer peer = null;
-	private Message msg = null;
+	private Peer peer = null;		/**@attribute Peer peer - represents the peer that is part of the comunication channels*/
+	private Message msg = null;		/**@attribute Message msg - message to handle*/
 
 	/**
 	 * Parse the message to object Message
@@ -31,7 +28,9 @@ public class MessageHandler extends Thread
 	public MessageHandler(Peer peer,byte[] msg)
 	{
 		this.peer = peer;
-		this.msg = parseMessage(msg);
+
+		//parse the msg in byte[] received directly by te channel to a object Message
+		this.msg = Message.parseMessage(msg,peer.getVersion());
 	}
 
 	/**
@@ -39,39 +38,43 @@ public class MessageHandler extends Thread
 	 */
 	public void run() 
 	{		
-		//protocols have the same version
+		//Protocols must have the same version
 		if(!protocolsCompatible())
 		{
-			System.out.println("Peers protocols not compatible.");
+			Logs.incompatibleProcols();
 			return;
 		}
-		//Don't process messages that were sent by himself!
+
+		//Only processes messages sent by others
 		if((peer.getID() != msg.getSenderId()) )
 		{	
 			Logs.receivedMessageLog(this.msg);
 
 			switch (msg.getType()) {
+
 			case PUTCHUNK:
-				//record this message (PUTCHUNK) at 'MessageRecord'
 				peer.getMessageRecord().addPutchunkMessage(msg.getFileId(), msg.getChunkNo());
 				handlePutchunk(msg.getFileId(),msg.getChunkNo(),msg.getReplicationDeg(),msg.getBody());
 				break;
+
 			case STORED:
-				//record this message (STORED) at 'MessageRecord'
 				peer.getMessageRecord().addStoredMessage(msg.getFileId(), msg.getChunkNo(), msg.getSenderId());
 				handleStore(msg.getFileId(), msg.getChunkNo(),msg.getSenderId());	
 				break;
+
 			case GETCHUNK:
-				handleGetchunk(msg.getFileId(),msg.getChunkNo());
+				handleGetchunk(msg.getFileId(),msg.getChunkNo(),null,null);
 				break;
+
 			case CHUNK:
-				//record this message (CHUNK) at 'MessageRecord'
 				peer.getMessageRecord().addChunkMessage(msg.getFileId(), msg.getChunkNo());
 				handleChunk(msg.getFileId(), msg.getChunkNo(), msg.getBody());
 				break;
+
 			case DELETE:
 				handleDelete(msg.getFileId());
 				break;
+
 			case REMOVED:
 				handleRemoved(msg.getFileId(),msg.getChunkNo(),msg.getSenderId());
 				break;
@@ -81,13 +84,27 @@ public class MessageHandler extends Thread
 			case INITIATOR:
 				//record this message (INITIATOR) at 'MessageRecord'
 				peer.getMessageRecord().addInitiatorMessage(msg.getFileId(), msg.getSenderId());
+				break;		
+			case GETCHUNKENH:
+				handleGetchunk(msg.getFileId(),msg.getChunkNo(),msg.getAddress(),msg.getPort());
 				break;
+
+			case GOTCHUNKENH:
+				peer.getMessageRecord().addChunkMessage(msg.getFileId(), msg.getChunkNo());
+				break;
+
 			default:
 				break;
+
 			}
 		}
 	}
 
+	/**
+	 * Check protocols compatibility
+	 * Compares the version of the peer and of the message
+	 * @Returns true if protocols are compatible, false otherwise
+	 */
 	private boolean protocolsCompatible() {
 		char[] receptor = peer.getVersion();
 		char[] sender = msg.getVersion();
@@ -99,48 +116,67 @@ public class MessageHandler extends Thread
 	}
 
 	/**
-	 * Peer response to other peer PUTCHUNK message
-	 * @param c
+	 * Peer response to other peer PUTCHUNK message.
+	 * The peer will store the chunk if it has space on its disk and if it doesn't have the chunk already stored.
+	 * 
+	 * Enhancement: If the conditions are pleased for the chunk to be stored, the peer will gather all the peers
+	 * that had stored the same chunk (previously and after receiving the message) and will check if the
+	 * number of peers (replication of the chunk) is bellow the desired. If it is, the peer will store the chunk,
+	 * otherwise, it will not be stored, ensuring the desired replication degree of that chunk and preventing space
+	 * occupation.
+	 * 
+	 * @param fileId - File identification
+	 * @param chunkNo - Chunk identification number
+	 * @param repDegree - Chunk desirable chunk replication degree
+	 * @param body - Chunk content
 	 */
 	private synchronized void handlePutchunk(String fileId, int chunkNo, int repDeg, byte[] body)
 	{
 		boolean enhancement = peer.isEnhancement();
-		
+
 		Chunk c = new Chunk(fileId, chunkNo, body);
 
 		//create response message : STORED
 		Message msg = new Message(Util.MessageType.STORED,peer.getVersion(),peer.getID(),c.getFileId(),c.getChunkNo());
 
 		//verifies chunk existence in this peer
-		boolean alreadyExists = peer.getMulticastRecord().checkMyChunk(fileId, chunkNo);
+		boolean alreadyExists = peer.getRecord().checkMyChunk(fileId, chunkNo);
 
-		//no space available and chunk wasn't stored yet -> can't store
+		/*
+		 * If the peer doesn't have available space, it will try to free some
+		 * by releasing chunks with the replication degree above average
+		 */
 		if(!peer.fileManager.hasSpaceAvailable(c) && !alreadyExists)
-		{
 			evictChunks();
-		}
-		
+
 		//verifies again (after evicting chunks) if has space available
 		if(peer.fileManager.hasSpaceAvailable(c))
 		{
-			if(alreadyExists)				//warns immediately
+			/*
+			 * If the peer already stored the chunk, it will warn immediately the multicast channel.
+			 * By doing this, another peer that is pondering on storing the chunk,
+			 * can be updated much faster about the actual replication of the chunk.
+			 */
+			if(alreadyExists)
 			{
 				peer.getMc().send(msg);
 				Logs.sentMessageLog(msg);
 			}
 			else
 			{
-				//waiting time
+				//Waits a random time
 				Util.randomDelay();
-				int rep = 0;
-				//Get replication degree recorded before the peer processed the store
+
+				int actualRep = 0;
+
+				//Get replication degree recorded before the peer started to process the putchunk message
 				ArrayList<Integer> peersWithChunk = peer.getMessageRecord().getPeersWithChunk(fileId, chunkNo);
 
 				if(peersWithChunk != null)
-					rep = peersWithChunk.size();
+					actualRep = peersWithChunk.size();
 
 				//ENHANCEMENT : If the replication degree is lower that the desired
-				if(!(rep >= repDeg && enhancement))
+				if(!(actualRep >= repDeg && enhancement))
 				{							
 					//send STORED message
 					peer.getMc().send(msg);
@@ -150,11 +186,11 @@ public class MessageHandler extends Thread
 					peer.fileManager.saveChunk(c);
 
 					//Save info on 'Record' 
-					peer.getMulticastRecord().addToMyChunks(fileId, chunkNo, repDeg);
+					peer.getRecord().addToMyChunks(fileId, chunkNo, repDeg);
 
 					//Update Actual Replication Degree
-					peer.getMulticastRecord().setPeersOnMyChunk(fileId, chunkNo, peersWithChunk);
-					peer.getMulticastRecord().addPeerOnMyChunk(fileId, chunkNo, peer.getID());
+					peer.getRecord().setPeersOnMyChunk(fileId, chunkNo, peersWithChunk);
+					peer.getRecord().addPeerOnMyChunk(fileId, chunkNo, peer.getID());
 
 					//System.out.println("CHUNK " + chunkNo + " REPLICATION: " + (int)(rep+1) + " DESIRED: " + repDeg);	
 				}
@@ -162,6 +198,7 @@ public class MessageHandler extends Thread
 					//only keeps the ones referred
 					peer.getMessageRecord().removeStoredMessages(fileId, chunkNo);
 				}
+				peer.getMessageRecord().removeStoredMessages(fileId, chunkNo);
 			}
 		}
 	}
@@ -176,88 +213,169 @@ public class MessageHandler extends Thread
 		ArrayList<Chunk> chunks = peer.record.getChunksWithRepAboveDes();
 
 		for (int i = 0; i < chunks.size(); i++) {
+
+			//Send message to the multicast to warn the other peers so they can update their replication degree of the chunk
+			Message msg = new Message(MessageType.REMOVED,peer.getVersion(),peer.getID(),chunks.get(i).getFileId(),chunks.get(i).getChunkNo());
+			peer.getMc().send(msg);
+			Logs.sentMessageLog(msg);
+
+			//Deletes the chunk from the peers disk
 			String filename = chunks.get(i).getChunkNo() + chunks.get(i).getFileId();
 			peer.fileManager.deleteFile(filename);
 		}
 	}
 
 	/**
-	 * Peer response to other peer STORE message
+	 * Peer response to other peer STORE message.
+	 * The peer will record the peers that stored the chunks of the files that he backup.
+	 * The peer will update the peers that stored the chunks that he also stored.
+	 * 
+	 * @param fileId - File identification
+	 * @param chunkNo - Chunk identification number
+	 * @param senderId - Sender peer identification number
 	 */
 	private synchronized void handleStore(String fileId, int chunkNo, int senderId){
+
 		//Updates the Replication Degree if the peer has the chunk
-		peer.getMulticastRecord().addPeerOnMyChunk(fileId,chunkNo,senderId);
+		peer.getRecord().addPeerOnMyChunk(fileId,chunkNo,senderId);
 
-		Chunk c = peer.getMulticastRecord().getMyChunk(fileId, chunkNo);
-
-		if(c != null)
-			System.out.println("CHUNK " + chunkNo + " REPDEG: " + c.getAtualRepDeg());
+		//Chunk c = peer.getRecord().getMyChunk(fileId, chunkNo);
 
 		//Record the storedChunks in case the peer is the OWNER of the backup file
-		peer.getMulticastRecord().recordStoredChunk(fileId, chunkNo, senderId);
+		peer.getRecord().recordStoredChunk(fileId, chunkNo, senderId);
 	}	
 
 	/**
-	 * Peer response to other peer GETCHUNK message
+	 * Peer response to other peer GETCHUNK message.
+	 * If the peer has stored the chunkNo of the fileId, it will send the chunk content
+	 * to the multicast (without enhancement) or to a private channel with the owner of the file (with enchancement)
+	 * in a message of type CHUNK.
+	 * 
+	 * Enhancement: The peer creates a new channel to communicate with the peer who sent the GETCHUNK message.
+	 * The message will be sent by this channel. This way, it will prevent the flow of big amounts of data
+	 * (chunks content) in the multicast where the destination is just one peer. Without the enhancement, peers who
+	 * aren't interested in this kind of information will dedicate time of their system to parse and receive this
+	 * message.
+	 * 
+	 * @param fileId - File identification
+	 * @param chunkNo - Chunk identification number
+	 * @param address - Address to send the message with the chunk in case the enhancement is activated
+	 * @param port - Port ti send the message with the chunk in case the enhancement is activated
 	 */
-	private synchronized void handleGetchunk(String fileId, int chunkNo){
+	private synchronized void handleGetchunk(String fileId, int chunkNo, String address, Integer port){
 
-		//peer has chunk stored
-		if(peer.record.checkMyChunk(fileId, chunkNo))
-		{
-			//body
-			byte[] body = peer.fileManager.getChunkContent(fileId, chunkNo);
-			//create CHUNK message
-			Message msg = new Message(Util.MessageType.CHUNK,peer.getVersion(),peer.getID(),fileId,chunkNo,body);
+		try{
 
-			//wait 0-400 ms
-			Util.randomDelay();
-
-			//chunk still needed by the initiator peer
-			if(!peer.getMessageRecord().receivedChunkMessage(fileId, chunkNo))
+			//peer has chunk stored
+			if(peer.record.checkMyChunk(fileId, chunkNo))
 			{
-				peer.getMdr().send(msg);
-				Logs.sentMessageLog(msg);
+				DatagramListener sendChunkChannel = null;
+
+				//Creates a private channel with the sender in case of ENHANCEMENTS
+				if(address != null && port != null && peer.isEnhancement()){
+					sendChunkChannel = new DatagramListener(InetAddress.getLocalHost(),peer);
+					sendChunkChannel.start();
+				}
+
+				byte[] body = peer.fileManager.getChunkContent(fileId, chunkNo);
+
+				//create CHUNK message
+				Message msg = new Message(Util.MessageType.CHUNK,peer.getVersion(),peer.getID(),fileId,chunkNo,body);
+
+				//Waits random time
+				Util.randomDelay();
+
+				//If meanwhile the chunk content wasn't sent to the sender by another peer
+				if(!peer.getMessageRecord().receivedChunkMessage(fileId, chunkNo))
+				{
+					if(peer.isEnhancement()) {
+						//send the chunk to the private channel
+						sendChunkChannel.send(msg,InetAddress.getByName(address),port);	
+					} 
+					else{
+						//send the chunk to the multicast
+						peer.getMdr().send(msg);	
+					}
+
+					Logs.sentMessageLog(msg);
+				}
 			}
 		}
-		//peer.getMessageRecord().removeChunkMessages(fileId, chunkNo);
+		catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
-	 * Peer response to other peer CHUNK message
+	 * Peer response to other peer CHUNK message.
+	 * If the peer is able to restore the file identified by fileId it will record the chunks content
+	 * on Record of the peer.
+	 * 
+	 * Enhancement: It will send a message of type GOTCHUNKENH to the multicast to warn all
+	 * peers that it has received the chunks content that he asked for previously. This is the
+	 * only way, for the peers, to know that the chunk was already sent, because with the restore
+	 * enhancement, the chunk is sent by a private channel between the peer who sent the GETCHUNKENH
+	 * and the peer who sends the CHUNK message.
+	 * 
+	 * @param fileId - File identification
+	 * @param chunkNo - Chunk identification number
+	 * @param body - Chunks content
 	 */
 	private synchronized void handleChunk(String fileId, int chunkNo, byte[] body){
 		//chunk message received by initiator peer 
-		FileInfo info = peer.getMulticastRecord().getRestoredFileInfoById(fileId);
+		FileInfo info = peer.getRecord().getRestoredFileInfoById(fileId);
 
-		//this peer is able to restore the file
+		//This peer is able to restore the file
 		if(info != null){
 			//record chunk as restored
-			if(peer.getMulticastRecord().recordRestoredChunk(fileId,chunkNo,body))
+			if(peer.getRecord().recordRestoredChunk(fileId,chunkNo,body))
 				Logs.chunkRestored(chunkNo);
+
+			//enhancement
+			if(peer.isEnhancement()){
+				//sends message GOTCHUNKENH to the multicast
+				Message msg = new Message(Util.MessageType.GOTCHUNKENH,peer.getVersion(),peer.getID(), fileId, chunkNo);
+				peer.getMc().send(msg);
+				Logs.sentMessageLog(msg);
+			}
 		}
 	}
 
+
 	/**
-	 * Peer response to other peer DELETE message
+	 * Peer response to other peer DELETE message.
+	 * Deletes all the chunks stored for the file with the
+	 * fileId identification.
+	 * 
+	 * @param fileId - File identification
 	 */
 	private synchronized void handleDelete(String fileId){
 		//verifies if the current peer has chunks stored from this file
-		if(peer.getMulticastRecord().myChunksBelongsToFile(fileId))
+		if(peer.getRecord().myChunksBelongsToFile(fileId))
 		{
 			//deletes chunks from disk
 			peer.fileManager.deleteChunks(fileId);	
 			//remove from record
-			peer.getMulticastRecord().deleteMyChunksByFile(fileId);
+			peer.getRecord().deleteMyChunksByFile(fileId);
 		}
 	}
 
+
 	/**
-	 * Peer response to other peer REMOVED message
+	 * Peer response to other peer REMOVED message.
+	 * If the peer has stored/backup this chunkNo of the fileId,
+	 * it will update it's replication degree and peers.
+	 * If the actual replication degree drops bellow the desired, a chunk
+	 * backup protocol is initiated after a random time and if it didn't
+	 * received a PUTCHUNK message for the same fileId and chunkNo meanwhile.
+	 * 
+	 * @param fileId - File identification
+	 * @param chunkNo - Chunk identification number
+	 * @param peerNo - Peer who removed the chunk from his disk
 	 */
 	private synchronized void handleRemoved(String fileId, int chunkNo, int peerNo){
 
-		Record record = peer.getMulticastRecord();
+		Record record = peer.getRecord();
 		FileInfo info = record.getBackupFileInfoById(fileId);	//from stored
 
 		if(info == null)
@@ -280,21 +398,22 @@ public class MessageHandler extends Thread
 				repDegree = peersWithChunk.size();
 
 			if(repDegree < desiredRepDegree){
+				//Get data of the chunk
 				ArrayList<Chunk> chunks = peer.fileManager.splitFileInChunks(info.getPath());
 				Chunk c = chunks.get(chunkNo);
 				data = c.getData();
 			}
 		}
 		//Not Owner but has the chunk stored
-		else if(peer.getMulticastRecord().checkMyChunk(fileId, chunkNo))
+		else if(peer.getRecord().checkMyChunk(fileId, chunkNo))
 		{
 			//remove peer from 'Record'
-			peer.getMulticastRecord().remPeerWithMyChunk(fileId, chunkNo, peerNo);
+			peer.getRecord().remPeerWithMyChunk(fileId, chunkNo, peerNo);
 
-			//get data to start backup protocol
+			//get data of the chunk
 			data = peer.fileManager.getChunkContent(fileId, chunkNo);
-			repDegree = peer.getMulticastRecord().getMyChunk(fileId, chunkNo).getAtualRepDeg();
-			desiredRepDegree = peer.getMulticastRecord().getMyChunk(fileId, chunkNo).getReplicationDeg();
+			repDegree = peer.getRecord().getMyChunk(fileId, chunkNo).getAtualRepDeg();
+			desiredRepDegree = peer.getRecord().getMyChunk(fileId, chunkNo).getReplicationDeg();
 		}
 
 		/*
@@ -308,13 +427,15 @@ public class MessageHandler extends Thread
 			Util.randomDelay();
 
 			if(!peer.getMessageRecord().receivedPutchunkMessage(fileId, chunkNo)){
+
+				//sends PUTCHUNK message
 				Message msg = new Message(MessageType.PUTCHUNK,peer.getVersion(),peer.getID(),fileId,chunkNo,repDegree,data);
 				//Logs.sentMessageLog(msg);
 				new ChunkBackupProtocol(peer.getMdb(), peer.getMessageRecord(), msg).start();
 			}
 		}
 	}
-
+	
 	private void handleGetInitiator(String fileId) 
 	{
 		//if myChunks contains this fileId, must send INITIATOR message
@@ -325,92 +446,6 @@ public class MessageHandler extends Thread
 			peer.mc.send(msg);
 			Logs.sentMessageLog(msg);
 		}
-	}
-	
-	/**
-	 * Fill the object 'Message'
-	 * @param message
-	 * @return
-	 */
-	private Message parseMessage(byte[] message)
-	{
-		Message parsed = null;
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(message);
-		BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-
-		try
-		{
-			String header = reader.readLine();	//a primeira linha corresponde a header
-
-			//interpreta��o da header
-			String[] parts = header.split("\\s");
-
-			Util.MessageType type_rcv = validateMessageType(parts[0]);
-
-			//common
-			char[] version_rcv = validateVersion(parts[1]);
-			int senderId_rcv = Integer.parseInt(parts[2]);
-			String fileId_rcv = parts[3];
-
-			//all except delete
-			int chunkNo_rcv = -1;
-			if(type_rcv.compareTo(Util.MessageType.DELETE) != 0 && type_rcv.compareTo(Util.MessageType.GETINITIATOR) != 0 && type_rcv.compareTo(Util.MessageType.INITIATOR) != 0 )
-				chunkNo_rcv = Integer.parseInt(parts[4]);
-
-			//just putchunk
-			int replicationDeg_rcv = -1;
-			if(type_rcv.compareTo(Util.MessageType.PUTCHUNK) == 0){
-				replicationDeg_rcv = Integer.parseInt(parts[5]);
-			}
-
-			//Removes the last sequences of white spaces (\s) and null characters (\0)
-			//String msg_received = (new String(packet.getData()).replaceAll("[\0 \\s]*$", ""));
-			//temporario?
-			int offset = header.length() + Message.LINE_SEPARATOR.length()*2;
-			byte[] body = new byte[64000];
-			System.arraycopy(message, offset, body, 0, 64000);
-
-			//create messages
-			if(type_rcv.compareTo(Util.MessageType.DELETE) == 0 || type_rcv.compareTo(Util.MessageType.GETINITIATOR) == 0 || type_rcv.compareTo(Util.MessageType.INITIATOR) == 0)
-				parsed = new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv);	
-			else if(type_rcv.compareTo(Util.MessageType.GETCHUNK) == 0 || type_rcv.compareTo(Util.MessageType.STORED) == 0 || type_rcv.compareTo(Util.MessageType.REMOVED) == 0)
-				parsed = new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv,chunkNo_rcv) ;	
-			else if(type_rcv.compareTo(Util.MessageType.PUTCHUNK) == 0)
-				parsed = new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv,chunkNo_rcv,replicationDeg_rcv,body);
-			else if(type_rcv.compareTo(Util.MessageType.CHUNK) == 0)
-				parsed = new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv,chunkNo_rcv,body);
-
-			reader.close();
-			stream.close();
-		} 
-		catch (IOException e) 
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		return parsed;
-	}
-
-	/*
-	 * Validates
-	 */
-
-	private char[] validateVersion(String string) 
-	{
-		char[] senderVs = string.toCharArray();
-		char[] peerVs = peer.getVersion();
-		if(senderVs[0] == peerVs[0] && senderVs[1] == peerVs[1] && senderVs[2] == peerVs[2])
-			return senderVs;
-
-		return null;	//deve retornar um erro
-	}
-
-	private Util.MessageType validateMessageType(String string) 
-	{
-		//nao sei se ha restricoes aqui
-		return Util.MessageType.valueOf(string);
 	}
 
 	/*

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import network.Message;
 import peer.Chunk;
 import peer.Peer;
+import resources.Logs;
 import resources.Util.MessageType;
 
 public class ReclaimTrigger extends Thread{
@@ -32,7 +33,7 @@ public class ReclaimTrigger extends Thread{
 		
 		if(memoryToRelease > 0){
 
-			ArrayList<Chunk> priorityChunks = peer.getMulticastRecord().getChunksWithRepAboveDes();
+			ArrayList<Chunk> priorityChunks = peer.getRecord().getChunksWithRepAboveDes();
 			ArrayList<String> backupChunks = peer.fileManager.deleteNecessaryChunks(priorityChunks,memoryToRelease);
 			
 			for(String chunk : backupChunks)
@@ -41,10 +42,11 @@ public class ReclaimTrigger extends Thread{
 				String fileId = chunk.substring(1,chunk.length());	
 				
 				//Remove from record
-				peer.getMulticastRecord().removeFromMyChunks(fileId, chunkNo);
+				peer.getRecord().removeFromMyChunks(fileId, chunkNo);
 				
 				Message msg = new Message(MessageType.REMOVED,peer.getVersion(),peer.getID(),fileId,chunkNo);
 				peer.getMc().send(msg);
+				Logs.sentMessageLog(msg);
 			
 			}
 		}

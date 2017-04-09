@@ -1,8 +1,10 @@
 package initiators;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.security.NoSuchAlgorithmException;
 
+import network.DatagramListener;
 import network.Message;
 import peer.FileInfo;
 import peer.Peer;
@@ -55,11 +57,24 @@ public class RestoreTrigger extends Thread{
 			//prepares "record" for chunk messages
 			peer.record.startRecordRestores(info);
 
+			DatagramListener receiveChunkChannel = null;
+			
+			if(peer.isEnhancement()){
+				receiveChunkChannel = new DatagramListener(InetAddress.getLocalHost(),peer);
+				receiveChunkChannel.start();
+			}
+			
 			//create and send message for each chunk
 			for(int i = 0; i < info.getNumChunks(); i++)
 			{
+				Message msg;
+				
 				//create message
-				Message msg = new Message(MessageType.GETCHUNK,peer.getVersion(),peer.getID(),info.getFileId(),i);
+				if(peer.isEnhancement()){
+					String address = InetAddress.getLocalHost().getHostAddress();
+					msg = new Message(MessageType.GETCHUNKENH,peer.getVersion(),peer.getID(),info.getFileId(),i,address,receiveChunkChannel.getPort());
+				}else
+					msg = new Message(MessageType.GETCHUNK,peer.getVersion(),peer.getID(),info.getFileId(),i);
 				new ChunkRestoreProtocol(peer.getMc(),peer.getMessageRecord(),msg).start();
 			}
 			
@@ -69,7 +84,7 @@ public class RestoreTrigger extends Thread{
 			while((System.currentTimeMillis() - startTime) < Util.MAX_AVG_DELAY_TIME)	
 			{
 				//true when all 'chunk' messages received
-			    if(peer.getMulticastRecord().checkAllChunksRestored(info))
+			    if(peer.getRecord().checkAllChunksRestored(info))
 			    {
 			    	//creates the file
 			    	peer.fileManager.restoreFile(info.getFilename(), peer.record.getRestores(info));
@@ -79,6 +94,9 @@ public class RestoreTrigger extends Thread{
 					return;
 			    }
 			}
+			
+			if(peer.isEnhancement())
+				receiveChunkChannel.destroy();
 			
 			//if file was not restores, the entries of objects that mapped this file must be deleted
 			peer.record.deleteRestoredFile(info.getFileId());

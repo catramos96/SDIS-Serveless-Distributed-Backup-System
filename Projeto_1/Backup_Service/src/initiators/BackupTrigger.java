@@ -78,7 +78,7 @@ public class BackupTrigger extends Thread{
 		//initiate file record
 		String fileID = peer.fileManager.getFileIdFromFilename(filename);
 		FileInfo fileinfo = new FileInfo(fileID,filename,chunks.size(),replicationDegree);
-		peer.getMulticastRecord().startRecordStores(fileinfo);
+		peer.getRecord().startRecordStores(fileinfo);
 
 		//list of service that my thread need to wait for
 		ArrayList<ChunkBackupProtocol> subprotocols = new ArrayList<>();

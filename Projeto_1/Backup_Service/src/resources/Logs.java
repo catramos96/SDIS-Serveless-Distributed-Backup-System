@@ -80,6 +80,13 @@ public class Logs {
 		System.out.println("Chunk Number "+chunkNo+" restored");
 	}
 	
+	public static void diskWithoutSpace(){
+		System.out.println("Disk without space to store the chunk");
+	}
+	
+	public static void chunkAlreadyExists(){
+		System.out.println("Chunk Already Exists");
+	}
 	/*
 	 * Protocols
 	 */
@@ -104,4 +111,7 @@ public class Logs {
 		System.out.println(stored + " Replication Degree not pleased for chunk number " + chunkNo);
 	}
 	
+	public static void incompatibleProcols(){
+		System.out.println("The peers protocols are not compatible");
+	}
 }
