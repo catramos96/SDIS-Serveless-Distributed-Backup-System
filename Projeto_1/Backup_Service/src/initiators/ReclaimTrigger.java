@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import network.Message;
 import peer.Chunk;
 import peer.Peer;
+import resources.Logs;
 import resources.Util.MessageType;
+import sun.rmi.runtime.Log;
 
 public class ReclaimTrigger extends Thread{
 	protected Peer peer = null;
@@ -45,6 +47,7 @@ public class ReclaimTrigger extends Thread{
 				
 				Message msg = new Message(MessageType.REMOVED,peer.getVersion(),peer.getID(),fileId,chunkNo);
 				peer.getMc().send(msg);
+				Logs.sentMessageLog(msg);
 			
 			}
 		}

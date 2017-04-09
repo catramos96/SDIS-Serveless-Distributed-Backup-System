@@ -2,6 +2,8 @@ package network;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
+
 import resources.Util;
 
 public class Message 
@@ -12,6 +14,9 @@ public class Message
 	private String fileId = null;
 	private int chunkNo = -1;
 	private int replicationDeg = -1;
+	//Enhancement messages attributes
+	private String address = null;
+	private int port = -1;
 	
 	private byte[] body = null;
 	
@@ -28,6 +33,9 @@ public class Message
 	 * CHUNK 	<Version> <SenderId> <FileId> <ChunkNo> 					<CRLF><CRLF>	<Body>
 	 * DELETE 	<Version> <SenderId> <FileId> 								<CRLF><CRLF>
 	 * REMOVED 	<Version> <SenderId> <FileId> <ChunkNo> 					<CRLF><CRLF>
+	 * Enhancement Messages:
+	 * GETCHUNKENH <Version> <SenderId> <FileId> <ChunkNo> <Address> <Port> <CRLF><CRLF>
+	 * GOTCHUNKENH <Version> <SenderId> <FileId> <ChunkNo>					<CRLF><CRLF>
 	 */
 	
 	public Message(Util.MessageType type, char[] version, int senderId, String fileId, int chunkNo, int ReplicationDeg, byte[] body)
@@ -45,7 +53,7 @@ public class Message
 	
 	public Message(Util.MessageType type, char[] version, int senderId, String fileId, int chunkNo)
 	{
-		if(!(type.name().equals("STORED")|| type.name().equals("GETCHUNK") || type.name().equals("REMOVED")) )
+		if(!(type.name().equals("STORED")|| type.name().equals("GETCHUNK") || type.name().equals("REMOVED") || type.name().equals("GOTCHUNKENH")))
 			System.out.println("Wrong Constructor stored/getchunk/removed");
 		this.type = type;
 		this.version = version;
@@ -81,6 +89,24 @@ public class Message
 		}
 	}
 	
+	/*
+	 * Enhancement Message
+	 */
+	public Message(Util.MessageType type, char[] version, int senderId, String fileId, int chunkNo, String address, int port){
+		if(!type.name().equals("GETCHUNKENH"))
+			System.out.println("Wrong Constructor delete");
+		else
+		{
+			this.type = type;
+			this.version = version;
+			this.senderId = senderId;
+			this.fileId = fileId;
+			this.chunkNo = chunkNo;
+			this.address = address;
+			this.port = port;
+		}
+	}
+	
 
 	/**
 	 * Create new message
@@ -95,6 +121,9 @@ public class Message
 		
 		if(type.compareTo(Util.MessageType.PUTCHUNK) == 0)
 			content += replicationDeg + " ";
+		
+		if(type.compareTo(Util.MessageType.GETCHUNKENH) == 0)
+			content += address + " " + port + " ";
 		
 		content += LINE_SEPARATOR + LINE_SEPARATOR;
 		
@@ -178,6 +207,22 @@ public class Message
 
 	public void setVersion(char[] version) {
 		this.version = version;
+	}
+	
+	public String getAddress(){
+		return address;
+	}
+	
+	public void setAddress(String address){
+		this.address = address;
+	}
+	
+	public int getPort(){
+		return port;
+	}
+	
+	public void setPort(int port){
+		this.port = port;
 	}
 	
 }

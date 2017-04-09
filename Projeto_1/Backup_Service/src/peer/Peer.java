@@ -185,7 +185,7 @@ public class Peer implements MessageRMI {
 			address = InetAddress.getByName(mdr_ap[0]);
 			port = Integer.parseInt(mdr_ap[1]);
 			mdr = new MulticastListener(address,port,this);		
-
+			
 			//inicializacao dos channels
 			mc.start();
 			mdb.start();
@@ -433,5 +433,9 @@ public class Peer implements MessageRMI {
 
 	public MessageRecord getMessageRecord(){
 		return msgRecord;
+	}
+	
+	public boolean enhancementVersion(){
+		return (!(version[0] == 1 && version[2] == '0'));
 	}
 }

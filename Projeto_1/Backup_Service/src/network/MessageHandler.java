@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 
 import resources.Logs;
@@ -62,7 +64,7 @@ public class MessageHandler extends Thread
 				handleStore(msg.getFileId(), msg.getChunkNo(),msg.getSenderId());	
 				break;
 			case GETCHUNK:
-				handleGetchunk(msg.getFileId(),msg.getChunkNo());
+				handleGetchunk(msg.getFileId(),msg.getChunkNo(),null,null);
 				break;
 			case CHUNK:
 				//record this message (CHUNK) at 'MessageRecord'
@@ -75,6 +77,14 @@ public class MessageHandler extends Thread
 			case REMOVED:
 				handleRemoved(msg.getFileId(),msg.getChunkNo(),msg.getSenderId());
 				break;
+			case GETCHUNKENH:{
+				handleGetchunk(msg.getFileId(),msg.getChunkNo(),msg.getAddress(),msg.getPort());
+				break;
+			}
+			case GOTCHUNKENH:{
+				handleGotchunk(msg.getFileId(),msg.getChunkNo());
+				break;
+			}
 			default:
 				break;
 			}
@@ -194,11 +204,23 @@ public class MessageHandler extends Thread
 	/**
 	 * Peer response to other peer GETCHUNK message
 	 */
-	private synchronized void handleGetchunk(String fileId, int chunkNo){
+	private synchronized void handleGetchunk(String fileId, int chunkNo, String address, Integer port){
 
 		//peer has chunk stored
 		if(peer.record.checkMyChunk(fileId, chunkNo))
 		{
+			DatagramListener sendChunkChannel = null;
+			
+			System.out.println(address);
+			
+			if(address != null && port != null && peer.enhancementVersion()){
+				try {
+					sendChunkChannel = new DatagramListener(InetAddress.getLocalHost(),peer);
+					sendChunkChannel.start();
+				} catch (UnknownHostException e) {
+					e.printStackTrace();
+				}
+			}
 			//body
 			byte[] body = peer.fileManager.getChunkContent(fileId, chunkNo);
 			//create CHUNK message
@@ -210,7 +232,14 @@ public class MessageHandler extends Thread
 			//chunk still needed by the initiator peer
 			if(!peer.getMessageRecord().receivedChunkMessage(fileId, chunkNo))
 			{
-				peer.getMdr().send(msg);
+				if(peer.enhancementVersion())
+					try {
+						sendChunkChannel.send(msg,InetAddress.getByName(address),port);
+					} catch (UnknownHostException e) {
+						e.printStackTrace();
+					}
+				else
+					peer.getMdr().send(msg);
 				Logs.sentMessageLog(msg);
 			}
 		}
@@ -229,6 +258,12 @@ public class MessageHandler extends Thread
 			//record chunk as restored
 			if(peer.getMulticastRecord().recordRestoredChunk(fileId,chunkNo,body))
 				Logs.chunkRestored(chunkNo);
+			
+			if(peer.enhancementVersion()){
+				Message msg = new Message(Util.MessageType.GOTCHUNKENH,peer.getVersion(),peer.getID(), fileId, chunkNo);
+				peer.getMc().send(msg);
+				Logs.sentMessageLog(msg);
+			}
 		}
 	}
 
@@ -310,6 +345,11 @@ public class MessageHandler extends Thread
 
 	}
 
+	
+	private synchronized void handleGotchunk(String fileId,int chunkNo){
+		peer.getMessageRecord().addChunkMessage(fileId, chunkNo);
+	}
+	
 	/**
 	 * Fill the object 'Message'
 	 * @param message
@@ -326,7 +366,7 @@ public class MessageHandler extends Thread
 		{
 			String header = reader.readLine();	//a primeira linha corresponde a header
 
-			//interpreta��o da header
+			//interpretacao da header
 			String[] parts = header.split("\\s");
 
 			Util.MessageType type_rcv = validateMessageType(parts[0]);
@@ -346,6 +386,14 @@ public class MessageHandler extends Thread
 			if(type_rcv.compareTo(Util.MessageType.PUTCHUNK) == 0){
 				replicationDeg_rcv = Integer.parseInt(parts[5]);
 			}
+			
+			//getchunkenh
+			String address_rcv = null;
+			Integer port_rcv = null;
+			if(type_rcv.compareTo(Util.MessageType.GETCHUNKENH) == 0){
+				address_rcv = parts[5];
+				port_rcv = Integer.parseInt(parts[6]);
+			}
 
 			//Removes the last sequences of white spaces (\s) and null characters (\0)
 			//String msg_received = (new String(packet.getData()).replaceAll("[\0 \\s]*$", ""));
@@ -357,12 +405,14 @@ public class MessageHandler extends Thread
 			//create messages
 			if(type_rcv.compareTo(Util.MessageType.DELETE) == 0)
 				parsed = new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv);	
-			else if(type_rcv.compareTo(Util.MessageType.GETCHUNK) == 0 || type_rcv.compareTo(Util.MessageType.STORED) == 0 || type_rcv.compareTo(Util.MessageType.REMOVED) == 0)
+			else if(type_rcv.compareTo(Util.MessageType.GETCHUNK) == 0 || type_rcv.compareTo(Util.MessageType.STORED) == 0 || type_rcv.compareTo(Util.MessageType.REMOVED) == 0 || type_rcv.compareTo(Util.MessageType.GOTCHUNKENH) == 0)
 				parsed = new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv,chunkNo_rcv) ;	
 			else if(type_rcv.compareTo(Util.MessageType.PUTCHUNK) == 0)
 				parsed = new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv,chunkNo_rcv,replicationDeg_rcv,body);
 			else if(type_rcv.compareTo(Util.MessageType.CHUNK) == 0)
 				parsed = new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv,chunkNo_rcv,body);
+			else if(type_rcv.compareTo(Util.MessageType.GETCHUNKENH) == 0)
+				parsed = new Message(type_rcv,version_rcv,senderId_rcv,fileId_rcv,chunkNo_rcv,address_rcv,port_rcv);
 
 			reader.close();
 			stream.close();
