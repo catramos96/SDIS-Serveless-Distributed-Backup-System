@@ -4,6 +4,10 @@ import network.Message;
 
 public class Logs {
 	
+	public static void log(String string) {
+		System.out.println(string);
+	}
+	
 	/*
 	 * Arguments
 	 */
@@ -121,5 +125,16 @@ public class Logs {
 	
 	public static void exception(String function, String myClass, String error){
 		System.out.println("Exception at "+function+ " from class "+myClass+" : "+error);
+	}
+	
+	/*
+	 * Client
+	 */
+	public static void serverResponse(String response){
+		System.out.println("Server response : "+response);
+	}
+	
+	public static void enter(){
+		System.out.println("Press ENTER to exit...");
 	}
 }

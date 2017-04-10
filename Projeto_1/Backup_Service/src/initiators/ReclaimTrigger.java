@@ -8,13 +8,20 @@ import peer.Peer;
 import resources.Logs;
 import resources.Util.MessageType;
 
-public class ReclaimTrigger extends Thread{
-	protected Peer peer = null;
-	protected int spaceToReclaim = 0;
-	protected String message;
+/**
+ * Peer initiator response to client request for reclaim disk space
+ * @attribute Peer peer - initiator peer
+ * @attribute int spaceToReclaim - space that the user wants to reclaim
+ * @attribute String message - response to client
+ */
+public class ReclaimTrigger extends Thread
+{
+	private Peer peer;
+	private int spaceToReclaim;
+	private String message;
 	
 	/**
-	 * Peer initiator response to client request for RECLAIM
+	 * constructor
 	 * @param action
 	 * @param filename
 	 * @param replicationDegree
@@ -25,16 +32,19 @@ public class ReclaimTrigger extends Thread{
 		this.message = null;
 	}
 	
+	/**
+	 * Thread execution
+	 */
 	@Override
 	public void run(){
 		
-		//Calcula a memoria necessaria a libertar
-		int memoryToRelease = peer.fileManager.memoryToRelease(spaceToReclaim);
+		//calculate the memory needed to release
+		int memoryToRelease = peer.getFileManager().memoryToRelease(spaceToReclaim);
 		
-		if(memoryToRelease > 0){
-
+		if(memoryToRelease > 0)
+		{
 			ArrayList<Chunk> priorityChunks = peer.getRecord().getChunksWithRepAboveDes();
-			ArrayList<String> backupChunks = peer.fileManager.deleteNecessaryChunks(priorityChunks,memoryToRelease);
+			ArrayList<String> backupChunks = peer.getFileManager().deleteNecessaryChunks(priorityChunks,memoryToRelease);
 			
 			for(String chunk : backupChunks)
 			{
@@ -51,12 +61,16 @@ public class ReclaimTrigger extends Thread{
 			}
 		}
 		
-		peer.fileManager.setTotalSpace(spaceToReclaim);
+		peer.getFileManager().setTotalSpace(spaceToReclaim);
 
-		message = "TOTAL MEMORY: " + peer.fileManager.getTotalSpace()
-					+"\nREMAING MEMORY. " + peer.fileManager.getRemainingSpace();
+		message = "TOTAL MEMORY: " + peer.getFileManager().getTotalSpace() +"\nREMAING MEMORY. " + peer.getFileManager().getRemainingSpace();
+		Logs.log(message);
 	}
 
+	/**
+	 * Return the feedback message to client
+	 * @return
+	 */
 	public String response() {
 		return message;
 	}

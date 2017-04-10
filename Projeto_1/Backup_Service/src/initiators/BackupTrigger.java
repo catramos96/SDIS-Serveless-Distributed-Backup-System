@@ -11,16 +11,24 @@ import protocols.ChunkBackupProtocol;
 import resources.Logs;
 import resources.Util.MessageType;
 
+/**
+ * Peer initiator response to client request for backup a file.
+ * @attribute ArrayList<Chunk> chunks - chunks to backup
+ * @attribute Peer peer - initiator peer
+ * @attribute String filename - file filename
+ * @attribute int replicationDegree - replication degree desired
+ * @attribute String message - response to client
+ */
 public class BackupTrigger extends Thread{
-	ArrayList<Chunk> chunks = null;
-	Peer peer = null;
-	String filename = null;
-	int replicationDegree = 0;
-	boolean deleteFirst = false;
+	
+	private ArrayList<Chunk> chunks = null;
+	private Peer peer = null;
+	private String filename = null;
+	private int replicationDegree = 0;
 	private String message = null;
 
 	/**
-	 * Peer initiator response to client request for backup
+	 * Constructor
 	 * @param action
 	 * @param filename
 	 * @param replicationDegree
@@ -32,6 +40,10 @@ public class BackupTrigger extends Thread{
 		this.filename = peer.fileManager.checkPath(filename);
 	}
 
+	/**
+	 * Thread execution
+	 */
+	@Override
 	public void run()
 	{
 		//verifies original file existence
@@ -39,21 +51,23 @@ public class BackupTrigger extends Thread{
 		if(!f.exists())
 		{
 			message = filename + " not found!\n";
+			Logs.log(message);
 			return;
 		}
 
 		//verifies if this file was already backed up 
-		FileInfo info = peer.record.getBackupFileInfoByPath(this.filename);
+		FileInfo info = peer.getRecord().getBackupFileInfoByPath(this.filename);
 
 		if(info != null)
 		{
 			//if already exists, verify if the fileId's are the same
-			String fileId1 = peer.fileManager.getFileIdFromFilename(this.filename);
+			String fileId1 = peer.getFileManager().getFileIdFromFilename(this.filename);
 			String fileId2 = info.getFileId(); 
 
 			//yes : ignore this request
 			if(fileId1.equals(fileId2)){
 				message = "File already backed up!";
+				Logs.log(message);
 				return;
 			}
 
@@ -67,16 +81,16 @@ public class BackupTrigger extends Thread{
 				dt.join();	 //waits for chunks delete
 			} 
 			catch (InterruptedException e) {
-				System.err.println("Server exception: " + e.toString());
+				Logs.exception("run", "BackupTrigger", e.toString());
 				e.printStackTrace();
 			}
 		}
 
 		//split file in chunks
-		chunks = peer.fileManager.splitFileInChunks(filename);
+		chunks = peer.getFileManager().splitFileInChunks(filename);
 		
 		//initiate file record
-		String fileID = peer.fileManager.getFileIdFromFilename(filename);
+		String fileID = peer.getFileManager().getFileIdFromFilename(filename);
 		FileInfo fileinfo = new FileInfo(fileID,filename,chunks.size(),replicationDegree);
 		peer.getRecord().startRecordStores(fileinfo);
 
@@ -101,13 +115,19 @@ public class BackupTrigger extends Thread{
 			try {
 				cbp.join();
 			} catch (InterruptedException e) {
+				Logs.exception("run", "BackupTrigger", e.toString());
 				e.printStackTrace();
 			}
 
 		}
 		message = "Backup successful!";
+		Logs.log(message);
 	}
 
+	/**
+	 * Return the feedback message to client
+	 * @return
+	 */
 	public String response() {
 		return message;
 	}

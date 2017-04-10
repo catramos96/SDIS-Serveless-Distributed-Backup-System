@@ -13,14 +13,20 @@ import resources.Logs;
 import resources.Util;
 import resources.Util.MessageType;
 
+/**
+ * Peer initiator response to client request for restore a file.
+ * @attribute Peer peer - initiator peer
+ * @attribute String filename - file filename
+ * @attribute String message - response to client
+ */
 public class RestoreTrigger extends Thread{
 	
-	private Peer peer = null;
-	private String filename = null;
-	private String message = null;
+	private Peer peer;
+	private String filename;
+	private String message;
 	
 	/**
-	 * Peer initiator response to client request for RESTORE
+	 * constructor
 	 * @param filename
 	 * @throws NoSuchAlgorithmException 
 	 */
@@ -31,6 +37,9 @@ public class RestoreTrigger extends Thread{
 		//this.filename = peer.fileManager.checkPath(filename);
 	}
 	
+	/**
+	 * Thread execution
+	 */
 	@Override
 	public void run()
 	{
@@ -38,24 +47,26 @@ public class RestoreTrigger extends Thread{
 		{
 			//verifies if this file was already backed up
 			//FileInfo info = peer.record.getBackupFileInfoByPath(this.filename);
-			FileInfo info = peer.record.getBackupFileInfoByName(filename);
+			FileInfo info = peer.getRecord().getBackupFileInfoByName(filename);
 			
 			if(info == null)
 			{
 				message = filename + " is not a path or was not backed up by this peer!";
+				Logs.log(message);
 				return;
 			}
 			
 			//verifies if this file was already restored
-			FileInfo restoredInfo = peer.record.getRestoredFileInfoById(info.getFileId());
+			FileInfo restoredInfo = peer.getRecord().getRestoredFileInfoById(info.getFileId());
 			if(restoredInfo != null)
 			{
 				message = info.getFilename() + " already restored!";
+				Logs.log(message);
 				return;
 			}
 						
 			//prepares "record" for chunk messages
-			peer.record.startRecordRestores(info);
+			peer.getRecord().startRecordRestores(info);
 
 			DatagramListener receiveChunkChannel = null;
 			
@@ -87,10 +98,11 @@ public class RestoreTrigger extends Thread{
 			    if(peer.getRecord().checkAllChunksRestored(info))
 			    {
 			    	//creates the file
-			    	peer.fileManager.restoreFile(info.getFilename(), peer.record.getRestores(info));
+			    	peer.getFileManager().restoreFile(info.getFilename(), peer.getRecord().getRestores(info));
 					Logs.fileRestored(info.getFilename());
 					
 					message = "Restore successful!";
+					Logs.log(message);
 					return;
 			    }
 			}
@@ -99,16 +111,22 @@ public class RestoreTrigger extends Thread{
 				receiveChunkChannel.destroy();
 			
 			//if file was not restores, the entries of objects that mapped this file must be deleted
-			peer.record.deleteRestoredFile(info.getFileId());
-			peer.msgRecord.resetChunkMessages(info.getFileId());
+			peer.getRecord().deleteRestoredFile(info.getFileId());
+			peer.getMessageRecord().resetChunkMessages(info.getFileId());
 			
 			message = info.getFilename() + " not restored...";
+			Logs.log(message);
 		} 
 		catch (IOException e) {
+			Logs.exception("run", "RestoreTrigger", e.toString());
 			e.printStackTrace();
 		}
 	}
-
+	
+	/**
+	 * Return the feedback message to client
+	 * @return
+	 */
 	public String response() {
 		return message;
 	}

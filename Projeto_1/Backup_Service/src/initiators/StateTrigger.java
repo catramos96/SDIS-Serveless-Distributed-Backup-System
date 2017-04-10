@@ -7,24 +7,34 @@ import peer.Chunk;
 import peer.FileInfo;
 import peer.Peer;
 
+/**
+ * Peer initiator response to client request for state.
+ * @attribute Peer peer - initiator peer
+ * @attribute String message - response to client
+ */
 public class StateTrigger extends Thread
 {
 	private Peer peer;
 	private String message = null;
 	
 	/**
-	 * Peer initiator response to client request for STATE
+	 * Constructor
+	 * @param peer
 	 */
 	public StateTrigger(Peer peer)
 	{
 		this.peer = peer;
 	}
 	
+	/**
+	 * Thread execution
+	 */
+	@Override
 	public void run()
 	{
 		message = "\n\nFiles whose backup was initiated : \n\n";
 		
-		HashMap<FileInfo, HashMap<Integer, ArrayList<Integer>>> storedConfirms = peer.record.getStored();
+		HashMap<FileInfo, HashMap<Integer, ArrayList<Integer>>> storedConfirms = peer.getRecord().getStored();
 		
 		//For each file whose backup it has initiated:
 		for (FileInfo fileinfo : storedConfirms.keySet()) 
@@ -47,7 +57,7 @@ public class StateTrigger extends Thread
 		message += "Chunks stored :\n\n";
 		
 		//For each chunk it stores
-		HashMap<String, ArrayList<Chunk>> files = peer.record.getMyChunks();
+		HashMap<String, ArrayList<Chunk>> files = peer.getRecord().getMyChunks();
 		for(String s : files.keySet())
 		{
 			ArrayList<Chunk> chunks = files.get(s);
@@ -64,10 +74,14 @@ public class StateTrigger extends Thread
 		
 		//peer storage capacity
 		message += "Peer stored capacity :\n\n";
-		message += " Maximum amount : "+peer.fileManager.getTotalSpace()+"\n";
-		message += " Storage amount : "+peer.fileManager.getRemainingSpace()+"\n";	
+		message += " Maximum amount : "+peer.getFileManager().getTotalSpace()+"\n";
+		message += " Storage amount : "+peer.getFileManager().getRemainingSpace()+"\n";	
 	}
-
+	
+	/**
+	 * Return the feedback message to client
+	 * @return
+	 */
 	public String response() {
 		return message;
 	}

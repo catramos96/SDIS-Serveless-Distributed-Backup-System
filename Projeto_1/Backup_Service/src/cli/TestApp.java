@@ -8,6 +8,11 @@ import java.util.Scanner;
 import network.MessageRMI;
 import resources.Logs;
 
+/**
+ * Client application for communication with the peers
+ * @attribute MessageRMI stub - Represents the rmi object used for receiving and sending messages.
+ * @attribute String response - Represents the peer response to messages
+ */
 public class TestApp 
 {
 	private static MessageRMI stub = null;
@@ -15,7 +20,7 @@ public class TestApp
 
 	public static void main(String[] args) throws IOException
 	{
-		System.out.println("CLIENT");
+		Logs.log("CLIENT");
 		
 		//args verification
 		if(args.length < 2)
@@ -36,8 +41,8 @@ public class TestApp
 			return;
 		}
 
-		System.out.println("Server response : \n" + response);
-
+		Logs.serverResponse(response);
+		
 		wait_to_close();
 	}
 
@@ -53,7 +58,7 @@ public class TestApp
 		} 
 		catch (Exception e) 
 		{
-			System.err.println("Client exception: " + e.toString());
+			Logs.exception("startRMI", "TestApp", e.toString());
 			e.printStackTrace();
 		}
 	}
@@ -75,7 +80,6 @@ public class TestApp
 			case "BACKUPENH":
 				if(args.length != 4) 
 					return false;
-				System.out.println(enhancement);
 				response = stub.backup(args[2],Integer.parseInt(args[3]),enhancement);
 				break;
 			case "RESTORE":
@@ -102,13 +106,13 @@ public class TestApp
 				response = stub.state();
 				break;
 			default:
-				System.out.println("Error sending message to peer");
+				Logs.exception("startRMI", "protocolVerAndSend", "Error sending message to peer");
 				return false;
 			}
 		} 
 		catch (NumberFormatException | RemoteException e) 
 		{
-			System.err.println("Client exception: " + e.toString());
+			Logs.exception("startRMI", "protocolVerAndSend", e.toString());
 			e.printStackTrace();
 			return false;
 		} 
@@ -120,8 +124,8 @@ public class TestApp
 	 * Waits for ENTER
 	 */
 	private static void wait_to_close() {
-		System.out.println("Press ENTER to exit...");
-
+		Logs.enter();
+		
 		Scanner scanner = new Scanner(System.in);
 		scanner.nextLine();
 		scanner.close();
