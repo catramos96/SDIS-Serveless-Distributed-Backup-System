@@ -6,13 +6,16 @@ import network.MulticastListener;
 import resources.Logs;
 import resources.Util;
 
+/**
+ * Class ChunkRestoreProtocol used to restore a chunk of a file until 5 tries.
+ */
 public class ChunkRestoreProtocol extends Protocol {
 
 	/**
-	 * Order to restore 1 chunk
-	 * @param mc
-	 * @param record
-	 * @param msg
+	 * Constructor of ChunkRestoreProtocol
+	 * @param mc - MulticasListener channel where it will be communicated the request of a chunk
+	 * @param record - MessageRecord of the communication channels
+	 * @param msg - Message of request
 	 */
 	public ChunkRestoreProtocol(MulticastListener mc, MessageRecord record, Message msg){
 		this.mc = mc;
@@ -46,14 +49,13 @@ public class ChunkRestoreProtocol extends Protocol {
 			
 			//verifies if some chunk was restored
 			if(msgRecord.receivedChunkMessage(fileNo, chunkNo)){
-				System.out.println("Restored chunk n: " + chunkNo);
+				Logs.chunkRestored(chunkNo);
 				return;
 			}
 			
 			//inc repetitions
 			rep++;
 		}
-		
-		System.out.println("Chunk no: " + chunkNo + " not restored.");
+		Logs.chunkNotRestored(chunkNo);
 	}
 }

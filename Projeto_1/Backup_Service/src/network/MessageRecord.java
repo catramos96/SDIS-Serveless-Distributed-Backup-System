@@ -49,7 +49,8 @@ public class MessageRecord {
 	 */
 	public void startRecordingPutchunks(String fileNo){
 		ArrayList<Integer> tmp = new ArrayList<Integer>();
-		putchunkMessages.put(fileNo, tmp);
+		if(!putchunkMessages.containsKey(fileNo))
+			putchunkMessages.put(fileNo, tmp);
 	}
 	
 	/**

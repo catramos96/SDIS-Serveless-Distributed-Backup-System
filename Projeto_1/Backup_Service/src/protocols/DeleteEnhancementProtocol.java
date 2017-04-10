@@ -5,6 +5,9 @@ import peer.Peer;
 import resources.Logs;
 import resources.Util;
 
+/**
+ * Class DeleteEnhancementProtocol used for the Delete protocol enhancement
+ */
 public class DeleteEnhancementProtocol extends Thread {
 
 	private Peer peer;

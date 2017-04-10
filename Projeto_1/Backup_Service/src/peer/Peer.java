@@ -171,7 +171,7 @@ public class Peer implements MessageRMI {
 		};
 		
 		if(enhancement)
-			scheduler.scheduleAtFixedRate(checkChunks, 30, 30, TimeUnit.SECONDS);
+			scheduler.scheduleAtFixedRate(checkChunks, 60, 60, TimeUnit.SECONDS);
 	}
 
 	private void verifyEnhancement() {
