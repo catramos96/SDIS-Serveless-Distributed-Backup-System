@@ -150,11 +150,11 @@ public class MessageHandler extends Thread
 		 * If the peer doesn't have available space, it will try to free some
 		 * by releasing chunks with the replication degree above average
 		 */
-		if(!peer.fileManager.hasSpaceAvailable(c) && !alreadyExists)
+		if(!peer.getFileManager().hasSpaceAvailable(c) && !alreadyExists)
 			evictChunks();
 
 		//verifies again (after evicting chunks) if has space available
-		if(peer.fileManager.hasSpaceAvailable(c))
+		if(peer.getFileManager().hasSpaceAvailable(c))
 		{
 			/*
 			 * If the peer already stored the chunk, it will warn immediately the multicast channel.
@@ -187,7 +187,7 @@ public class MessageHandler extends Thread
 					Logs.sentMessageLog(msg);
 
 					//save chunk in memory
-					peer.fileManager.saveChunk(c);
+					peer.getFileManager().saveChunk(c);
 
 					//Save info on 'Record' 
 					peer.getRecord().addToMyChunks(fileId, chunkNo, repDeg);
@@ -225,7 +225,7 @@ public class MessageHandler extends Thread
 
 			//Deletes the chunk from the peers disk
 			String filename = chunks.get(i).getChunkNo() + chunks.get(i).getFileId();
-			peer.fileManager.deleteFile(filename);
+			peer.getFileManager().deleteFile(filename);
 		}
 	}
 
@@ -273,7 +273,7 @@ public class MessageHandler extends Thread
 		try{
 
 			//peer has chunk stored
-			if(peer.record.checkMyChunk(fileId, chunkNo))
+			if(peer.getRecord().checkMyChunk(fileId, chunkNo))
 			{
 				DatagramListener sendChunkChannel = null;
 
@@ -283,7 +283,7 @@ public class MessageHandler extends Thread
 					sendChunkChannel.start();
 				}
 
-				byte[] body = peer.fileManager.getChunkContent(fileId, chunkNo);
+				byte[] body = peer.getFileManager().getChunkContent(fileId, chunkNo);
 
 				//create CHUNK message
 				Message msg = new Message(Util.MessageType.CHUNK,peer.getVersion(),peer.getID(),fileId,chunkNo,body);
@@ -308,6 +308,7 @@ public class MessageHandler extends Thread
 			}
 		}
 		catch (UnknownHostException e) {
+			Logs.exception("handleGetchunk", "MessageHandler", e.toString());
 			e.printStackTrace();
 		}
 	}
@@ -360,7 +361,7 @@ public class MessageHandler extends Thread
 		if(peer.getRecord().myChunksBelongsToFile(fileId))
 		{
 			//deletes chunks from disk
-			peer.fileManager.deleteChunks(fileId);	
+			peer.getFileManager().deleteChunks(fileId);	
 			//remove from record
 			peer.getRecord().deleteMyChunksByFile(fileId);
 		}
@@ -402,7 +403,7 @@ public class MessageHandler extends Thread
 
 			if(repDegree < desiredRepDegree){
 				//Get data of the chunk
-				ArrayList<Chunk> chunks = peer.fileManager.splitFileInChunks(info.getPath());
+				ArrayList<Chunk> chunks = peer.getFileManager().splitFileInChunks(info.getPath());
 				Chunk c = chunks.get(chunkNo);
 				data = c.getData();
 			}
@@ -414,7 +415,7 @@ public class MessageHandler extends Thread
 			peer.getRecord().remPeerWithMyChunk(fileId, chunkNo, peerNo);
 
 			//get data of the chunk
-			data = peer.fileManager.getChunkContent(fileId, chunkNo);
+			data = peer.getFileManager().getChunkContent(fileId, chunkNo);
 			repDegree = peer.getRecord().getMyChunk(fileId, chunkNo).getAtualRepDeg();
 			desiredRepDegree = peer.getRecord().getMyChunk(fileId, chunkNo).getReplicationDeg(); 
 		}
@@ -439,14 +440,21 @@ public class MessageHandler extends Thread
 		}
 	}
 	
+	/**
+	 * Peer response to other peer message GETINITIATOR
+	 * 
+	 * If the peer has initiated the backup of the file with the fileId received, 
+	 * it will send a message of type 'INITIATOR' through the multicast channel.
+	 * @param fileId
+	 */
 	private void handleGetInitiator(String fileId) 
 	{
 		//if myChunks contains this fileId, must send INITIATOR message
-		if(peer.record.getBackupFileInfoById(fileId) != null)
+		if(peer.getRecord().getBackupFileInfoById(fileId) != null)
 		{
 			Message msg = new Message(MessageType.INITIATOR,peer.getVersion(),peer.getID(),fileId);
 			Util.randomDelay();
-			peer.mc.send(msg);
+			peer.getMc().send(msg);
 			Logs.sentMessageLog(msg);
 		}
 	}
@@ -454,6 +462,7 @@ public class MessageHandler extends Thread
 	/*
 	 * gets e sets
 	 */
+	
 	public Peer getPeer() {
 		return peer;
 	}

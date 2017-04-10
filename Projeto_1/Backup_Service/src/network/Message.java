@@ -6,6 +6,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import resources.Logs;
 import resources.Util;
 
 /**
@@ -199,6 +200,7 @@ public class Message
 			} 
 			catch (IOException e) 
 			{
+				Logs.exception("buildMessage", "Message", e.toString());
 				e.printStackTrace();
 			}
 			
@@ -356,6 +358,7 @@ public class Message
 		} 
 		catch (IOException e) 
 		{
+			Logs.exception("parseMessage", "Message", e.toString());
 			e.printStackTrace();
 		}
 

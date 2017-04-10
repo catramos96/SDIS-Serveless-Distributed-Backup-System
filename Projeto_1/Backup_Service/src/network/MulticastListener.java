@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+
+import resources.Logs;
 import resources.Util;
 
 import peer.Peer;
@@ -54,6 +56,7 @@ public class MulticastListener extends Thread
 		} 
 		catch (IOException e) 
 		{
+			Logs.exception("send", "MulticastListener", e.toString());
 			e.printStackTrace();
 		}
 	}
@@ -73,6 +76,7 @@ public class MulticastListener extends Thread
 		} 
 		catch (IOException e) 
 		{
+			Logs.exception("receive", "MulticastListener", e.toString());
 			e.printStackTrace();
 		}
 		
@@ -107,6 +111,7 @@ public class MulticastListener extends Thread
 		} 
 		catch (IOException e) 
 		{
+			Logs.exception("run", "MulticastListener", e.toString());
 			e.printStackTrace();
 		}
 	}

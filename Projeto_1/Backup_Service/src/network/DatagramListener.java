@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.MulticastSocket;
 import java.net.SocketException;
 
 import peer.Peer;
+import resources.Logs;
 import resources.Util;
 
 /**
@@ -35,7 +35,7 @@ public class DatagramListener extends Thread{
 		try {
 			socket = new DatagramSocket();
 		} catch (SocketException e) {
-			// TODO Auto-generated catch block
+			Logs.exception("constructor","DatagramListener",e.toString());
 			e.printStackTrace();
 		}
 	}
@@ -55,6 +55,7 @@ public class DatagramListener extends Thread{
 			socket.send(packet);
 		} 
 		catch (IOException e) 	{
+			Logs.exception("send","DatagramListener",e.toString());
 			e.printStackTrace();
 		}
 	}
@@ -71,6 +72,7 @@ public class DatagramListener extends Thread{
 			socket.receive(packet);
 		} 
 		catch (IOException e) 	{
+			Logs.exception("receive","DatagramListener",e.toString());
 			e.printStackTrace();
 		}
 		
@@ -96,7 +98,7 @@ public class DatagramListener extends Thread{
 	}
 	
 	/**
-	 * Function that exists the thread
+	 * Function that exits the thread
 	 */
 	public void destroy(){
 		running = false;
@@ -108,5 +110,21 @@ public class DatagramListener extends Thread{
 	 */
 	public int getPort(){
 		return socket.getLocalPort();
+	}
+
+	/**
+	 * Get address
+	 * @return
+	 */
+	public InetAddress getAddress() {
+		return address;
+	}
+
+	/**
+	 * Set address
+	 * @param address
+	 */
+	public void setAddress(InetAddress address) {
+		this.address = address;
 	}
 }

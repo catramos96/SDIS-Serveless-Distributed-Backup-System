@@ -114,4 +114,12 @@ public class Logs {
 	public static void incompatibleProcols(){
 		System.out.println("The peers protocols are not compatible");
 	}
+	
+	/*
+	 * Exceptions
+	 */
+	
+	public static void exception(String function, String myClass, String error){
+		System.out.println("Exception at "+function+ " from class "+myClass+" : "+error);
+	}
 }

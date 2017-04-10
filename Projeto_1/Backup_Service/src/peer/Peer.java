@@ -492,4 +492,8 @@ public class Peer implements MessageRMI {
 	public void setEnhancement(boolean enhancement) {
 		this.enhancement = enhancement;
 	}
+
+	public FileManager getFileManager() {
+		return fileManager;
+	}
 }
