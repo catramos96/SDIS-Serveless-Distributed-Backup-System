@@ -300,6 +300,9 @@ public class MessageHandler extends Thread
 
 					Logs.sentMessageLog(msg);
 				}
+				
+				if(sendChunkChannel != null)
+					sendChunkChannel.destroy();
 			}
 		}
 		catch (UnknownHostException e) {
