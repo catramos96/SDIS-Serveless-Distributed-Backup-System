@@ -175,7 +175,7 @@ public class Peer implements MessageRMI {
 	}
 
 	private void verifyEnhancement() {
-		if((version[0] != '1') && (version[1] != '.') && (version[2] != '0'))
+		if((version[0] == '1') && (version[1] == '.') && (version[2] == '0'))
 			enhancement = false;
 		else
 			enhancement = true;

@@ -3,6 +3,24 @@ package network;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * Class MessageRecord used to record messages received by the communication channels.
+ * Some messages records are automatic, others have to be initiated by the functions 
+ * startRecordingXXX(...).
+ * 
+ * @attribute storedMessages - Record of messages of type STORED as a HashMap<String, HashMap<Integer, ArrayList<Integer>>>
+ * where the hash String represents a file identification and the HashMap<Integer, ArrayList<Integer>> represents all the chunks
+ * associated with it. In the inner HashMap, the hash Integer represents the chunk identification number and the ArrayList the list of peers.
+ * 
+ * @attribute chunkMessages - Record of the messages of type CHUNK/GOTCHUNKENH as a HashMap<String, ArrayList<Integer>>
+ * where the hash represents the file identification and the ArrayList the list of chunks.
+ * 
+ * @attribute putchunkMessages - Record of the messages of type PUTCHUNK as a HashMap<String, ArrayList<Integer>>
+ * where the hash represents the file identification and the ArrayList the list of chunks.
+ * 
+ * @attribute initiatorMessages - Record of the messages of type INITIATOR as a HashMap<String, Integer>
+ * where the hash represents the file identification and the key the chunk identification number.
+ */
 public class MessageRecord {
 
 	private HashMap<String, HashMap<Integer, ArrayList<Integer>>> storedMessages = null;
@@ -10,6 +28,10 @@ public class MessageRecord {
 	private HashMap<String, ArrayList<Integer>> putchunkMessages = null;
 	private HashMap<String, Integer> initiatorMessages = null;
 
+	/**
+	 * Constructor of the MessageRecord.
+	 * Initializes all the attributes with default values.
+	 */
 	public MessageRecord(){
 		storedMessages = new HashMap<String, HashMap<Integer, ArrayList<Integer>>>();	//apriori before store
 		chunkMessages = new HashMap<String, ArrayList<Integer>>();						
@@ -20,16 +42,20 @@ public class MessageRecord {
 	/*
 	 * Start Recording
 	 */
-	
-	public void startRecordingChunks(String fileNo){
-		chunkMessages.put(fileNo, new ArrayList<Integer>());
-	}
-	
+		
+	/**
+	 * Function that starts recording the putchunkMessages of a certain file.
+	 * @param fileNo - File identification
+	 */
 	public void startRecordingPutchunks(String fileNo){
 		ArrayList<Integer> tmp = new ArrayList<Integer>();
 		putchunkMessages.put(fileNo, tmp);
 	}
 	
+	/**
+	 * Function that start recording the initiatorMessages of a certain file.
+	 * @param fileId - File identification
+	 */
 	public void startRecordingInitiators(String fileId){
 		initiatorMessages.put(fileId, null);
 	}
@@ -38,6 +64,13 @@ public class MessageRecord {
 	 * ADDS
 	 */
 
+	/**
+	 * Function that adds a store message to the record. It doesn't add if it already exists
+	 * a record for that sender peer.
+	 * @param fileNo - File identification
+	 * @param chunkNo - Chunk identification number
+	 * @param sender - Sender identification
+	 */
 	public void addStoredMessage(String fileNo, int chunkNo, Integer sender){
 		HashMap<Integer,ArrayList<Integer>> chunks = new HashMap<Integer,ArrayList<Integer>>();
 		ArrayList<Integer> peers = new ArrayList<Integer>();
@@ -56,6 +89,12 @@ public class MessageRecord {
 		storedMessages.put(fileNo, chunks);
 	}
 
+	/**
+	 * Function that adds a chunk message record. It doesn't add if it already exists
+	 * a record for that sender peer.
+	 * @param fileNo - File identification
+	 * @param chunkNo - Chunk identification number
+	 */
 	public void addChunkMessage(String fileNo, int chunkNo){
 		ArrayList<Integer> chunks = new ArrayList<Integer>();
 
@@ -69,6 +108,12 @@ public class MessageRecord {
 		chunkMessages.put(fileNo, chunks);
 	}
 
+	/**
+	 * Function that adds a putchunk message record. It will only be added if
+	 * the record was started previously for this type of message with this fileNo.
+	 * @param fileNo - File identification
+	 * @param chunkNo - Chunk identification
+	 */
 	public void addPutchunkMessage(String fileNo, int chunkNo){
 
 		if(putchunkMessages.containsKey(fileNo)){
@@ -83,6 +128,12 @@ public class MessageRecord {
 		}
 	}
 	
+	/**
+	 * Function that adds a initiator message record. It will only be added if
+	 * the record was started previously for this type of message with this fileNo.
+	 * @param fileId
+	 * @param senderId
+	 */
 	public void addInitiatorMessage(String fileId, int senderId){
 		if(initiatorMessages.containsKey(fileId))
 			initiatorMessages.put(fileId, senderId);
@@ -92,6 +143,13 @@ public class MessageRecord {
 	 * CONTAINS
 	 */
 
+	/**
+	 * Function that checks if it has a record in the stored messages for
+	 * that fileNo and chunkNo.
+	 * @param fileNo - File identification
+	 * @param chunkNo - Chunk identification number
+	 * @return True if it has, False otherwise
+	 */
 	public boolean receivedStoredMessage(String fileNo,int chunkNo){
 		if(storedMessages.containsKey(fileNo))
 			if(storedMessages.get(fileNo).containsKey(chunkNo))
@@ -99,6 +157,13 @@ public class MessageRecord {
 		return false;
 	}
 
+	/**
+	 * Function that checks if it has a record in the chunk messages for
+	 * that fileNo and chunkNo.
+	 * @param fileNo - File identification
+	 * @param chunkNo - Chunk identification number
+	 * @return True if it has, False otherwise
+	 */
 	public boolean receivedChunkMessage(String fileNo, int chunkNo){
 		if(chunkMessages.containsKey(fileNo))
 			if(chunkMessages.get(fileNo).contains(chunkNo))
@@ -106,6 +171,13 @@ public class MessageRecord {
 		return false;
 	}
 
+	/**
+	 * Function that checks if it has a record in the putchunk messages for
+	 * that fileNo and chunkNo.
+	 * @param fileNo - File identification
+	 * @param chunkNo - Chunk identification number
+	 * @return True if it has, False otherwise
+	 */
 	public boolean receivedPutchunkMessage(String fileNo, int chunkNo){
 		if(putchunkMessages.containsKey(fileNo))
 			if(putchunkMessages.get(fileNo).contains(chunkNo))
@@ -113,6 +185,12 @@ public class MessageRecord {
 		return false;
 	}
 	
+	/**
+	 * Function that checks if it has a record in the initiator messages for
+	 * that fileNo.
+	 * @param fileNo - File identification
+	 * @return True if it has, False otherwise
+	 */
 	public boolean receivedInitiatorMessage(String fileNo){
 		if(initiatorMessages.get(fileNo) != null)
 			return true;
@@ -122,7 +200,13 @@ public class MessageRecord {
 	/*
 	 * REMOVE RECORD
 	 */
-
+	
+	/**
+	 * Function that removes from the stored record, the entry with that
+	 * fileNo and chunkNo.
+	 * @param fileNo - File identification
+	 * @param chunkNo - Chunk identification number
+	 */
 	public void removeStoredMessages(String fileNo, int chunkNo){
 		if(receivedStoredMessage(fileNo,chunkNo)){
 			HashMap<Integer,ArrayList<Integer>> chunks = storedMessages.get(fileNo);
@@ -137,12 +221,23 @@ public class MessageRecord {
 		}
 	}
 
+	/**
+	 * Function that removes from the chunk record, the entry with that
+	 * fileNo.
+	 * @param fileNo - File identification
+	 */
 	public void removeChunkMessages(String fileNo){
 		if(chunkMessages.containsKey(fileNo)){
 			chunkMessages.remove(fileNo);
 		}
 	}
 
+	/**
+	 * Function that removes from the putchunk record, the entry with that
+	 * fileNo and chunkNo.
+	 * @param fileNo - File identification
+	 * @param chunkNo - Chunk identification number
+	 */
 	public void removePutChunkMessages(String fileNo, int chunkNo){
 		if(putchunkMessages.containsKey(fileNo))
 		{
@@ -155,11 +250,19 @@ public class MessageRecord {
 		}
 	}
 
+	/**
+	 * Function that resets the chunk record with the fileId entry.
+	 * @param fileNo - File identification
+	 */
 	public void resetChunkMessages(String fileId) 
 	{
 		chunkMessages.remove(fileId);
 	}
 	
+	/**
+	 * Function that resets the initiator record with the fileId entry.
+	 * @param fileNo - File identification
+	 */
 	public void resetInitiatorMessages(String fileId) 
 	{
 		initiatorMessages.remove(fileId);
@@ -168,7 +271,13 @@ public class MessageRecord {
 	/*
 	 * GETS
 	 */
-
+	/**
+	 * Function that gets the list of peers that are recorded in the stored messages for
+	 * that fileNo and chunkNo. If there are no peers, it will return NULL.
+	 * @param fileNo - File identification
+	 * @param chunkNo - Chunk identification number
+	 * @return List of peers or Null in case there are any.
+	 */
 	public synchronized ArrayList<Integer> getPeersWithChunk(String fileNo, int chunkNo){
 
 		if(receivedStoredMessage(fileNo, chunkNo)){

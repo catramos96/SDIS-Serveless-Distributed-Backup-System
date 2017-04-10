@@ -10,6 +10,13 @@ import java.net.SocketException;
 import peer.Peer;
 import resources.Util;
 
+/**
+ * Class DatagramListener used for peers private communication channels.
+ * @attribute DatagramSocket socket - Represents the socket used for receiving and sending messages.
+ * @attribute InetAddress address - Represents the peer local address
+ * @attribute boolean running - True if it stills active, False otherwise.
+ * @attribute Peer peer - Peer that uses the channel.
+ */
 public class DatagramListener extends Thread{
 	
 	private DatagramSocket socket = null;
@@ -17,6 +24,11 @@ public class DatagramListener extends Thread{
 	private boolean running = false;
 	private Peer peer = null;
 	
+	/**
+	 * Constructor of the DatagramListener
+	 * @param address
+	 * @param peer
+	 */
 	public DatagramListener(InetAddress address,Peer peer){
 		this.address = address;
 		this.peer = peer;
@@ -29,8 +41,10 @@ public class DatagramListener extends Thread{
 	}
 	
 	/**
-	 * Send message 
+	 * Function that sends a message to the peer in destination address2:port2
 	 * @param message
+	 * @param address2
+	 * @param port2
 	 */
 	public void send(Message message, InetAddress address2, int port2)
 	{
@@ -46,8 +60,8 @@ public class DatagramListener extends Thread{
 	}
 	
 	/**
-	 * receive message
-	 * @return
+	 * Function that receives a message
+	 * @return Message content
 	 */
 	public byte[] receive()
 	{
@@ -63,6 +77,9 @@ public class DatagramListener extends Thread{
 		return packet.getData();
 	}
 	
+	/**
+	 * 
+	 */
 	public void run(){
 		
 		running = true;
@@ -76,13 +93,19 @@ public class DatagramListener extends Thread{
 	
 		//close connection
 		socket.close();
-		
 	}
 	
+	/**
+	 * Function that exists the thread
+	 */
 	public void destroy(){
 		running = false;
 	}
 	
+	/**
+	 * Function that gets the port associated with the socket
+	 * @return Port
+	 */
 	public int getPort(){
 		return socket.getLocalPort();
 	}

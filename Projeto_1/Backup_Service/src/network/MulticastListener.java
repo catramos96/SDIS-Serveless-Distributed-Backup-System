@@ -8,8 +8,14 @@ import resources.Util;
 
 import peer.Peer;
 
-/*
- * Class that create the multicast socket and send/receive the messages
+/**
+ * Class MulticastListener used for peers to communicate in multicast channels.
+ * 
+ * @attribute MulticastSocket socket - Represents the socket used for receiving and sending messages.
+ * @attribute InetAddress address - Represents the multicast address.
+ * @attribute int port - Represents the port of the multicast channel.
+ *  * @attribute boolean running - True if it stills active, False otherwise.
+ * @attribute Peer peer - Peer that uses the channel.
  */
 public class MulticastListener extends Thread
 {
@@ -20,7 +26,7 @@ public class MulticastListener extends Thread
 	protected Peer peer = null;
 
 	/**
-	 * 
+	 * Constructor for the MulticastListener
 	 * @param address
 	 * @param port
 	 * @param peer
@@ -33,6 +39,7 @@ public class MulticastListener extends Thread
 	}
 	
 	/**
+	 * Function that sends a message to the multicast channel.
 	 * Send message 
 	 * @param message
 	 */
@@ -52,8 +59,8 @@ public class MulticastListener extends Thread
 	}
 	
 	/**
-	 * receive message
-	 * @return
+	 * Function that receives a message.
+	 * @return Message content
 	 */
 	public byte[] receive()
 	{
@@ -72,6 +79,9 @@ public class MulticastListener extends Thread
 		return packet.getData();
 	}
 
+	/**
+	 * 
+	 */
 	@Override
 	public void run() 
 	{	

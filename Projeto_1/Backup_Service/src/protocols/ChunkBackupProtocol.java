@@ -44,6 +44,9 @@ public class ChunkBackupProtocol extends Protocol{
 		while(rep < Util.MAX_TRIES)	
 		{
 			Logs.tryNrStoreChunk(rep, msg.getChunkNo());
+			
+			if(msgRecord.receivedChunkMessage(fileNo, chunkNo))
+				return;
 		
 			//send message
 			mdb.send(msg);
