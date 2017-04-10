@@ -272,9 +272,16 @@ public class Peer implements MessageRMI {
 	}
 
 	/**
-	 * 
+	 * Function that adds to the scheduler the function checkChunks only if the enhancements are active.
 	 */
 	private void verifyChunks() {
+		/**
+		 * Function that gets all the chunks stored by this peer with the atual replication degree
+		 * bellow the desired and try to initiate the chunk backup protocol for each chunk after a random time,
+		 * only if, between this time, it didn't received any putchunk message for the chunk to backup.
+		 * If the chunk backup protocol was initiated for a chunk, the peer will also send a Stored
+		 * message warning the peers that himself has the chunk in backup.
+		 */
 		final Runnable checkChunks = new Runnable() {
 			public void run() {
 				Logs.checkChunks("replication degree"); 
