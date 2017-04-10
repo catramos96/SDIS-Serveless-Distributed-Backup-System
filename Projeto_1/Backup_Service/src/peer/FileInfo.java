@@ -2,6 +2,15 @@ package peer;
 
 import java.io.Serializable;
 
+/**
+ * Class responsible for saving all information about files.
+ * @attribute long serialVersionUID - serial id 
+ * @attribute String fileId - file id calculated
+ * @attribute String filename - name of the file
+ * @attribute String path - path of the file
+ * @attribute int numChunks - number of chunks create for this file
+ * @attribute int repDegree - desired replication degree for this file
+ */
 public class FileInfo implements Serializable
 {
 	private static final long serialVersionUID = 1L;
@@ -11,12 +20,24 @@ public class FileInfo implements Serializable
 	private int numChunks = -1;
 	private int repDegree = -1;
 	
+	/**
+	 * Constructor
+	 * @param fileId
+	 * @param repDegree
+	 */
 	public FileInfo(String fileId, int repDegree)
 	{
 		this.fileId = fileId;
 		this.repDegree = repDegree;
 	}
 	
+	/**
+	 * Constructor
+	 * @param fileId
+	 * @param filename
+	 * @param numChunks
+	 * @param repDegree
+	 */
 	public FileInfo(String fileId, String filename, int numChunks,int repDegree)
 	{
 		this.fileId = fileId;
@@ -29,6 +50,9 @@ public class FileInfo implements Serializable
 		this.repDegree = repDegree;
 	}
 
+	/*
+	 * Gets and sets
+	 */
 	public int getNumChunks() {
 		return numChunks;
 	}

@@ -5,8 +5,16 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import resources.Logs;
 
+/**
+ * Server application for communication with the clients
+ */
 public class BackupSystem 
 {
+	/**
+	 * Server execution
+	 * @param args
+	 * @throws IOException
+	 */
 	public static void main(String[] args) throws IOException
 	{		
 		if(args.length != 6)
@@ -40,6 +48,7 @@ public class BackupSystem
 				parts[0] = InetAddress.getLocalHost().getHostName();
 			} 
 			catch (UnknownHostException e) {
+				Logs.exception("addressVerification", "BackupSystem", e.toString());
 				e.printStackTrace();
 			}
 			parts[1] = parts_ap[0];
@@ -49,6 +58,5 @@ public class BackupSystem
 
 		return parts;
 	}
-
 
 }

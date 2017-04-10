@@ -91,6 +91,14 @@ public class Logs {
 	public static void chunkAlreadyExists(){
 		System.out.println("Chunk Already Exists");
 	}
+	
+	/*
+	 * Directory
+	 */
+	public static void creatingDir(String string) {
+		System.out.println("Creating directory "+ string);
+	}
+	
 	/*
 	 * Protocols
 	 */
@@ -136,5 +144,25 @@ public class Logs {
 	
 	public static void enter(){
 		System.out.println("Press ENTER to exit...");
+	}
+	
+	/*
+	 * Server
+	 */
+
+	public static void rmiReady() {
+		System.out.println("Server ready!");
+	}
+
+	public static void updated(String string) {
+		System.out.println("Chunks "+string+" updated");
+	}
+
+	public static void serializeWarn(String string, int ID) {
+		System.out.println("Serialized data "+string+" peersDisk/peer"+ID+"/record.ser");
+	}
+
+	public static void checkChunks(String string) {
+		System.out.println("Check chunks "+string+"...");
 	}
 }

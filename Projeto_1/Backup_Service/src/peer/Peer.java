@@ -32,6 +32,19 @@ import resources.Logs;
 import resources.Util;
 import resources.Util.MessageType;
 
+/**
+ * Class responsible for the peer. 
+ * @attribute int ID - peerId
+ * @attribute char[] version - protocol version used
+ * @attribute boolean enhancement - result from the observation of the protocol version used
+ * @attribute MulticastListener mc - multicast general channel
+ * @attribute MulticastListener mdb - multicast data backup channel
+ * @attribute MulticastListener mdr -  multicast data restore channel
+ * @attribute MessageRecord msgRecord - record specific messages captured by the multicast channels 
+ * @attribute FileManager fileManager - responsible for all the interactions with the disk
+ * @attribute Record record - responsible for mapping chunks (metadata)
+ * @attribute ScheduledExecutorService scheduler - execute scheduled runnables 
+ */
 public class Peer implements MessageRMI {
 
 	/*informations*/
@@ -57,7 +70,14 @@ public class Peer implements MessageRMI {
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
 
 	/**
-	 * Create peer
+	 * Constructor. 
+	 * Check if this peer will execute the enhancements;
+	 * Loads metadata, if any; 
+	 * Initializes variables like : MessageRecord, FileManager, multicasts;
+	 * Initializes RMI;
+	 * If enhancement, verifies if there is any chunk stored that was deleted when server was down;
+	 * Verifies if exists chunks stored with actual replication degree lower than desired;
+	 * Schedule metadata saving and verification of replication degrees.
 	 * @param protocolVs
 	 * @param id
 	 * @param access_point
@@ -84,28 +104,24 @@ public class Peer implements MessageRMI {
 		//init multicasts
 		initMulticasts(mc_ap, mdb_ap, mdr_ap);
 
-		//save metadata in 30s intervals
-
-		saveMetadata();
-
+		//Enhancement of Delete Protocol
 		if(enhancement)
-		{
-			//Enhancement of Delete Protocol
 			verifyDeletions();
-		}
-		
+
 		//Enhancement of Reclaim Protocol
 		verifyChunks();
+
+		//save metadata in 30s intervals
+		saveMetadata();
 
 		//save metadata when shouts down
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {
 				try {
-					System.out.println("Shouting down ...");
 					Thread.sleep(200);
 					saveRecord();
 				} catch (InterruptedException e) {
-					System.err.println("Server exception: " + e.toString());
+					Logs.exception("addShutdownHook", "Peer", e.toString());
 					e.printStackTrace();
 				}
 			}
@@ -113,100 +129,69 @@ public class Peer implements MessageRMI {
 	}
 
 	/**
-	 * 
+	 * If the version is '1''.''0', this peer dont execute enhancements.
+	 * Otherwise, execute enhancements.
 	 */
-	private void verifyDeletions() 
-	{
-		HashMap<String, ArrayList<Chunk>> myChunks = record.getMyChunks();
-		
-		//list of service that my thread need to wait for
-		ArrayList<DeleteEnhancementProtocol> subprotocols = new ArrayList<>();
-		
-		for(Entry<String, ArrayList<Chunk>> s : myChunks.entrySet())
-		{
-			Message msg = new Message(MessageType.GETINITIATOR,version,ID,s.getKey());
-			DeleteEnhancementProtocol dep = new DeleteEnhancementProtocol(this, msg);
-			dep.start();
-			
-			subprotocols.add(dep);
-		}	
-		//wait for all threads to finish
-		for (DeleteEnhancementProtocol dep : subprotocols)
-		{
-			try {
-				dep.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		System.out.println("Chunks updated");
-	}
-
-	private void verifyChunks() {
-		final Runnable checkChunks = new Runnable() {
-			public void run() {
-				System.out.println("Check Chunks Replication..."); 
-				ArrayList<Chunk> chunks = record.getChunksWithRepBellowDes();
-				
-				for(Chunk c : chunks){
-					
-					msgRecord.removePutChunkMessages(c.getFileId(), c.getChunkNo());
-					msgRecord.startRecordingPutchunks(c.getFileId());
-					
-					Util.randomDelay();
-					
-					if(!msgRecord.receivedPutchunkMessage(c.getFileId(), c.getChunkNo())){
-						
-						byte[] data = fileManager.getChunkContent(c.getFileId(), c.getChunkNo());
-						Message msg = new Message(MessageType.PUTCHUNK,version,ID,c.getFileId(),c.getChunkNo(),c.getReplicationDeg(),data);
-						new ChunkBackupProtocol(mdb, msgRecord, msg).start();
-						
-						//Warns the peers that it also has the chunk
-						msg = new Message(MessageType.STORED,version,ID,c.getFileId(),c.getChunkNo());
-						mc.send(msg);
-					}
-				}
-			}
-		};
-		
-		if(enhancement)
-			scheduler.scheduleAtFixedRate(checkChunks, 30, 30, TimeUnit.SECONDS);
-	}
-
 	private void verifyEnhancement() {
 		if((version[0] == '1') && (version[1] == '.') && (version[2] == '0'))
 			enhancement = false;
 		else
 			enhancement = true;
 	}
+	
+	/**
+	 * Record Object deserialization
+	 */
+	public synchronized void loadRecord() {
 
-	private void saveMetadata() {
-		final Runnable saveMetadata = new Runnable() {
-			public void run() {
-				System.out.println("Saving Metadata..."); 
-				saveRecord();
+		record = new Record();
+
+		File recordFile = new File("../peersDisk/peer"+ID+"/record.ser");
+
+		//file can be loaded
+		if(recordFile.exists())
+		{
+			try 
+			{
+				FileInputStream fileIn = new FileInputStream("../peersDisk/peer"+ID+"/record.ser");
+				ObjectInputStream in  = new ObjectInputStream(fileIn);
+				record = (Record) in.readObject();
+				in.close();
+				fileIn.close();
+
+				Logs.serializeWarn("loaded from",ID);
+			} 
+			catch (FileNotFoundException e) {
+				Logs.exception("loadRecord", "Peer", e.toString());
+				e.printStackTrace();
 			}
-		};
-		scheduler.scheduleAtFixedRate(saveMetadata, 30, 30, TimeUnit.SECONDS);
+			catch (IOException e) {
+				Logs.exception("loadRecord", "Peer", e.toString());
+				e.printStackTrace();
+			}
+			catch (ClassNotFoundException e) {
+				Logs.exception("loadRecord", "Peer", e.toString());
+				e.printStackTrace();
+			}
+		}
 	}
 
-	/*
-	 * Init rmi for client communication
+	/**
+	 * Init RMI for client communication
+	 * @param remoteObjectName
 	 */
 	private void initRMI(String remoteObjectName) 
 	{
 		try {
 			MessageRMI stub = (MessageRMI) UnicastRemoteObject.exportObject(this, 0);
 			LocateRegistry.getRegistry().rebind(remoteObjectName, stub);
-
-			System.out.println("Server ready!");
+			Logs.rmiReady();
 		} catch (Exception e) {
-			System.err.println("Server exception: AAA " + e.toString());
+			Logs.exception("initRMI", "Peer", e.toString());
 			e.printStackTrace();
 		}
 	}
-
+	
 	/**
 	 * Initiate the 3 multicasts
 	 * @param mc_ap
@@ -235,19 +220,105 @@ public class Peer implements MessageRMI {
 			address = InetAddress.getByName(mdr_ap[0]);
 			port = Integer.parseInt(mdr_ap[1]);
 			mdr = new MulticastListener(address,port,this);		
-			
-			//inicializacao dos channels
+
+			//channels execution
 			mc.start();
 			mdb.start();
 			mdr.start();
 		} 
 		catch (IOException e)
 		{
-			System.err.println("Server exception: " + e.toString());
+			Logs.exception("initMulticasts", "Peer", e.toString());
 			e.printStackTrace();
 		}
 	}
+	
+	/**
+	 * When the peer starts, and the protocol permits enhancements, it must verify if it missed some 'DELETE'
+	 * message. If that happen, this peer will have chunks that will never be reclaimed. 
+	 * To avoid that situation, the peer sent a 'GETINITIATOR' message for each file stored. If the peer,
+	 * after a waiting time, received a 'INITIATOR' message for each file, it means that there was no DELETE 
+	 * message lost. Otherwise, if some file don't receive the 'INITIATOR' message, it must delete all chunks 
+	 * stored from that file.
+	 */
+	private void verifyDeletions() 
+	{
+		Logs.checkChunks("deletition"); 
+		
+		HashMap<String, ArrayList<Chunk>> myChunks = record.getMyChunks();
 
+		//list of service that my thread need to wait for
+		ArrayList<DeleteEnhancementProtocol> subprotocols = new ArrayList<>();
+
+		for(Entry<String, ArrayList<Chunk>> s : myChunks.entrySet())
+		{
+			Message msg = new Message(MessageType.GETINITIATOR,version,ID,s.getKey());
+			DeleteEnhancementProtocol dep = new DeleteEnhancementProtocol(this, msg);
+			dep.start();
+
+			subprotocols.add(dep);
+		}	
+		//wait for all threads to finish
+		for (DeleteEnhancementProtocol dep : subprotocols)
+		{
+			try {
+				dep.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
+		Logs.updated("deletition");
+	}
+
+	/**
+	 * 
+	 */
+	private void verifyChunks() {
+		final Runnable checkChunks = new Runnable() {
+			public void run() {
+				Logs.checkChunks("replication degree"); 
+				ArrayList<Chunk> chunks = record.getChunksWithRepBellowDes();
+
+				for(Chunk c : chunks){
+
+					msgRecord.removePutChunkMessages(c.getFileId(), c.getChunkNo());
+					msgRecord.startRecordingPutchunks(c.getFileId());
+
+					Util.randomDelay();
+
+					if(!msgRecord.receivedPutchunkMessage(c.getFileId(), c.getChunkNo())){
+
+						byte[] data = fileManager.getChunkContent(c.getFileId(), c.getChunkNo());
+						Message msg = new Message(MessageType.PUTCHUNK,version,ID,c.getFileId(),c.getChunkNo(),c.getReplicationDeg(),data);
+						new ChunkBackupProtocol(mdb, msgRecord, msg).start();
+
+						//Warns the peers that it also has the chunk
+						msg = new Message(MessageType.STORED,version,ID,c.getFileId(),c.getChunkNo());
+						mc.send(msg);
+					}
+				}
+			}
+		};
+
+		if(enhancement)
+			scheduler.scheduleAtFixedRate(checkChunks, 30, 30, TimeUnit.SECONDS);
+		
+		Logs.updated("replication degree");
+	}
+
+	/**
+	 * Runnable executed in 90s interval to save metadata, preventing mapping lost if the server crashes. 
+	 */
+	private void saveMetadata() {
+		final Runnable saveMetadata = new Runnable() {
+			public void run() { 
+				saveRecord();
+			}
+		};
+		scheduler.scheduleAtFixedRate(saveMetadata, 30, 90, TimeUnit.SECONDS);
+	}
+	
 	/**
 	 * Record Object Serialization
 	 */
@@ -263,52 +334,15 @@ public class Peer implements MessageRMI {
 			out.writeObject(record);
 			out.close();
 			fileOut.close();
-			System.out.println("Serialized data saved in peersDisk/peer"+ID+"/record.ser");
+			Logs.serializeWarn("saved in", ID);
 		}
 		catch (FileNotFoundException e) {
-			System.err.println("Server exception: " + e.toString());
+			Logs.exception("saveRecord", "Peer", e.toString());
 			e.printStackTrace();
 		}
 		catch (IOException e) {
-			System.err.println("Server exception: " + e.toString());
+			Logs.exception("saveRecord", "Peer", e.toString());
 			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * Record Object deserialization
-	 */
-	public synchronized void loadRecord() {
-
-		record = new Record();
-
-		File recordFile = new File("../peersDisk/peer"+ID+"/record.ser");
-
-		//file can be loaded
-		if(recordFile.exists())
-		{
-			try 
-			{
-				FileInputStream fileIn = new FileInputStream("../peersDisk/peer"+ID+"/record.ser");
-				ObjectInputStream in  = new ObjectInputStream(fileIn);
-				record = (Record) in.readObject();
-				in.close();
-				fileIn.close();
-
-				System.out.println("Serialized data loaded from peersDisk/peer"+ID+"/record.ser");
-			} 
-			catch (FileNotFoundException e) {
-				System.err.println("Server exception: " + e.toString());
-				e.printStackTrace();
-			}
-			catch (IOException e) {
-				System.err.println("Server exception: " + e.toString());
-				e.printStackTrace();
-			}
-			catch (ClassNotFoundException e) {
-				System.err.println("Server exception: " + e.toString());
-				e.printStackTrace();
-			}
 		}
 	}
 
@@ -333,7 +367,7 @@ public class Peer implements MessageRMI {
 		} 
 		catch (InterruptedException e) 
 		{
-			System.err.println("Server exception: " + e.toString());
+			Logs.exception("backup", "Peer", e.toString());
 			e.printStackTrace();
 		}
 		return bt.response();
@@ -360,7 +394,7 @@ public class Peer implements MessageRMI {
 			rt.join();
 		} 
 		catch (InterruptedException e) {
-			System.err.println("Server exception: " + e.toString());
+			Logs.exception("restore", "Peer", e.toString());
 			e.printStackTrace();
 		}
 		return rt.response();
@@ -386,7 +420,7 @@ public class Peer implements MessageRMI {
 			dt.join();
 		}
 		catch (InterruptedException e) {
-			System.err.println("Server exception: " + e.toString());
+			Logs.exception("delete", "Peer", e.toString());
 			e.printStackTrace();
 		}
 
@@ -416,7 +450,7 @@ public class Peer implements MessageRMI {
 			rt.join();
 		} 
 		catch (InterruptedException e) {
-			System.err.println("Server exception: " + e.toString());
+			Logs.exception("reclaim", "Peer", e.toString());
 			e.printStackTrace();
 		}
 		return rt.response();
@@ -438,7 +472,7 @@ public class Peer implements MessageRMI {
 			st.join();
 		}
 		catch (InterruptedException e) {
-			System.err.println("Server exception: " + e.toString());
+			Logs.exception("state", "Peer", e.toString());
 			e.printStackTrace();
 		}
 		return st.response();

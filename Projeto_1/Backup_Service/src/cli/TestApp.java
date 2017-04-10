@@ -10,7 +10,7 @@ import resources.Logs;
 
 /**
  * Client application for communication with the peers
- * @attribute MessageRMI stub - Represents the rmi object used for receiving and sending messages.
+ * @attribute MessageRMI stub - Represents the RMI object used for receiving and sending messages.
  * @attribute String response - Represents the peer response to messages
  */
 public class TestApp 
@@ -18,6 +18,11 @@ public class TestApp
 	private static MessageRMI stub = null;
 	private static String response = null;
 
+	/**
+	 * Client execution
+	 * @param args
+	 * @throws IOException
+	 */
 	public static void main(String[] args) throws IOException
 	{
 		Logs.log("CLIENT");

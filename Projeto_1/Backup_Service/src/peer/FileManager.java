@@ -17,7 +17,11 @@ import javax.xml.bind.DatatypeConverter;
 import resources.Logs;
 
 /**
- * Object that handles all the interactions with the disk
+ * Class responsible for handling all the interactions with the file system.
+ * @attribute String diskDIR - actual directory of this peer
+ * @attribute int peerId - id of the peer responsible for this file system
+ * @attribute int totalSpace - space available for new chunks + space occupied by chunks
+ * @attribute int remainingSpace - space available for new chunks
  */
 public class FileManager {	
 
@@ -26,6 +30,12 @@ public class FileManager {
 	private int totalSpace = Util.DISK_SPACE_DEFAULT;
 	private int remainingSpace = Util.DISK_SPACE_DEFAULT;
 
+	/**
+	 * Constructor
+	 * @param id
+	 * @param totalSpace
+	 * @param remaingSpace
+	 */
 	FileManager(int id, int totalSpace, int remaingSpace){
 		this.peerID = id;
 		this.totalSpace = totalSpace;
@@ -57,7 +67,6 @@ public class FileManager {
 				byte[] bytes = Files.readAllBytes(file.toPath());
 				int byteCount = 0;
 
-
 				for(int i = 0; i < numChunks; i++)
 				{
 					int length = Util.CHUNK_MAX_SIZE;
@@ -81,6 +90,7 @@ public class FileManager {
 			} 
 			catch (NoSuchAlgorithmException e) 
 			{
+				Logs.exception("splitFileInChunks", "FileManager", e.toString());
 				e.printStackTrace();
 			} 
 			catch (IOException e) 
@@ -88,7 +98,6 @@ public class FileManager {
 				Logs.errorFindingFile(filename);
 				e.printStackTrace();
 			}
-
 		}
 		else
 			Logs.errorOpeningFile(filename);
@@ -110,7 +119,7 @@ public class FileManager {
 	}
 
 	/**
-	 * 
+	 * Applies sha256 functions
 	 * @param textToEncrypt
 	 * @return
 	 * @throws NoSuchAlgorithmException
@@ -124,7 +133,7 @@ public class FileManager {
 	}
 
 	/**
-	 * Save chunk in the disk
+	 * Save chunk in the disk and updates remaining space
 	 * @param c
 	 */
 	public void saveChunk(Chunk c)
@@ -139,8 +148,10 @@ public class FileManager {
 		} 
 		catch (FileNotFoundException e) 
 		{
+			Logs.exception("saveChunk", "FileManager", e.toString());
 			e.printStackTrace();
 		} catch (IOException e) {
+			Logs.exception("saveChunk", "FileManager", e.toString());
 			e.printStackTrace();
 		}
 
@@ -191,7 +202,7 @@ public class FileManager {
 			try {
 				Files.delete(file.toPath());
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
+				Logs.exception("deleteFile", "FileManager", e.toString());
 				e.printStackTrace();
 			}
 	}
@@ -216,6 +227,7 @@ public class FileManager {
 					try {
 						Files.delete(file.toPath());
 					} catch (IOException e) {
+						Logs.exception("deleteChunks", "FileManager", e.toString());
 						e.printStackTrace();
 					}
 					remainingSpace += length;
@@ -229,17 +241,20 @@ public class FileManager {
 	 */
 
 	/**
-	 * 
+	 * Calculates the space needed to release in view of the memory that client wants to reclaim.
 	 * @param newTotalSpace
 	 * @return
 	 */
 	public int memoryToRelease(int newTotalSpace){
 		int needRelease = newTotalSpace - (totalSpace - remainingSpace);
 
-		System.out.println("NewTotal Space: " + newTotalSpace);
-		System.out.println("Need release: " + needRelease);
-		System.out.println("Total space: " + totalSpace);
-		System.out.println("Remaing Space: " + remainingSpace);
+		/*
+		 * DEBUG
+		 * System.out.println("NewTotal Space: " + newTotalSpace);
+		 * System.out.println("Need release: " + needRelease);
+		 * System.out.println("Total space: " + totalSpace);
+		 * System.out.println("Remaing Space: " + remainingSpace);
+		 */
 
 		if(needRelease < 0)
 			return -needRelease;
@@ -249,7 +264,7 @@ public class FileManager {
 
 	/**
 	 * Deletes chunks until it released enough memory
-	 * It starts by deleting the chunks with the atual replication degree above
+	 * It starts by deleting the chunks with the actual replication degree above
 	 * the desired and next the normal chunks
 	 * @param chunks
 	 * @param spaceToFree
@@ -265,7 +280,7 @@ public class FileManager {
 		for(Chunk c : chunks){
 			String filename = createChunkName(c.getFileId(), c.getChunkNo());
 
-			File file = new File(filename);		//verificar se nao precisa de extencao
+			File file = new File(filename);		
 			if(file.exists()){
 				remainingSpace += file.length();	//Updates free space
 				spaceReleased += file.length();
@@ -293,12 +308,15 @@ public class FileManager {
 
 				String filename = file.getName();
 				
-				/*String fileId = filename.substring(1,filename.length());
-				Integer chunkNo = Integer.parseInt(filename.substring(0,1));
-				System.out.println("FILEID: " + fileId);
-				System.out.println("CHUNKNO: " + chunkNo);
-				System.out.println("SPACE RELEASED: " + spaceReleased);
-				System.out.println("SPACE TO FREE: " + spaceToFree);*/
+				/*
+				 * DEBUG
+				 * String fileId = filename.substring(1,filename.length());
+				 * Integer chunkNo = Integer.parseInt(filename.substring(0,1));
+				 * System.out.println("FILEID: " + fileId);
+				 * System.out.println("CHUNKNO: " + chunkNo);
+				 * System.out.println("SPACE RELEASED: " + spaceReleased);
+				 * System.out.println("SPACE TO FREE: " + spaceToFree);
+				 */
 
 				chunksDeleted.add(filename); //chunkNo + fileId
 				file.delete();
@@ -306,15 +324,19 @@ public class FileManager {
 				if(spaceReleased >=  spaceToFree)
 					break;
 			}	
-
 			return chunksDeleted;
 		}
-
 		return chunksDeleted;
 	}
 
 	/*
 	 * Gets e Sets
+	 */
+	
+	/**
+	 * Calculates fileId from filename
+	 * @param filename
+	 * @return
 	 */
 	public String getFileIdFromFilename(String filename)
 	{
@@ -329,6 +351,11 @@ public class FileManager {
 		return null;
 	}
 
+	/**
+	 * Calculates number of chunks from filename
+	 * @param filename
+	 * @return
+	 */
 	public int getFileNumChunks(String filename)
 	{
 		File file = new File(filename);
@@ -339,6 +366,12 @@ public class FileManager {
 		return -1;
 	}
 
+	/**
+	 * Search at the file System for the chunk with the pair (ChunkNo, FileId) and retrieve its content.
+	 * @param fileNo
+	 * @param chunkNo
+	 * @return
+	 */
 	public byte[] getChunkContent(String fileNo,int chunkNo)
 	{
 		String chunkName = createChunkName(fileNo,chunkNo);
@@ -353,112 +386,162 @@ public class FileManager {
 				in.read(data);
 				in.close();
 			} catch (FileNotFoundException e) {
+				Logs.exception("getChunkContent", "FileManager", e.toString());
 				e.printStackTrace();
 			} catch (IOException e) {
+				Logs.exception("getChunkContent", "FileManager", e.toString());
 				e.printStackTrace();
 			}
 		}
 		return data;
 	}
 
-	public int getTotalSpace(){
-		return totalSpace;
-	}
-
-	public int getRemainingSpace(){
-		return this.remainingSpace;
-	}
-
+	/**
+	 * Receiving a new TotalSpace, calculates the new RemainingSpace and updates this 2 values.
+	 * @param NewSpace
+	 */
 	public void setTotalSpace(int NewSpace){
-
 		int spaceInUse = totalSpace - remainingSpace;
 
 		remainingSpace = NewSpace - spaceInUse;
-
 		totalSpace = NewSpace;
 
 		if(remainingSpace < 0)
 			remainingSpace = totalSpace;
 	}
 
-	public File[] getFilesFromDirectory(String dirName)
-	{
+	/**
+	 * List all files from a directory
+	 * @param dirName
+	 * @return
+	 */
+	public File[] getFilesFromDirectory(String dirName){
 		File dir = new File(dirName);
-		if(dir.exists() && dir.isDirectory())
+		if(dirExists(dir))
 		{
 			return dir.listFiles();
 		}
 		return null;
 	}
 
+	/**
+	 * True if a file exists and its a file. False otherwise.
+	 * @param file
+	 * @return
+	 */
 	public boolean fileExists(File file){
 		return file.exists() && file.isFile();
+	}
+	
+	/**
+	 * True if a directory exists. False otherwise.
+	 * @param file
+	 * @return
+	 */
+	public boolean dirExists(File dir){
+		return dir.exists() && dir.isDirectory();
 	}
 
 	/*
 	 * OTHERS
 	 */
 
+	/**
+	 * Given a chunk, verifies if the file System has space to create a new File with the chunk's data.
+	 * @param c
+	 * @return
+	 */
 	public boolean hasSpaceAvailable(Chunk c){
 		return (c.getData().length <= remainingSpace);
 	}
 
-	private String createChunkName(String fileNo, int chunkNo)
-	{
+	/**
+	 * Create path for a new chunk
+	 * @param fileNo
+	 * @param chunkNo
+	 * @return
+	 */
+	private String createChunkName(String fileNo, int chunkNo){
 		return new String(diskDIR + Util.CHUNKS_DIR + chunkNo+ fileNo);
 	}
 	
-	private void checkDirectories(){
-		System.out.println("PEERID" + peerID);
+	/**
+	 * Create new directories for restores, chunks and local files of the peer.
+	 */
+	private void checkDirectories()
+	{
+		//init peer
+		Logs.log("PEERID" + peerID);
 
+		//init directories
 		File dir = new File(new String(diskDIR));
-		if(!(dir.exists() && dir.isDirectory()))
+		if(!dirExists(dir))
 		{
 			dir.mkdir();
 		}
 
+		//peer directory name
 		diskDIR += "Peer"+ peerID;
-		System.out.println(diskDIR);
-
 		dir = new File(new String(diskDIR));
-		if(!(dir.exists() && dir.isDirectory()))
+		if(!dirExists(dir))
 		{
-			System.out.println("CRIAR DISK PEER");
+			Logs.creatingDir(diskDIR);
 			dir.mkdir();
 		}
 
-		dir = new File(new String(diskDIR + Util.CHUNKS_DIR));
-		System.out.println(diskDIR + Util.CHUNKS_DIR);
-		if(!(dir.exists() && dir.isDirectory()))
+		//chunk directory name
+		String name = diskDIR + Util.CHUNKS_DIR;
+		dir = new File(new String(name));
+		if(!dirExists(dir))
 		{
-			System.out.println("CRIAR DISK CHUNKS");
+			Logs.creatingDir(name);
 			dir.mkdir();
 		}
 
-		dir = new File(new String(diskDIR + Util.RESTORES_DIR));
-		System.out.println(diskDIR + Util.RESTORES_DIR);
-		if(!(dir.exists() && dir.isDirectory()))
+		//restore directory name
+		name = diskDIR + Util.RESTORES_DIR;
+		dir = new File(new String(name));
+		if(!dirExists(dir))
 		{
-			System.out.println("CRIAR DISK RESTORE");
+			Logs.creatingDir(name);
 			dir.mkdir();
 		}
 
-		dir = new File(new String(diskDIR + Util.LOCAL_DIR));
-		System.out.println(diskDIR + Util.LOCAL_DIR);
-		if(!(dir.exists() && dir.isDirectory()))
+		//local files directory name
+		name = diskDIR + Util.LOCAL_DIR;
+		dir = new File(new String(name));
+		if(!dirExists(dir))
 		{
-			System.out.println("CRIAR DISK LOCAL");
+			Logs.creatingDir(name);
 			dir.mkdir();
 		}
 	}
 
-	public String checkPath(String path)
+	/**
+	 * Check if the given name is a path. 
+	 * If the name is not a path, we assume that this file belongs to the local files of the disk.
+	 * @param path
+	 * @return
+	 */
+	public String checkPath(String name)
 	{
-		String[] parts = path.split("/+");
+		String[] parts = name.split("/+");
 
 		if(parts.length == 1)
-			return new String(diskDIR + Util.LOCAL_DIR + path);
+			return new String(diskDIR + Util.LOCAL_DIR + name);
 
-		return path;
+		return name;
+	}
+	
+	/*
+	 * Gets and sets
+	 */
+	
+	public int getTotalSpace(){
+		return totalSpace;
+	}
+
+	public int getRemainingSpace(){
+		return this.remainingSpace;
 	}
 }
