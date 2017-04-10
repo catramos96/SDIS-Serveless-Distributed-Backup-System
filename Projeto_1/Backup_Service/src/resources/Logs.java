@@ -276,19 +276,34 @@ public class Logs {
 	 * Server
 	 */
 
+	/**
+	 * Function that display the state of the server for communications
+	 */
 	public static void rmiReady() {
 		System.out.println("Server ready!");
 	}
 
+	/**
+	 * Function that displays the message 'updated' after updating services. 
+	 * @param string
+	 */
 	public static void updated(String string) {
 		System.out.println("Chunks "+string+" updated");
 	}
 
+	/**
+	 * Function that displays the local where the serialized object was loaded or saved. 
+	 * @param string
+	 */
 	public static void serializeWarn(String string, int ID) {
 		System.out.println("Serialized data "+string+" peersDisk/peer"+ID+"/record.ser");
 	}
 
+	/**
+	 * Function that displays the information of server state
+	 * @param string
+	 */
 	public static void checkChunks(String string) {
-		System.out.println("Check chunks "+string+"...");
+		System.out.println("Checking chunks "+string+"...");
 	}
 }
