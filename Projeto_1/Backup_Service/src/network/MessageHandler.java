@@ -196,7 +196,6 @@ public class MessageHandler extends Thread
 					peer.getRecord().setPeersOnMyChunk(fileId, chunkNo, peersWithChunk);
 					peer.getRecord().addPeerOnMyChunk(fileId, chunkNo, peer.getID());
 
-					//System.out.println("CHUNK " + chunkNo + " REPLICATION: " + (int)(rep+1) + " DESIRED: " + repDeg);	
 				}
 				else {
 					//only keeps the ones referred
@@ -242,10 +241,6 @@ public class MessageHandler extends Thread
 
 		//Updates the Replication Degree if the peer has the chunk
 		peer.getRecord().addPeerOnMyChunk(fileId,chunkNo,senderId);
-
-		Chunk c = peer.getRecord().getMyChunk(fileId, chunkNo);
-		if(c != null)
-			System.out.println("STORE CHUNK " + c.getChunkNo() + " REP " + c.getAtualRepDeg() + " DES " + c.getReplicationDeg());
 
 		//Record the storedChunks in case the peer is the OWNER of the backup file
 		peer.getRecord().recordStoredChunk(fileId, chunkNo, senderId);
@@ -305,6 +300,9 @@ public class MessageHandler extends Thread
 
 					Logs.sentMessageLog(msg);
 				}
+				
+				if(sendChunkChannel != null)
+					sendChunkChannel.destroy();
 			}
 		}
 		catch (UnknownHostException e) {

@@ -72,7 +72,7 @@ public class Message
 	public Message(Util.MessageType type, char[] version, int senderId, String fileId, int chunkNo, int replicationDeg, byte[] body)
 	{
 		if(!type.name().equals("PUTCHUNK"))
-			System.out.println("Wrong Constructor putchunk");
+			Logs.wrongMessageConstructor(type);
 		this.type = type;
 		this.version = version;
 		this.senderId = senderId;
@@ -93,7 +93,7 @@ public class Message
 	public Message(Util.MessageType type, char[] version, int senderId, String fileId, int chunkNo)
 	{
 		if(!(type.name().equals("STORED")|| type.name().equals("GETCHUNK") || type.name().equals("REMOVED") || type.name().equals("GOTCHUNKENH")))
-			System.out.println("Wrong Constructor stored/getchunk/removed");
+			Logs.wrongMessageConstructor(type);
 		this.type = type;
 		this.version = version;
 		this.senderId = senderId;
@@ -113,7 +113,7 @@ public class Message
 	public Message(Util.MessageType type, char[] version, int senderId, String fileId, int chunkNo, byte[] body)
 	{
 		if(!type.name().equals("CHUNK"))
-			System.out.println("Wrong Constructor chunk");
+			Logs.wrongMessageConstructor(type);
 		else
 		{
 			this.type = type;
@@ -134,7 +134,7 @@ public class Message
 	 */
 	public Message(Util.MessageType type, char[] version, int senderId, String fileId) {
 		if(!(type.name().equals("DELETE") || type.name().equals("GETINITIATOR") || type.name().equals("INITIATOR")))
-			System.out.println("Wrong Constructor delete/getinitiator/initiator");
+			Logs.wrongMessageConstructor(type);
 		else
 		{
 			this.type = type;
@@ -156,7 +156,7 @@ public class Message
 	 */
 	public Message(Util.MessageType type, char[] version, int senderId, String fileId, int chunkNo, String address, int port){
 		if(!type.name().equals("GETCHUNKENH"))
-			System.out.println("Wrong Constructor delete");
+			Logs.wrongMessageConstructor(type);
 		else
 		{
 			this.type = type;
