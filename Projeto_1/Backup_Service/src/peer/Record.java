@@ -11,6 +11,17 @@ import java.util.Map.Entry;
 
 import resources.Util;
 
+/**
+ * Serializable Class Record used to keep the peers state. It's loaded and saved when a peer initiate or exits.
+ * @attribute serialVerionUID - Version of the Serialization.
+ * @attribute storedConfirms - Record of peers who stored a certain chunk number of a certain file that the peer backed up(peers by chunks by file).
+ * @attribute restoreConfirms - Record of chunks content restored by file (chunks content by file).
+ * @attribute myChunks - Record of chunks by file identification that this peer stored (chunks by fileID) each chunk contains the atual replication
+ * degree and the desired one.
+ * @attribute totalMemory - Total memory in the disk of the peer for chunk backup.
+ * @attribute remaingMemory - Remaing memory in the disk of the peer for chunk backup.
+ *
+ */
 public class Record implements Serializable {
 
 	private static final long serialVersionUID = 1L;
@@ -27,6 +38,9 @@ public class Record implements Serializable {
 	public int totalMemory = Util.DISK_SPACE_DEFAULT;	//Just for loads and saves
 	public int remaingMemory = Util.DISK_SPACE_DEFAULT;
 
+	/**
+	 * Constructor of the Record
+	 */
 	public Record()
 	{
 		storedConfirms = new HashMap<FileInfo, HashMap<Integer, ArrayList<Integer>>>();
@@ -39,21 +53,20 @@ public class Record implements Serializable {
 	 */
 
 	/**
-	 * Put the fileId at the information structure.
-	 * This means that our multicastRecord it's waiting for chunks from this specific file.
-	 * @param fileNo
+	 * Function that starts recording the stores for a certain file.
+	 * @param fileNo - File identification
 	 */
 	public synchronized void startRecordStores(FileInfo file)
 	{
-		System.out.println("aqui");
 		storedConfirms.put(file, new HashMap<Integer, ArrayList<Integer>>());
 	}
 
 	/**
-	 * Save chunks from 'fileId' if 'fileId' was previously initiated
-	 * @param fileNo
-	 * @param chunkNo
-	 * @param peerNo
+	 * Function that records a new peer who stored a certain chunkNo of a certain fileId only if
+	 * the record was started previously for that file.
+	 * @param fileNo - File identification
+	 * @param chunkNo - Chunk identification number
+	 * @param peerNo - Number of the peer
 	 */
 	public synchronized void recordStoredChunk(String fileID, int chunkNo, int peerNo)
 	{
@@ -84,9 +97,9 @@ public class Record implements Serializable {
 	}
 
 	/**
-	 * Verifies if chunkNo from fileId is stored
-	 * @param fileNo
-	 * @param chunkNo
+	 * Function that gets the list of peers who stored a certain chunk of a certain file.
+	 * @param fileNo - File identification
+	 * @param chunkNo - Chunk identification number
 	 * @return List of peers who stored chunkNo of fileNo
 	 */
 	public synchronized ArrayList<Integer> checkStoredChunk(String fileId, int chunkNo)
@@ -107,8 +120,8 @@ public class Record implements Serializable {
 	}
 
 	/**
-	 * Delete some file from backup history
-	 * @param fileId
+	 * Function that deletes the entry in the storedConfirms of a file.
+	 * @param fileId - File identification
 	 */
 	public synchronized void deleteStoredFile(String fileId) { 
 
@@ -121,11 +134,12 @@ public class Record implements Serializable {
 	}
 
 	/**
-	 * ?
-	 * @param fileId
-	 * @param chunkNo
-	 * @param peerNo
-	 * @return
+	 * Function that removes a peer, if it exists, from the list of peers of the chunk of a certain file
+	 * that was backed up by this peer (storedConfirms).
+	 * @param fileId - File identification
+	 * @param chunkNo - Chunk identification number
+	 * @param peerNo - Peer who previously stored the chunk, but not anymore
+	 * @return True if the delete was a success, False otherwise
 	 */
 	public synchronized boolean deleteStored(String fileId, int chunkNo,Integer peerNo){
 		for (FileInfo fileinfo : storedConfirms.keySet()) 
@@ -167,9 +181,9 @@ public class Record implements Serializable {
 	}
 
 	/** 
-	 * Verifies if some file with this fileId started its backup from this peer. 
-	 * @param filename 
-	 * @return 
+	 * Function that verifies if some file with the given fileId started its backup from this peer. 
+	 * @param fileId - File identification
+	 * @return FileInfo - Info of the File or Null in case there where any
 	 */ 
 	public synchronized FileInfo getBackupFileInfoById(String fileId){
 		for (FileInfo fileinfo : storedConfirms.keySet()) 
@@ -182,6 +196,11 @@ public class Record implements Serializable {
 		return null;
 	}
 	
+	/**
+	 * Function that verifies if come file with the given filename started its backup from this peer.
+	 * @param filename - Name of the file
+	 * @return FileInfo - Info of the File or Null in case there where any
+	 */
 	public synchronized FileInfo getBackupFileInfoByName(String filename){
 		for (FileInfo fileinfo : storedConfirms.keySet()) 
 		{
@@ -194,14 +213,14 @@ public class Record implements Serializable {
 	}
 
 	/** 
-	 * Verifies if some file with this filename started its backup from this peer. 
-	 * @param filename 
-	 * @return 
+	 * Function that verifies if some file with the given path started its backup from this peer. 
+	 * @param path - Path of the file
+	 * @return FileInfo - Info of the File or Null in case there where any
 	 */ 
-	public synchronized FileInfo getBackupFileInfoByPath(String filename){
+	public synchronized FileInfo getBackupFileInfoByPath(String path){
 		for (FileInfo fileinfo : storedConfirms.keySet()) 
 		{
-			if(fileinfo.getPath().equals(filename))
+			if(fileinfo.getPath().equals(path))
 			{
 				return fileinfo;
 			}
@@ -214,9 +233,8 @@ public class Record implements Serializable {
 	 */
 
 	/**
-	 * Put the fileinfo at the information structure.
-	 * This means that our multicastRecord it's waiting for chunks from this specific file.
-	 * @param file
+	 * Function that starts recording the restore for a certain file.
+	 * @param fileNo - File identification
 	 */
 	public synchronized void startRecordRestores(FileInfo file)
 	{
@@ -224,10 +242,11 @@ public class Record implements Serializable {
 	}
 
 	/**
-	 * 
-	 * @param chunkNo
-	 * @param chunkBody
-	 * @return
+	 * Function that adds a new restore to the restoreConfirms.
+	 * @param fileId - File identification
+	 * @param chunkNo - Chunk identification number
+	 * @param chunkBody - Content of the chunks
+	 * @return True if it added with success, False otherwise
 	 */
 	public synchronized boolean recordRestoredChunk(String fileID, int chunkNo, byte[] chunkBody)
 	{
@@ -253,9 +272,9 @@ public class Record implements Serializable {
 	}
 
 	/**
-	 * 
-	 * @param fileId
-	 * @return
+	 * Function that gets a file information of a file in the restoreConfirms.
+	 * @param fileId - File identification
+	 * @return FileInfo - Information about the file or Null in case there where any
 	 */
 	public synchronized FileInfo getRestoredFileInfoById(String fileId) {
 		//finds file at restored file of this initiator peer
@@ -268,10 +287,10 @@ public class Record implements Serializable {
 	}
 
 	/**
-	 * 
-	 * @param fileId
-	 * @param chunkNo
-	 * @return
+	 * Function that checks if a certain chunk of a file was already restored.
+	 * @param fileId - File identification
+	 * @param chunkNo - Chunk identification number
+	 * @return True if it was already restored, False otherwise
 	 */
 	public synchronized boolean checkRestoredChunk(String fileId,int chunkNo)
 	{
@@ -287,9 +306,9 @@ public class Record implements Serializable {
 	}
 
 	/**
-	 * 
-	 * @param info
-	 * @return
+	 * Function that checks if all the chunks of a certain file where restored.
+	 * @param info - File information
+	 * @return True in case of success, False otherwise
 	 */
 	public synchronized boolean checkAllChunksRestored(FileInfo info)
 	{
@@ -304,8 +323,8 @@ public class Record implements Serializable {
 	}
 
 	/**
-	 * 
-	 * @param fileId
+	 * Function that deletes the entry in the restoredConfirms for a given fileId
+	 * @param fileId - File identification
 	 */
 	public void deleteRestoredFile(String fileId) { 
 
@@ -322,10 +341,10 @@ public class Record implements Serializable {
 	 */
 
 	/**
-	 * 
-	 * @param fileNo
-	 * @param chunkNo
-	 * @return
+	 * Function that checks if the peer has stored a certain chunk of a file.
+	 * @param fileNo - File identification
+	 * @param chunkNo - Chunk identification number
+	 * @return True in case of success, False otherwise
 	 */
 	public synchronized boolean checkMyChunk(String fileID, int chunkNo){
 		if(myChunks.containsKey(fileID))
@@ -338,6 +357,12 @@ public class Record implements Serializable {
 		return false;
 	}
 
+	/**
+	 * Function that adds a new chunk record to my chunks.
+	 * @param fileNo - File identification
+	 * @param chunkNo - Chunk identification number
+	 * @param repDegree - Desired replication degree
+	 */
 	public synchronized void addToMyChunks(String fileNo, int chunkNo, int repDegree){
 
 		Chunk c = new Chunk(fileNo,chunkNo,repDegree);
@@ -352,6 +377,12 @@ public class Record implements Serializable {
 		myChunks.put(fileNo,chunks);
 	}
 
+	/**
+	 * Function that sets the list of peers in a certain chunk of a file in the MyChunks.
+	 * @param fileNo - File identification
+	 * @param chunkNo - Chunk identification number
+	 * @param peers - List of peers
+	 */
 	public synchronized void setPeersOnMyChunk(String fileNo, int chunkNo, ArrayList<Integer> peers){
 		if(peers == null)
 			return;
@@ -369,6 +400,12 @@ public class Record implements Serializable {
 		}
 	}
 
+	/**
+	 * Function that adds a new peer to the list of peers in a chunk of a file in myChunks.
+	 * @param fileNo - File identification
+	 * @param chunkNo - Chunk identification number
+	 * @param peerNo - Peer identification
+	 */
 	public synchronized void addPeerOnMyChunk(String fileNo, int chunkNo, int peerNo){
 		if(myChunks.containsKey(fileNo)){
 			ArrayList<Chunk>chunks = myChunks.get(fileNo);
@@ -380,8 +417,12 @@ public class Record implements Serializable {
 		}
 	}
 
-	/*
-	 * Returns the difference between the ActualReDeg and the RepDegDesired
+	/**
+	 * Function that removes a peer of a chunk of a file in myChunks.
+	 * @param fileNo
+	 * @param chunkNo
+	 * @param peerNo
+	 * @return Returns the difference between the ActualReDeg and the RepDegDesired. 
 	 * If the return is less than 0 then the repetition degree is bellow the desired
 	 */
 	public synchronized int remPeerWithMyChunk(String fileNo,int chunkNo,int peerNo){
@@ -398,15 +439,30 @@ public class Record implements Serializable {
 		return 0;
 	}
 
+	/**
+	 * Function that checks if the peers has stored chunks of a certain file.
+	 * @param fileNo - File identification
+	 * @return True if it has stored, False otherwise
+	 */
 	public synchronized boolean myChunksBelongsToFile(String fileNo){
 		return myChunks.containsKey(fileNo);
 	}
 
+	
+	/**
+	 * Function that deletes of MyChunks the entry associated to a certain file.
+	 * @param fileId - File identification
+	 */
 	public synchronized void deleteMyChunksByFile(String fileId){
 		if(myChunks.containsKey(fileId))
 			myChunks.remove(fileId);
 	}
 
+	/**
+	 * Function that removes a chunk of a file in myChunks
+	 * @param fileNo - File identification
+	 * @param chunkNo - Chunk identification number
+	 */
 	public synchronized void removeFromMyChunks(String fileNo, int chunkNo){
 		if(checkMyChunk(fileNo, chunkNo)){
 			ArrayList<Chunk> chunks = myChunks.get(fileNo);
@@ -421,6 +477,13 @@ public class Record implements Serializable {
 		}
 	}
 
+	
+	/**
+	 * Function that get a chunk of myChunks
+	 * @param fileNo - File identification
+	 * @param chunkNo - Chunk identification number
+	 * @return chunk
+	 */
 	public synchronized Chunk getMyChunk(String fileNo, int chunkNo){
 		if(myChunks.containsKey(fileNo)){
 			for(Chunk c : myChunks.get(fileNo))
@@ -430,6 +493,12 @@ public class Record implements Serializable {
 		return null;
 	}
 
+	
+	/**
+	 * Function that gets a list with all the chunks the peer stored and that
+	 * have a replication degree above the desired
+	 * @return List of chunks
+	 */
 	public synchronized ArrayList<Chunk> getChunksWithRepAboveDes(){
 		ArrayList<Chunk> chunks = new ArrayList<Chunk>();
 
@@ -450,6 +519,11 @@ public class Record implements Serializable {
 		return chunks;
 	}
 	
+	/**
+	 * Function that gets a list with all the chunks the peer stored and that
+	 * have a replication degree bellow the desired
+	 * @return List of chunks
+	 */
 	public synchronized ArrayList<Chunk> getChunksWithRepBellowDes(){
 		ArrayList<Chunk> chunks = new ArrayList<Chunk>();
 		
@@ -464,7 +538,13 @@ public class Record implements Serializable {
 	}
 	
 	/*
-	 * Gets
+	 * GETS
+	 */
+	
+	/**
+	 * Function that gets all the chunks and their contents of a certain file of the restoresConfirms.
+	 * @param info - File information
+	 * @return HashMap<Integer,byte[] > where Integer is the chunkNo and the byte[] the content of the chunk
 	 */
 	public synchronized HashMap<Integer,byte[] > getRestores(FileInfo info) 
 	{
@@ -475,10 +555,22 @@ public class Record implements Serializable {
 		return null;
 	}
 
+	/**
+	 * Function that returns the storedConfirms.
+	 * @return HashMap<FileInfo, HashMap<Integer, ArrayList<Integer>>> where the hash FileInfo is the
+	 * information of the file, the inner hash Integer is the chunk number and the arrayList is the
+	 * list of peers.
+	 */
 	public HashMap<FileInfo, HashMap<Integer, ArrayList<Integer>>> getStored() {
 		return storedConfirms;
 	}
 
+	
+	/**
+	 * Function that return the myChunks.
+	 * @return HashMap<String, ArrayList<Chunk>> where the hash is the file identification
+	 * and the array list the list of chunks.
+	 */
 	public HashMap<String, ArrayList<Chunk>> getMyChunks() {
 		return myChunks;
 	}
