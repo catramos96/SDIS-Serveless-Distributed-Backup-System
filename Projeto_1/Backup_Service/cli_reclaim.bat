@@ -1,1 +1,0 @@
-start java cli.TestApp MessageRMI0 RECLAIM 100000
