@@ -386,6 +386,7 @@ public class MessageHandler extends Thread
 		byte[] data = null;
 		int repDegree = 0;
 		int desiredRepDegree = 0;
+		boolean hasChunk = false;
 
 		//This peer initiated the backup of this file (with fileId received)
 		if(record.checkStoredChunk(fileId, chunkNo) != null && info != null)
@@ -416,6 +417,8 @@ public class MessageHandler extends Thread
 			data = peer.getFileManager().getChunkContent(fileId, chunkNo);
 			repDegree = peer.getRecord().getMyChunk(fileId, chunkNo).getAtualRepDeg();
 			desiredRepDegree = peer.getRecord().getMyChunk(fileId, chunkNo).getReplicationDeg(); 
+			
+			hasChunk = true;
 		}
 
 		/*
@@ -434,6 +437,16 @@ public class MessageHandler extends Thread
 				Message msg = new Message(MessageType.PUTCHUNK,peer.getVersion(),peer.getID(),fileId,chunkNo,repDegree,data);
 				//Logs.sentMessageLog(msg);
 				new ChunkBackupProtocol(peer.getMdb(), peer.getMessageRecord(), msg).start();
+				
+				
+				if(hasChunk){
+					Util.randomDelay();
+					
+					peer.getMessageRecord().addStoredMessage(fileId, chunkNo, peer.getID());
+					//Warns the peers that it also has the chunk
+					msg = new Message(MessageType.STORED,peer.getVersion(),peer.getID(),fileId,chunkNo);
+					peer.getMc().send(msg);
+				}
 			}
 		}
 	}
