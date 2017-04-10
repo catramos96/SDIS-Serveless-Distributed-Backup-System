@@ -300,6 +300,9 @@ public class Peer implements MessageRMI {
 						Message msg = new Message(MessageType.PUTCHUNK,version,ID,c.getFileId(),c.getChunkNo(),c.getReplicationDeg(),data);
 						new ChunkBackupProtocol(mdb, msgRecord, msg).start();
 
+						Util.randomDelay();
+						
+						msgRecord.addStoredMessage(c.getFileId(), c.getChunkNo(), ID);
 						//Warns the peers that it also has the chunk
 						msg = new Message(MessageType.STORED,version,ID,c.getFileId(),c.getChunkNo());
 						mc.send(msg);
