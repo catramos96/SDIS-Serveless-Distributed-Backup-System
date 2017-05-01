@@ -1,0 +1,1 @@
+start java cli.TestApp MessageRMI0 DELETE ../resources/test1.html

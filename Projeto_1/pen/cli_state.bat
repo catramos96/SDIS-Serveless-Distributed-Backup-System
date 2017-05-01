@@ -1,0 +1,1 @@
+start java cli.TestApp MessageRMI2 STATE

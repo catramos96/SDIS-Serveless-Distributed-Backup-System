@@ -1,1 +1,0 @@
-start java cli.TestApp MessageRMI0 RESTORE natural.png

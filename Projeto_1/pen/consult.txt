@@ -1,0 +1,20 @@
+git svn clone https://svn.fe.up.pt/repos/sdis1617-t3g05
+
+java -jar McastSnooper.jar log.txt 224.0.1.117:4446 224.1.0.118:4446 224.0.1.119:4446
+
+rmiregistry
+
+javac -d bin -sourcepath src -encoding ISO-8859-1 src/peer/BackupSystem.java src/cli/TestApp.java
+
+java peer.BackupSystem 1.0 0 MessageRMI0 224.0.1.117:4446 224.0.1.118:4446 224.0.1.119:4446
+
+java cli.TestApp MessageRMI0 BACKUP ../resources/test1.html 3
+java cli.TestApp MessageRMI0 BACKUP ../resources/test2.pdf 3
+
+java cli.TestApp MessageRMI0 DELETE ../resources/test1.html
+
+start java cli.TestApp MessageRMI0 RESTORE test1.html
+
+start java cli.TestApp MessageRMI3 RECLAIM 10000
+
+start java cli.TestApp MessageRMI0 STATE
